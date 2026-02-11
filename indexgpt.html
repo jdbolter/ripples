@@ -3,31 +3,30 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RIPPLES — Simulation Interface</title>
+  <title>RIPPLES — World Jockey (Wings Mode)</title>
 
-  <!-- Font (optional, safe to remove later) -->
+  <!-- Font (optional) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 
-  <!-- External CSS -->
   <link rel="stylesheet" href="gpt.css" />
 </head>
 
 <body>
   <div class="app">
 
-    <!-- LEFT PANEL: ENTITY POOL -->
+    <!-- LEFT PANEL: CHARACTERS -->
     <section class="panel" id="leftPanel">
       <div class="panel-header">
-        <div class="panel-title">ENTITY POOL</div>
+        <div class="panel-title">CHARACTERS</div>
         <div class="pill" id="scenarioPill">—</div>
       </div>
 
       <div class="panel-body">
         <div class="help">
-          Click an entity to lock perspective.
-          Keys: <span class="k">1–6</span>
+          Click a character to lock perspective.
+          Keys: <span class="k">1–8</span>
         </div>
         <div class="entity-list" id="entityList">
           <!-- populated by JS -->
@@ -41,11 +40,11 @@
       <!-- GRID PANEL -->
       <section class="panel">
         <div class="panel-header">
-          <div class="panel-title">SCENE / GRID</div>
+          <div class="panel-title">SCENE / PROXIMITY</div>
           <div class="row">
             <span class="k">←</span>
             <span class="k">→</span>
-            <select id="scenarioSelect" aria-label="Scenario select">
+            <select id="scenarioSelect" aria-label="Scene select">
               <!-- populated by JS -->
             </select>
             <span class="pill">TICK: <span id="tickLabel">0</span></span>
@@ -60,10 +59,10 @@
         </div>
       </section>
 
-      <!-- VECTOR CONTROLS -->
+      <!-- ACTIVATIONS -->
       <section class="panel">
         <div class="panel-header">
-          <div class="panel-title">VECTOR CONTROLS</div>
+          <div class="panel-title">ATTENTION</div>
           <div class="row">
             <div class="switch">
               <div class="toggle" id="autoplayToggle" role="switch" aria-checked="false"></div>
@@ -78,14 +77,14 @@
 
         <div class="panel-body">
           <div class="vectors">
-            <button class="btn goal" id="btnGoal" disabled>
-              GOAL <span class="k">G</span>
+            <button class="btn thoughts" id="btnThoughts" disabled>
+              THOUGHTS <span class="k">T</span>
             </button>
-            <button class="btn obstacle" id="btnObstacle" disabled>
-              OBSTACLE <span class="k">O</span>
+            <button class="btn fears" id="btnFears" disabled>
+              FEARS <span class="k">F</span>
             </button>
-            <button class="btn shift" id="btnShift" disabled>
-              SHIFT <span class="k">S</span>
+            <button class="btn longing" id="btnLonging" disabled>
+              LONGING <span class="k">L</span>
             </button>
           </div>
 
@@ -115,9 +114,9 @@
 
           <div class="help">
             Shortcuts:
-            <span class="k">G</span>
-            <span class="k">O</span>
-            <span class="k">S</span>
+            <span class="k">T</span>
+            <span class="k">F</span>
+            <span class="k">L</span>
             <span class="k">Space</span>
           </div>
         </div>
@@ -128,20 +127,20 @@
     <section class="panel" id="rightPanel">
       <div class="panel-header">
         <div class="panel-title">WORLDTEXT</div>
-        <div class="pill" id="selectedPill">NO ENTITY</div>
+        <div class="pill" id="selectedPill">NO CHARACTER</div>
       </div>
 
       <div class="panel-body right-stack">
 
         <!-- WORLDTEXT VIEWPORT -->
         <div class="worldtext flicker" id="worldtext">
-          <!-- text injected by JS -->
+          <!-- injected by JS -->
         </div>
 
-        <!-- LATENT LIBRARY -->
+        <!-- SEED PANEL -->
         <section class="panel nested">
           <div class="panel-header">
-            <div class="panel-title">LATENT LIBRARY</div>
+            <div class="panel-title">SEEDS</div>
             <div class="pill">preview</div>
           </div>
           <div class="panel-body">
@@ -169,7 +168,8 @@
 
   </div>
 
-  <!-- External JavaScript -->
+  <!-- IMPORTANT: scenes.js must load BEFORE gpt.js -->
+  <script src="scenes.js"></script>
   <script src="gpt.js"></script>
 </body>
 </html>

@@ -1,14 +1,13 @@
 /* gpt.css
-   RIPPLES — Simulation Interface (CSS only)
-   Requires: indexgpt.html structure + gpt.js to populate dynamic content.
+   World Jockey (Wings Mode) — CSS
 */
 
 :root{
   --term-bg: #050a05;
-  --term-text: #4af626;
+  --term-text: #4af626;      /* thoughts */
   --term-dim: #1e5c12;
-  --term-alert: #ff3333;
-  --term-gold: #ffd700;
+  --term-alert: #ff3333;     /* fears */
+  --term-gold: #ffd700;      /* longing */
   --term-cyan: #00ffff;
 
   --grid-line: #0a1f0a;
@@ -134,9 +133,7 @@ body{
 }
 
 /* Inputs */
-select, input[type="range"]{
-  accent-color: var(--term-text);
-}
+select, input[type="range"]{ accent-color: var(--term-text); }
 
 select{
   background: rgba(5,10,5,0.85);
@@ -162,11 +159,9 @@ label{
   color: rgba(74,246,38,0.85);
 }
 
-input[type="range"]{
-  width: 100%;
-}
+input[type="range"]{ width: 100%; }
 
-/* Left: entity pool */
+/* Left: character pool */
 .entity-list{
   display:flex;
   flex-direction: column;
@@ -316,10 +311,15 @@ input[type="range"]{
   stroke-linecap: round;
 }
 
-/* Ripple + flash */
-.flash.goal{ box-shadow: 0 0 30px rgba(255,215,0,0.5); }
-.flash.obstacle{ box-shadow: 0 0 30px rgba(255,51,51,0.5); }
-.flash.shift{ box-shadow: 0 0 30px rgba(0,255,255,0.5); }
+/* Activation color tags in audit */
+.thoughts{ color: var(--term-text); }
+.fears{ color: var(--term-alert); }
+.longing{ color: var(--term-gold); }
+
+/* Ripple + flash (updated classes) */
+.flash.thoughts{ box-shadow: 0 0 30px rgba(74,246,38,0.55); }
+.flash.fears{ box-shadow: 0 0 30px rgba(255,51,51,0.55); }
+.flash.longing{ box-shadow: 0 0 30px rgba(255,215,0,0.55); }
 
 .ripple-ring{
   position:absolute;
@@ -336,19 +336,19 @@ input[type="range"]{
   animation: ripple-expand calc(900ms / var(--fx-ripple-speed)) ease-out forwards;
 }
 
-.ripple-ring.goal{
-  border-color: rgba(255,215,0,0.95);
-  filter: drop-shadow(0 0 10px rgba(255,215,0,0.35));
+.ripple-ring.thoughts{
+  border-color: rgba(74,246,38,0.95);
+  filter: drop-shadow(0 0 10px rgba(74,246,38,0.35));
 }
 
-.ripple-ring.obstacle{
+.ripple-ring.fears{
   border-color: rgba(255,51,51,0.95);
   filter: drop-shadow(0 0 10px rgba(255,51,51,0.35));
 }
 
-.ripple-ring.shift{
-  border-color: rgba(0,255,255,0.95);
-  filter: drop-shadow(0 0 10px rgba(0,255,255,0.35));
+.ripple-ring.longing{
+  border-color: rgba(255,215,0,0.95);
+  filter: drop-shadow(0 0 10px rgba(255,215,0,0.35));
 }
 
 @keyframes ripple-expand{
@@ -356,7 +356,7 @@ input[type="range"]{
   100%{ transform: translate(-50%,-50%) scale(3.2); opacity: 0; }
 }
 
-/* Vector buttons */
+/* Activation buttons */
 .vectors{
   display:grid;
   grid-template-columns: repeat(3, 1fr);
@@ -387,9 +387,9 @@ input[type="range"]{
 .btn:active{ transform: translateY(0); }
 .btn:disabled{ opacity: 0.35; cursor: not-allowed; transform:none; box-shadow:none; }
 
-.btn.goal{ color: var(--term-gold); border-color: rgba(255,215,0,0.35); }
-.btn.obstacle{ color: var(--term-alert); border-color: rgba(255,51,51,0.35); }
-.btn.shift{ color: var(--term-cyan); border-color: rgba(0,255,255,0.35); }
+.btn.thoughts{ color: var(--term-text); border-color: rgba(74,246,38,0.35); }
+.btn.fears{ color: var(--term-alert); border-color: rgba(255,51,51,0.35); }
+.btn.longing{ color: var(--term-gold); border-color: rgba(255,215,0,0.35); }
 
 /* Autoplay switch */
 .switch{
@@ -491,7 +491,7 @@ input[type="range"]{
 
 .entity-link:hover{ opacity: 0.85; }
 
-/* Latent panel */
+/* Seeds panel */
 .latent-grid{
   display:grid;
   grid-template-columns: 1fr;
