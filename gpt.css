@@ -1,5 +1,6 @@
 /* gpt.css
-   World Jockey (Wings Mode) — CSS
+   RIPPLES — 2-column layout (grid dominates ~2/3, text ~1/3)
+   Matches index.html with NO left column.
 */
 
 :root{
@@ -18,11 +19,6 @@
   --radius: 16px;
   --shadow: 0 0 20px rgba(74,246,38,0.12);
   --transition: 0.15s ease;
-
-  /* Effect controls (gpt.js may update these) */
-  --fx-flicker: 0.35;        /* 0..1 */
-  --fx-glow: 0.65;           /* 0..1 */
-  --fx-ripple-speed: 1;      /* 0.5..2 */
 }
 
 *{ box-sizing: border-box; }
@@ -41,11 +37,14 @@ body{
   overflow: hidden;
 }
 
-/* Layout */
+/* ===========================
+   Layout (2 columns: 2/3 + 1/3)
+   =========================== */
+
 .app{
   height: 100%;
   display: grid;
-  grid-template-columns: 300px minmax(520px, 1fr) 420px;
+  grid-template-columns: 2fr 1fr;
   gap: 10px;
   padding: 10px;
 }
@@ -57,7 +56,19 @@ body{
   min-height: 0;
 }
 
-/* Panels */
+/* Make the SCENE pane consume most of the center column */
+#scenePanel{
+  flex: 1 1 auto;
+  min-height: 0;
+}
+#attentionPanel{
+  flex: 0 0 auto;
+}
+
+/* ===========================
+   Panels
+   =========================== */
+
 .panel{
   border: 1px solid rgba(74,246,38,0.25);
   background: rgba(5,10,5,0.85);
@@ -99,7 +110,10 @@ body{
   border-bottom: 1px solid rgba(74,246,38,0.12);
 }
 
-/* Common UI */
+/* ===========================
+   Common UI
+   =========================== */
+
 .row{
   display:flex;
   align-items:center;
@@ -110,7 +124,7 @@ body{
 .help{
   color: rgba(74,246,38,0.75);
   font-size: 12px;
-  margin-bottom: 10px;
+  margin-top: 10px;
 }
 
 .pill{
@@ -133,7 +147,7 @@ body{
 }
 
 /* Inputs */
-select, input[type="range"]{ accent-color: var(--term-text); }
+select{ accent-color: var(--term-text); }
 
 select{
   background: rgba(5,10,5,0.85);
@@ -150,80 +164,16 @@ select:focus{
   box-shadow: 0 0 0 3px rgba(74,246,38,0.12);
 }
 
-label{
-  display:flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 10px;
-  font-size: 12px;
-  color: rgba(74,246,38,0.85);
-}
+/* ===========================
+   Center: Grid (Scene)
+   =========================== */
 
-input[type="range"]{ width: 100%; }
-
-/* Left: character pool */
-.entity-list{
-  display:flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.entity-item{
-  display:flex;
-  align-items:flex-start;
-  gap: 10px;
-  padding: 8px 10px;
-  border: 1px solid rgba(74,246,38,0.18);
-  border-radius: 14px;
-  cursor: pointer;
-  transition: transform var(--transition), border var(--transition), box-shadow var(--transition), background var(--transition);
-  background: rgba(74,246,38,0.02);
-}
-
-.entity-item:hover{
-  transform: translateY(-1px);
-  border-color: rgba(74,246,38,0.35);
-  box-shadow: 0 0 0 3px rgba(74,246,38,0.08);
-}
-
-.entity-item.selected{
-  border-color: rgba(74,246,38,0.6);
-  background: rgba(74,246,38,0.06);
-  box-shadow: 0 0 18px rgba(74,246,38,0.12);
-}
-
-.entity-icon{
-  font-size: 18px;
-  width: 24px;
-  text-align:center;
-  line-height: 1.2;
-  margin-top: 1px;
-  text-shadow: 0 0 10px rgba(74,246,38,0.25);
-}
-
-.entity-meta{
-  display:flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.entity-name{
-  font-weight: 600;
-  overflow:hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.entity-sub{
-  color: rgba(74,246,38,0.75);
-  font-size: 12px;
-}
-
-/* Center: grid */
 .grid-wrap{
   position: relative;
   padding: 10px;
+  height: 100%;
+  min-height: 0;
+  display:flex;
 }
 
 .grid{
@@ -234,6 +184,8 @@ input[type="range"]{ width: 100%; }
   border-radius: 14px;
   padding: 2px;
   position: relative;
+  width: 100%;
+  flex: 1 1 auto;
 }
 
 .grid-cell{
@@ -263,7 +215,7 @@ input[type="range"]{ width: 100%; }
 
 .grid-cell.selected{
   animation: pulse 1s infinite;
-  box-shadow: 0 0 20px rgba(74,246,38, calc(0.25 + 0.35*var(--fx-glow)));
+  box-shadow: 0 0 20px rgba(74,246,38,0.35);
   border-color: rgba(74,246,38,0.65);
   background: rgba(42,106,42,0.45);
 }
@@ -284,7 +236,7 @@ input[type="range"]{ width: 100%; }
 }
 
 .grid-entity .icon{
-  font-size: 20px;
+  font-size: 22px;
   text-shadow: 0 0 12px rgba(74,246,38,0.25);
 }
 
@@ -292,7 +244,7 @@ input[type="range"]{ width: 100%; }
   font-size: 10px;
   color: rgba(74,246,38,0.85);
   opacity: 0.9;
-  max-width: 70px;
+  max-width: 110px;
   overflow:hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -311,64 +263,21 @@ input[type="range"]{ width: 100%; }
   stroke-linecap: round;
 }
 
-/* Activation color tags in audit */
-.thoughts{ color: var(--term-text); }
-.fears{ color: var(--term-alert); }
-.longing{ color: var(--term-gold); }
+/* ===========================
+   Attention Buttons
+   =========================== */
 
-/* Ripple + flash (updated classes) */
-.flash.thoughts{ box-shadow: 0 0 30px rgba(74,246,38,0.55); }
-.flash.fears{ box-shadow: 0 0 30px rgba(255,51,51,0.55); }
-.flash.longing{ box-shadow: 0 0 30px rgba(255,215,0,0.55); }
-
-.ripple-ring{
-  position:absolute;
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  border: 2px solid rgba(74,246,38,0.85);
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%,-50%) scale(0.5);
-  opacity: 0;
-  pointer-events:none;
-  filter: drop-shadow(0 0 8px rgba(74,246,38,0.25));
-  animation: ripple-expand calc(900ms / var(--fx-ripple-speed)) ease-out forwards;
-}
-
-.ripple-ring.thoughts{
-  border-color: rgba(74,246,38,0.95);
-  filter: drop-shadow(0 0 10px rgba(74,246,38,0.35));
-}
-
-.ripple-ring.fears{
-  border-color: rgba(255,51,51,0.95);
-  filter: drop-shadow(0 0 10px rgba(255,51,51,0.35));
-}
-
-.ripple-ring.longing{
-  border-color: rgba(255,215,0,0.95);
-  filter: drop-shadow(0 0 10px rgba(255,215,0,0.35));
-}
-
-@keyframes ripple-expand{
-  0%{ transform: translate(-50%,-50%) scale(0.5); opacity: 1; }
-  100%{ transform: translate(-50%,-50%) scale(3.2); opacity: 0; }
-}
-
-/* Activation buttons */
 .vectors{
   display:grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  margin-bottom: 10px;
 }
 
 .btn{
   border: 1px solid rgba(74,246,38,0.25);
   background: rgba(74,246,38,0.03);
   color: var(--term-text);
-  padding: 12px 12px;
+  padding: 14px 12px;
   border-radius: 16px;
   cursor:pointer;
   transition: transform var(--transition), border var(--transition), box-shadow var(--transition), opacity var(--transition);
@@ -430,24 +339,35 @@ input[type="range"]{ width: 100%; }
   background: rgba(74,246,38,0.85);
 }
 
-/* Right panel stack */
+/* ===========================
+   Right: Worldtext + Replay
+   =========================== */
+
 .right-stack{
   display:flex;
   flex-direction: column;
   gap: 10px;
   min-height: 0;
+  height: 100%;
 }
 
-/* Worldtext viewport + CRT effect */
+/* worldtext grows; replay has stable height */
 .worldtext{
   position: relative;
   border-radius: 14px;
   padding: 12px;
   border: 1px solid rgba(74,246,38,0.18);
   background: rgba(5,10,5,0.70);
-  min-height: 240px;
   overflow:auto;
   white-space: pre-wrap;
+
+  flex: 1 1 auto;
+  min-height: 320px;
+}
+
+#replayPanel{
+  flex: 0 0 220px;
+  min-height: 220px;
 }
 
 .worldtext::before{
@@ -473,69 +393,25 @@ input[type="range"]{ width: 100%; }
 
 @keyframes flicker{
   0%,100%{ opacity: 1; }
-  10%{ opacity: calc(1 - 0.02*var(--fx-flicker)); }
+  10%{ opacity: 0.98; }
   12%{ opacity: 1; }
-  19%{ opacity: calc(1 - 0.03*var(--fx-flicker)); }
+  19%{ opacity: 0.97; }
   22%{ opacity: 1; }
-  68%{ opacity: calc(1 - 0.02*var(--fx-flicker)); }
+  68%{ opacity: 0.98; }
   70%{ opacity: 1; }
 }
 
+/* Clickable character links inside worldtext */
 .entity-link{
   color: var(--term-text);
-  text-shadow: 0 0 12px rgba(74,246,38, calc(0.15 + 0.35*var(--fx-glow)));
+  text-shadow: 0 0 12px rgba(74,246,38,0.25);
   border-bottom: 1px dotted rgba(74,246,38,0.45);
   cursor:pointer;
   transition: opacity var(--transition);
 }
-
 .entity-link:hover{ opacity: 0.85; }
 
-/* Seeds panel */
-.latent-grid{
-  display:grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-}
-
-.latent-card{
-  border: 1px solid rgba(74,246,38,0.18);
-  border-radius: 14px;
-  padding: 10px;
-  background: rgba(74,246,38,0.02);
-}
-
-.latent-card .h{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin-bottom: 6px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
-.latent-card .tag{
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(74,246,38,0.18);
-  color: rgba(74,246,38,0.85);
-  background: rgba(74,246,38,0.03);
-}
-
-.latent-card .txt{
-  color: rgba(74,246,38,0.9);
-  font-size: 12px;
-  line-height: 1.65;
-  cursor:pointer;
-}
-
-.latent-card .txt:hover{
-  text-shadow: 0 0 10px rgba(74,246,38,0.18);
-}
-
-/* Audit log */
+/* Replay list */
 .audit{
   display:flex;
   flex-direction: column;
@@ -558,11 +434,59 @@ input[type="range"]{ width: 100%; }
   transform: translateY(-1px);
 }
 
-/* Responsive */
-@media (max-width: 1260px){
+/* Activation color tags */
+.thoughts{ color: var(--term-text); }
+.fears{ color: var(--term-alert); }
+.longing{ color: var(--term-gold); }
+
+/* Ripple + flash */
+.flash.thoughts{ box-shadow: 0 0 30px rgba(74,246,38,0.55); }
+.flash.fears{ box-shadow: 0 0 30px rgba(255,51,51,0.55); }
+.flash.longing{ box-shadow: 0 0 30px rgba(255,215,0,0.55); }
+
+.ripple-ring{
+  position:absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid rgba(74,246,38,0.85);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%) scale(0.5);
+  opacity: 0;
+  pointer-events:none;
+  filter: drop-shadow(0 0 8px rgba(74,246,38,0.25));
+  animation: ripple-expand 900ms ease-out forwards;
+}
+
+.ripple-ring.thoughts{
+  border-color: rgba(74,246,38,0.95);
+  filter: drop-shadow(0 0 10px rgba(74,246,38,0.35));
+}
+.ripple-ring.fears{
+  border-color: rgba(255,51,51,0.95);
+  filter: drop-shadow(0 0 10px rgba(255,51,51,0.35));
+}
+.ripple-ring.longing{
+  border-color: rgba(255,215,0,0.95);
+  filter: drop-shadow(0 0 10px rgba(255,215,0,0.35));
+}
+
+@keyframes ripple-expand{
+  0%{ transform: translate(-50%,-50%) scale(0.5); opacity: 1; }
+  100%{ transform: translate(-50%,-50%) scale(3.2); opacity: 0; }
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+
+@media (max-width: 1200px){
   body{ overflow:auto; }
   .app{
     height:auto;
     grid-template-columns: 1fr;
   }
+  #replayPanel{ flex: 0 0 auto; }
+  .worldtext{ min-height: 280px; }
 }

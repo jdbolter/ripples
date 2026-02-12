@@ -1,25 +1,18 @@
 /* gpt.js
-   World Jockey (Wings Mode) — UI + Engine
+   RIPPLES — Simplified End-User Interface (2-column layout)
    Depends on: scenes.js providing window.SCENES and window.SCENE_ORDER
-   HTML IDs must match indexgpt.html you loaded.
+   Compatible with index.html with NO left column (no #entityList).
 */
 
 (() => {
   "use strict";
 
-  // -----------------------------
-  // Guard: scenes.js must load first
-  // -----------------------------
   if (!window.SCENES || !window.SCENE_ORDER) {
     throw new Error("Missing SCENES/SCENE_ORDER. Ensure scenes.js is loaded before gpt.js.");
   }
 
   const ACTIVATIONS = ["THOUGHTS", "FEARS", "LONGING"];
-  const ACT_CLASS = {
-    THOUGHTS: "thoughts",
-    FEARS: "fears",
-    LONGING: "longing"
-  };
+  const ACT_CLASS = { THOUGHTS: "thoughts", FEARS: "fears", LONGING: "longing" };
 
   // -----------------------------
   // DOM
@@ -28,9 +21,7 @@
   const elScenarioPill = byId("scenarioPill");
   const elGrid = byId("grid");
   const elLinks = byId("linkLayer");
-  const elList = byId("entityList"); // left list container (kept id for compatibility)
   const elWorldtext = byId("worldtext");
-  const elLatentPanel = byId("latentPanel");
   const elAuditLog = byId("auditLog");
   const elTickLabel = byId("tickLabel");
   const elSelectedPill = byId("selectedPill");
@@ -40,23 +31,16 @@
   const btnLonging = byId("btnLonging");
 
   const elAutoplayToggle = byId("autoplayToggle");
-  const elCountdownPill = byId("countdownPill");
-
-  const elBpmSlider = byId("bpmSlider");
-  const elFxSlider = byId("fxSlider");
-  const elRippleSpeedSlider = byId("rippleSpeedSlider");
-  const elBpmLabel = byId("bpmLabel");
 
   // -----------------------------
-  // ENGINE (semantic layer boundary)
+  // ENGINE
   // -----------------------------
   const engine = (() => {
     let sceneId = window.SCENE_ORDER[0]?.id || Object.keys(window.SCENES)[0];
     let tick = 0;
     let selectedId = null;
 
-    // Drift state: neighbors pick “more aligned” variants next time.
-    // Example: FEARS ripple nudges FEARS variants up; LONGING nudges LONGING, etc.
+    // Drift state biases which monologue variant is picked next.
     const drift = {}; // drift[characterId] = { THOUGHTS:0, FEARS:0, LONGING:0 }
     const used = {};  // used[characterId][activation] = Set(index)
 
@@ -68,7 +52,6 @@
       tick = 0;
       selectedId = null;
       audit = [];
-      // reset state
       for (const k of Object.keys(drift)) delete drift[k];
       for (const k of Object.keys(used)) delete used[k];
       return snapshot({ worldtext: getScene().meta.baseline, mode: "baseline" });
@@ -84,15 +67,7 @@
 
     function selectCharacter(id) {
       selectedId = id;
-      return snapshot(); // keep current worldtext unless baseline mode needs hint
-    }
-
-    function preview(characterId, activation) {
-      const sc = getScene();
-      const seed = sc.seeds?.[characterId]?.[activation] || "(no seed)";
-      const ch = sc.characters.find(c => c.id === characterId);
-      const header = `[PREVIEW — ${ch ? ch.label : characterId} · ${activation}]`;
-      return { text: `${header}\n\n${seed}`, mode: "preview" };
+      return snapshot();
     }
 
     function activate(activation) {
@@ -105,28 +80,22 @@
 
       const primaryText = pickMonologue(sc, ch.id, activation);
 
-      // Ripple: subtle drift nudges neighbors
+      // Psychological ripple = drift nudges neighbors
       const neighbors = (ch.adjacentTo || []).slice();
-      const rippleLedger = [];
-      for (const nbId of neighbors) {
-        applyDrift(nbId, activation, ch);
-        rippleLedger.push({ targetId: nbId, activation, strength: driftStrength(ch) });
-      }
+      for (const nbId of neighbors) applyDrift(nbId, activation, ch);
 
-      const entry = {
+      audit.unshift({
         tick,
         time: new Date().toLocaleTimeString(),
         characterId: ch.id,
         characterLabel: ch.label,
         activation,
         text: primaryText
-      };
-      audit.unshift(entry);
+      });
 
-      // advance tick AFTER logging, so T0 is first event
       tick++;
 
-      return snapshot({ worldtext: primaryText, mode: "ripple", rippleLedger });
+      return snapshot({ worldtext: primaryText, mode: "ripple" });
     }
 
     function pickMonologue(sc, characterId, activation) {
@@ -137,20 +106,15 @@
           "(No monologue available.)";
       }
 
-      // Choose variant based on drift + "not recently used" preference
-      const d = getDrift(characterId)[activation]; // scalar
-      const targetBand = bandIndex(arr.length, d); // choose higher indices when drift is high
-
-      const chosen = chooseWithAvoidance(characterId, activation, arr.length, targetBand);
+      const d = getDrift(characterId)[activation];
+      const preferred = bandIndex(arr.length, d);
+      const chosen = chooseWithAvoidance(characterId, activation, arr.length, preferred);
       markUsed(characterId, activation, chosen);
-
       return arr[chosen];
     }
 
     function chooseWithAvoidance(characterId, activation, n, preferredIndex) {
-      // Try preferred first; if used recently, try nearby.
-      const order = [];
-      order.push(preferredIndex);
+      const order = [preferredIndex];
       for (let step = 1; step < n; step++) {
         const a = preferredIndex - step;
         const b = preferredIndex + step;
@@ -162,15 +126,11 @@
       for (const idx of order) {
         if (!usedSet.has(idx)) return idx;
       }
-
-      // If all used, just pick the preferred index and reset the used set
       usedSet.clear();
       return preferredIndex;
     }
 
     function bandIndex(n, driftScalar) {
-      // driftScalar grows slowly; map to index 0..n-1
-      // Keep it subtle: clamp drift to [0, 2]
       const d = clamp(driftScalar, 0, 2);
       const t = d / 2; // 0..1
       return Math.round(t * (n - 1));
@@ -180,18 +140,14 @@
       const s = driftStrength(sourceChar);
       const d = getDrift(targetId);
 
-      // Nudge the activated channel up; tiny cross-talk to others down
       for (const a of ACTIVATIONS) {
         if (a === activation) d[a] += 0.20 * s;
         else d[a] = Math.max(0, d[a] - 0.05 * s);
       }
-
-      // Clamp to keep it subtle and avoid runaway
       for (const a of ACTIVATIONS) d[a] = clamp(d[a], 0, 2);
     }
 
     function driftStrength(sourceChar) {
-      // sensitivity: low/medium/high
       const s = (sourceChar?.sensitivity || "medium").toLowerCase();
       if (s === "low") return 0.6;
       if (s === "high") return 1.2;
@@ -210,11 +166,9 @@
     }
 
     function markUsed(id, activation, idx) {
-      getUsedSet(id, activation).add(idx);
-      // keep memory small by capping size
       const s = getUsedSet(id, activation);
+      s.add(idx);
       if (s.size > 12) {
-        // crude cap: clear after it grows
         s.clear();
         s.add(idx);
       }
@@ -223,26 +177,12 @@
     function snapshot(extra = {}) {
       const sc = getScene();
       return {
-        meta: {
-          sceneId,
-          label: sc.meta.label,
-          title: sc.meta.title,
-          tick
-        },
-        scene: {
-          cols: sc.meta.cols,
-          rows: sc.meta.rows,
-          baseline: sc.meta.baseline
-        },
+        meta: { sceneId, label: sc.meta.label, title: sc.meta.title, tick },
+        scene: { cols: sc.meta.cols, rows: sc.meta.rows, baseline: sc.meta.baseline },
         characters: sc.characters,
-        seeds: sc.seeds || {},
         selection: { characterId: selectedId },
         audit: audit.slice(0, 50),
-        uiText: {
-          worldtext: extra.worldtext ?? null,
-          mode: extra.mode ?? null
-        },
-        rippleLedger: extra.rippleLedger || null
+        uiText: { worldtext: extra.worldtext ?? null, mode: extra.mode ?? null }
       };
     }
 
@@ -262,16 +202,7 @@
       return { characterId: pool[0].character, activation: pool[0].activation };
     }
 
-    return {
-      listScenes,
-      loadScene,
-      getScene,
-      snapshot,
-      selectCharacter,
-      preview,
-      activate,
-      chooseAmbientMove
-    };
+    return { listScenes, loadScene, getScene, snapshot, selectCharacter, activate, chooseAmbientMove };
   })();
 
   // -----------------------------
@@ -279,11 +210,10 @@
   // -----------------------------
   let isAutoplay = false;
   let autoplayTimer = null;
-  let countdownTimer = null;
-  let secondsToNext = 0;
-
-  // Track last worldtext mode to decide whether to re-baseline on selection
   let lastWorldMode = "baseline";
+
+  // Fixed pace for end-user experience (ms)
+  const AUTOPLAY_INTERVAL_MS = 3200;
 
   // -----------------------------
   // Init
@@ -291,7 +221,6 @@
   function init() {
     populateScenes();
     bindUI();
-    applyFxFromSliders();
 
     const firstSceneId = engine.listScenes()[0]?.id || Object.keys(window.SCENES)[0];
     const snap = engine.loadScene(firstSceneId);
@@ -321,15 +250,6 @@
 
     elAutoplayToggle.addEventListener("click", toggleAutoplay);
 
-    elBpmSlider.addEventListener("input", () => {
-      const bpm = clamp(parseInt(elBpmSlider.value, 10), 6, 60);
-      elBpmLabel.textContent = String(bpm);
-      if (isAutoplay) restartAutoplay();
-    });
-
-    elFxSlider.addEventListener("input", applyFxFromSliders);
-    elRippleSpeedSlider.addEventListener("input", applyFxFromSliders);
-
     window.addEventListener("keydown", (e) => {
       const k = e.key;
 
@@ -341,13 +261,6 @@
       if (k === "t" || k === "T") onActivate("THOUGHTS");
       if (k === "f" || k === "F") onActivate("FEARS");
       if (k === "l" || k === "L") onActivate("LONGING");
-
-      if (/^[1-8]$/.test(k)) {
-        const idx = parseInt(k, 10) - 1;
-        const sc = engine.getScene();
-        const ch = sc.characters[idx];
-        if (ch) onSelectCharacter(ch.id);
-      }
     });
 
     window.addEventListener("resize", () => {
@@ -363,13 +276,11 @@
     const snap = engine.selectCharacter(id);
     render(snap);
 
-    // If we were showing baseline/preview, update baseline with hint
     if (lastWorldMode !== "ripple") {
       const sc = engine.getScene();
       const ch = sc.characters.find(c => c.id === id);
       if (ch) {
-        const baseline = sc.meta.baseline +
-          `\n\n[Perspective locked: ${ch.label} (${ch.id}). Press T/F/L.]`;
+        const baseline = sc.meta.baseline + `\n\n[Listening to: ${ch.label}. Press T / F / L.]`;
         setWorldtext(baseline, { mode: "baseline" });
       }
     }
@@ -380,7 +291,6 @@
     const selectedId = snapBefore.selection.characterId;
     if (!selectedId) return;
 
-    // Visual ripple first (selected + neighbors)
     const sc = engine.getScene();
     const ch = sc.characters.find(c => c.id === selectedId);
     if (ch) {
@@ -410,69 +320,28 @@
   // Render
   // -----------------------------
   function render(snapshot, opts = {}) {
-    // Header pills
     elScenarioPill.textContent = snapshot.meta.label;
     elTickLabel.textContent = String(snapshot.meta.tick);
 
-    // Selection pill
     if (!snapshot.selection.characterId) elSelectedPill.textContent = "NO CHARACTER";
     else elSelectedPill.textContent = snapshot.selection.characterId.toUpperCase();
 
-    // Buttons enabled state
     const enabled = !!snapshot.selection.characterId;
     btnThoughts.disabled = !enabled;
     btnFears.disabled = !enabled;
     btnLonging.disabled = !enabled;
 
-    // Scene select (keep sync)
     elScenarioSelect.value = snapshot.meta.sceneId;
 
-    // List, grid, links, seeds, audit
-    renderCharacterList(snapshot);
     renderGrid(snapshot);
     renderLinks(snapshot);
-    renderSeeds(snapshot);
-    renderAudit(snapshot);
+    renderReplay(snapshot);
 
-    // Worldtext (only override if provided)
     if (opts.forceWorldtext != null) {
       setWorldtext(opts.forceWorldtext, { mode: opts.mode || "ripple" });
     } else if (lastWorldMode == null) {
       setWorldtext(snapshot.scene.baseline, { mode: "baseline" });
     }
-  }
-
-  function renderCharacterList(snapshot) {
-    elList.innerHTML = "";
-    snapshot.characters.forEach((ch, i) => {
-      const item = document.createElement("div");
-      item.className = "entity-item" + (snapshot.selection.characterId === ch.id ? " selected" : "");
-      item.addEventListener("click", () => onSelectCharacter(ch.id));
-
-      const icon = document.createElement("div");
-      icon.className = "entity-icon";
-      icon.textContent = ch.icon || "•";
-
-      const meta = document.createElement("div");
-      meta.className = "entity-meta";
-
-      const name = document.createElement("div");
-      name.className = "entity-name";
-      name.textContent = ch.label;
-
-      const sub = document.createElement("div");
-      sub.className = "entity-sub";
-      const loc = ch.location ? ` · ${ch.location}` : "";
-      const w = ch.innerWeather ? ` · ${ch.innerWeather}` : "";
-      sub.textContent = `key ${i + 1}${loc}${w}`;
-
-      meta.appendChild(name);
-      meta.appendChild(sub);
-
-      item.appendChild(icon);
-      item.appendChild(meta);
-      elList.appendChild(item);
-    });
   }
 
   function renderGrid(snapshot) {
@@ -494,7 +363,7 @@
 
         const ch = occupied.get(`${x},${y}`);
         if (ch) {
-          cell.classList.add("has-entity"); // keep class for now; CSS still uses it
+          cell.classList.add("has-entity");
           cell.dataset.characterId = ch.id;
 
           if (snapshot.selection.characterId === ch.id) cell.classList.add("selected");
@@ -556,61 +425,13 @@
     }
   }
 
-  function renderSeeds(snapshot) {
-    elLatentPanel.innerHTML = "";
-
-    const id = snapshot.selection.characterId;
-    if (!id) {
-      const d = document.createElement("div");
-      d.className = "help";
-      d.textContent = "Select a character to preview seed fragments (THOUGHTS / FEARS / LONGING).";
-      elLatentPanel.appendChild(d);
-      return;
-    }
-
-    const sc = engine.getScene();
-    const ch = sc.characters.find(c => c.id === id);
-    const seedObj = snapshot.seeds[id] || {};
-
-    const cards = [
-      { a: "THOUGHTS", colorVar: "--term-text" },
-      { a: "FEARS", colorVar: "--term-alert" },
-      { a: "LONGING", colorVar: "--term-gold" }
-    ];
-
-    for (const card of cards) {
-      const wrap = document.createElement("div");
-      wrap.className = "latent-card";
-
-      const h = document.createElement("div");
-      h.className = "h";
-      h.innerHTML = `
-        <span style="color:var(${card.colorVar})">${card.a}</span>
-        <span class="tag">${escapeHtml(ch ? ch.id : id)}</span>
-      `;
-
-      const txt = document.createElement("div");
-      txt.className = "txt";
-      txt.textContent = seedObj[card.a] || "(no seed)";
-
-      txt.addEventListener("click", () => {
-        const pv = engine.preview(id, card.a);
-        setWorldtext(pv.text, { mode: pv.mode });
-      });
-
-      wrap.appendChild(h);
-      wrap.appendChild(txt);
-      elLatentPanel.appendChild(wrap);
-    }
-  }
-
-  function renderAudit(snapshot) {
+  function renderReplay(snapshot) {
     elAuditLog.innerHTML = "";
 
     if (!snapshot.audit.length) {
       const d = document.createElement("div");
       d.className = "help";
-      d.textContent = "No events yet. Trigger THOUGHTS / FEARS / LONGING to begin. Entries are replayable.";
+      d.textContent = "No replay items yet. Select a character in the scene and trigger THOUGHTS / FEARS / LONGING.";
       elAuditLog.appendChild(d);
       return;
     }
@@ -640,11 +461,10 @@
     const mode = opts.mode || "ripple";
     lastWorldMode = mode;
 
-    // Make character ids and labels clickable (lightweight)
     const sc = engine.getScene();
     let html = escapeHtml(String(text));
 
-    // Replace labels and ids (longer keys first)
+    // Clickable character ids + labels
     const tokens = [];
     for (const ch of sc.characters) {
       tokens.push({ key: ch.label, id: ch.id });
@@ -681,11 +501,9 @@
 
     const cls = ACT_CLASS[activation] || "thoughts";
 
-    // Flash
     cell.classList.add("flash", cls);
     window.setTimeout(() => cell.classList.remove("flash", cls), 420);
 
-    // Rings (two pulses)
     for (let i = 0; i < 2; i++) {
       const ring = document.createElement("div");
       ring.className = `ripple-ring ${cls}`;
@@ -697,19 +515,7 @@
   }
 
   // -----------------------------
-  // FX
-  // -----------------------------
-  function applyFxFromSliders() {
-    const fx = clamp(parseInt(elFxSlider.value, 10) / 100, 0, 1);
-    const sp = clamp(parseInt(elRippleSpeedSlider.value, 10) / 100, 0.5, 2);
-
-    document.documentElement.style.setProperty("--fx-flicker", String(0.15 + 0.85 * fx));
-    document.documentElement.style.setProperty("--fx-glow", String(0.15 + 0.85 * fx));
-    document.documentElement.style.setProperty("--fx-ripple-speed", String(sp));
-  }
-
-  // -----------------------------
-  // Autoplay
+  // Autoplay (fixed pace)
   // -----------------------------
   function toggleAutoplay() {
     isAutoplay = !isAutoplay;
@@ -718,12 +524,6 @@
 
     if (isAutoplay) startAutoplay();
     else stopAutoplay();
-  }
-
-  function restartAutoplay() {
-    if (!isAutoplay) return;
-    stopAutoplay();
-    startAutoplay();
   }
 
   function stopAutoplayIfRunning() {
@@ -736,45 +536,23 @@
   }
 
   function startAutoplay() {
-    // Choose default character if none selected
     const snap = engine.snapshot();
     if (!snap.selection.characterId) {
       const first = snap.characters[0];
       if (first) onSelectCharacter(first.id);
     }
 
-    const bpm = clamp(parseInt(elBpmSlider.value, 10), 6, 60);
-    elBpmLabel.textContent = String(bpm);
-
-    const intervalMs = Math.round(60000 / bpm);
-    secondsToNext = Math.ceil(intervalMs / 1000);
-
-    elCountdownPill.style.display = "inline-block";
-    elCountdownPill.textContent = `NEXT: ${secondsToNext}s`;
-
-    countdownTimer = setInterval(() => {
-      secondsToNext = Math.max(0, secondsToNext - 1);
-      elCountdownPill.textContent = `NEXT: ${secondsToNext}s`;
-    }, 1000);
-
     autoplayTimer = setInterval(() => {
-      secondsToNext = Math.ceil(intervalMs / 1000);
-      elCountdownPill.textContent = `NEXT: ${secondsToNext}s`;
-
       const move = engine.chooseAmbientMove();
       if (!move) return;
-
       onSelectCharacter(move.characterId);
       onActivate(move.activation);
-    }, intervalMs);
+    }, AUTOPLAY_INTERVAL_MS);
   }
 
   function stopAutoplay() {
     clearInterval(autoplayTimer);
-    clearInterval(countdownTimer);
     autoplayTimer = null;
-    countdownTimer = null;
-    elCountdownPill.style.display = "none";
   }
 
   // -----------------------------

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RIPPLES — World Jockey (Wings Mode)</title>
+  <title>RIPPLES — A Listening Experience</title>
 
   <!-- Font (optional) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,31 +16,15 @@
 <body>
   <div class="app">
 
-    <!-- LEFT PANEL: CHARACTERS -->
-    <section class="panel" id="leftPanel">
-      <div class="panel-header">
-        <div class="panel-title">CHARACTERS</div>
-        <div class="pill" id="scenarioPill">—</div>
-      </div>
+    <!-- LEFT COLUMN REMOVED -->
 
-      <div class="panel-body">
-        <div class="help">
-          Click a character to lock perspective.
-          Keys: <span class="k">1–8</span>
-        </div>
-        <div class="entity-list" id="entityList">
-          <!-- populated by JS -->
-        </div>
-      </div>
-    </section>
-
-    <!-- CENTER COLUMN -->
+    <!-- CENTER -->
     <section class="center-stack">
 
-      <!-- GRID PANEL -->
-      <section class="panel">
+      <!-- SCENE / PROXIMITY (dominant) -->
+      <section class="panel" id="scenePanel">
         <div class="panel-header">
-          <div class="panel-title">SCENE / PROXIMITY</div>
+          <div class="panel-title">SCENE</div>
           <div class="row">
             <span class="k">←</span>
             <span class="k">→</span>
@@ -48,6 +32,7 @@
               <!-- populated by JS -->
             </select>
             <span class="pill">TICK: <span id="tickLabel">0</span></span>
+            <span class="pill" id="scenarioPill">—</span>
           </div>
         </div>
 
@@ -59,19 +44,16 @@
         </div>
       </section>
 
-      <!-- ACTIVATIONS -->
-      <section class="panel">
+      <!-- ATTENTION -->
+      <section class="panel" id="attentionPanel">
         <div class="panel-header">
           <div class="panel-title">ATTENTION</div>
           <div class="row">
             <div class="switch">
               <div class="toggle" id="autoplayToggle" role="switch" aria-checked="false"></div>
-              <div>
-                AUTOPLAY
-                <span class="pill" id="countdownPill" style="display:none;">—</span>
-              </div>
+              <div>AUTOPLAY</div>
             </div>
-            <span class="pill">BPM: <span id="bpmLabel">20</span></span>
+            <span class="pill">Press <span class="k">T</span> <span class="k">F</span> <span class="k">L</span></span>
           </div>
         </div>
 
@@ -88,42 +70,15 @@
             </button>
           </div>
 
-          <!-- PERFORMANCE CONTROLS -->
-          <div class="panel nested">
-            <div class="panel-header">
-              <div class="panel-title">PERFORMANCE</div>
-              <div class="pill">FX</div>
-            </div>
-            <div class="panel-body">
-              <label>
-                BPM (autoplay tempo)
-                <input id="bpmSlider" type="range" min="6" max="60" value="20">
-              </label>
-
-              <label>
-                Effects intensity
-                <input id="fxSlider" type="range" min="0" max="100" value="50">
-              </label>
-
-              <label>
-                Ripple speed
-                <input id="rippleSpeedSlider" type="range" min="50" max="200" value="100">
-              </label>
-            </div>
-          </div>
-
           <div class="help">
-            Shortcuts:
-            <span class="k">T</span>
-            <span class="k">F</span>
-            <span class="k">L</span>
-            <span class="k">Space</span>
+            Select a character in the scene grid, then choose an activation.
+            Toggle autoplay with <span class="k">Space</span>.
           </div>
         </div>
       </section>
     </section>
 
-    <!-- RIGHT PANEL -->
+    <!-- RIGHT -->
     <section class="panel" id="rightPanel">
       <div class="panel-header">
         <div class="panel-title">WORLDTEXT</div>
@@ -137,24 +92,11 @@
           <!-- injected by JS -->
         </div>
 
-        <!-- SEED PANEL -->
-        <section class="panel nested">
+        <!-- REPLAY -->
+        <section class="panel nested" id="replayPanel">
           <div class="panel-header">
-            <div class="panel-title">SEEDS</div>
-            <div class="pill">preview</div>
-          </div>
-          <div class="panel-body">
-            <div class="latent-grid" id="latentPanel">
-              <!-- populated by JS -->
-            </div>
-          </div>
-        </section>
-
-        <!-- AUDIT LOG -->
-        <section class="panel nested">
-          <div class="panel-header">
-            <div class="panel-title">AUDIT LOG</div>
-            <div class="pill">replayable</div>
+            <div class="panel-title">REPLAY</div>
+            <div class="pill">click to replay</div>
           </div>
           <div class="panel-body">
             <div class="audit" id="auditLog">
