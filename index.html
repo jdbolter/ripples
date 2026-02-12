@@ -16,12 +16,10 @@
 <body>
   <div class="app">
 
-    <!-- LEFT COLUMN REMOVED -->
-
     <!-- CENTER -->
     <section class="center-stack">
 
-      <!-- SCENE / PROXIMITY (dominant) -->
+      <!-- SCENE -->
       <section class="panel" id="scenePanel">
         <div class="panel-header">
           <div class="panel-title">SCENE</div>
@@ -36,8 +34,17 @@
           </div>
         </div>
 
-        <div class="panel-body grid-wrap">
+        <div class="panel-body grid-wrap" id="gridWrap">
+          <!-- NEW: Focus overlay (hidden by default; JS toggles .open) -->
+          <div class="focus-overlay" id="focusOverlay" aria-hidden="true" title="Click to return (Esc)">
+            <img id="focusImage" alt="" />
+            <div class="focus-hint">
+              <span class="k">Esc</span> or click to return
+            </div>
+          </div>
+
           <svg class="links" id="linkLayer"></svg>
+
           <div class="grid" id="grid">
             <!-- grid cells inserted by JS -->
           </div>
@@ -87,12 +94,10 @@
 
       <div class="panel-body right-stack">
 
-        <!-- WORLDTEXT VIEWPORT -->
         <div class="worldtext flicker" id="worldtext">
           <!-- injected by JS -->
         </div>
 
-        <!-- REPLAY -->
         <section class="panel nested" id="replayPanel">
           <div class="panel-header">
             <div class="panel-title">REPLAY</div>

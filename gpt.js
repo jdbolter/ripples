@@ -1,7 +1,8 @@
 /* gpt.js
-   RIPPLES — Simplified End-User Interface (2-column layout)
+   RIPPLES — End-User Interface (2-column layout)
+   + photoreal thumbnails + focus overlay expand/collapse
    Depends on: scenes.js providing window.SCENES and window.SCENE_ORDER
-   Compatible with index.html with NO left column (no #entityList).
+   Requires index.html elements: #focusOverlay, #focusImage
 */
 
 (() => {
@@ -32,6 +33,10 @@
 
   const elAutoplayToggle = byId("autoplayToggle");
 
+  // NEW: focus overlay
+  const elFocusOverlay = byId("focusOverlay");
+  const elFocusImage = byId("focusImage");
+
   // -----------------------------
   // ENGINE
   // -----------------------------
@@ -40,10 +45,8 @@
     let tick = 0;
     let selectedId = null;
 
-    // Drift state biases which monologue variant is picked next.
     const drift = {}; // drift[characterId] = { THOUGHTS:0, FEARS:0, LONGING:0 }
     const used = {};  // used[characterId][activation] = Set(index)
-
     let audit = [];
 
     function loadScene(newSceneId) {
@@ -57,13 +60,8 @@
       return snapshot({ worldtext: getScene().meta.baseline, mode: "baseline" });
     }
 
-    function getScene() {
-      return window.SCENES[sceneId];
-    }
-
-    function listScenes() {
-      return window.SCENE_ORDER.slice();
-    }
+    function getScene() { return window.SCENES[sceneId]; }
+    function listScenes() { return window.SCENE_ORDER.slice(); }
 
     function selectCharacter(id) {
       selectedId = id;
@@ -80,7 +78,7 @@
 
       const primaryText = pickMonologue(sc, ch.id, activation);
 
-      // Psychological ripple = drift nudges neighbors
+      // Ripple = drift nudges neighbors
       const neighbors = (ch.adjacentTo || []).slice();
       for (const nbId of neighbors) applyDrift(nbId, activation, ch);
 
@@ -94,7 +92,6 @@
       });
 
       tick++;
-
       return snapshot({ worldtext: primaryText, mode: "ripple" });
     }
 
@@ -132,7 +129,7 @@
 
     function bandIndex(n, driftScalar) {
       const d = clamp(driftScalar, 0, 2);
-      const t = d / 2; // 0..1
+      const t = d / 2;
       return Math.round(t * (n - 1));
     }
 
@@ -212,8 +209,11 @@
   let autoplayTimer = null;
   let lastWorldMode = "baseline";
 
-  // Fixed pace for end-user experience (ms)
+  // Fixed pace (ms) for end-user experience
   const AUTOPLAY_INTERVAL_MS = 3200;
+
+  // Focus overlay state
+  let isFocusOpen = false;
 
   // -----------------------------
   // Init
@@ -240,6 +240,7 @@
   function bindUI() {
     elScenarioSelect.addEventListener("change", () => {
       stopAutoplayIfRunning();
+      closeFocus();
       const snap = engine.loadScene(elScenarioSelect.value);
       render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
     });
@@ -250,8 +251,22 @@
 
     elAutoplayToggle.addEventListener("click", toggleAutoplay);
 
+    // Focus overlay: click to close
+    elFocusOverlay.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeFocus();
+    });
+
     window.addEventListener("keydown", (e) => {
       const k = e.key;
+
+      if (k === "Escape") {
+        if (isFocusOpen) {
+          e.preventDefault();
+          closeFocus();
+        }
+        return;
+      }
 
       if (k === "ArrowLeft") { e.preventDefault(); cycleScene(-1); }
       if (k === "ArrowRight") { e.preventDefault(); cycleScene(1); }
@@ -276,9 +291,14 @@
     const snap = engine.selectCharacter(id);
     render(snap);
 
+    const sc = engine.getScene();
+    const ch = sc.characters.find(c => c.id === id);
+
+    // NEW: open focus overlay if this character has an image
+    if (ch?.image) openFocus(ch.image, ch.label || ch.id);
+    else closeFocus();
+
     if (lastWorldMode !== "ripple") {
-      const sc = engine.getScene();
-      const ch = sc.characters.find(c => c.id === id);
       if (ch) {
         const baseline = sc.meta.baseline + `\n\n[Listening to: ${ch.label}. Press T / F / L.]`;
         setWorldtext(baseline, { mode: "baseline" });
@@ -312,6 +332,7 @@
     elScenarioSelect.value = scenes[next].id;
 
     stopAutoplayIfRunning();
+    closeFocus();
     const snap = engine.loadScene(scenes[next].id);
     render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
   }
@@ -336,6 +357,16 @@
     renderGrid(snapshot);
     renderLinks(snapshot);
     renderReplay(snapshot);
+
+    // Keep focus overlay image in sync if open and selection changed via replay/link
+    if (snapshot.selection.characterId) {
+      const sc = engine.getScene();
+      const ch = sc.characters.find(c => c.id === snapshot.selection.characterId);
+      if (ch?.image) openFocus(ch.image, ch.label || ch.id);
+      else closeFocus();
+    } else {
+      closeFocus();
+    }
 
     if (opts.forceWorldtext != null) {
       setWorldtext(opts.forceWorldtext, { mode: opts.mode || "ripple" });
@@ -369,13 +400,21 @@
           if (snapshot.selection.characterId === ch.id) cell.classList.add("selected");
 
           const inner = document.createElement("div");
-          inner.className = "grid-entity";
-          inner.innerHTML = `
-            <div class="icon">${escapeHtml(ch.icon || "•")}</div>
-            <div class="label">${escapeHtml(ch.id)}</div>
-          `;
-          cell.appendChild(inner);
+          const hasPhoto = !!ch.image;
+          inner.className = "grid-entity" + (hasPhoto ? " has-photo" : "");
 
+          if (hasPhoto) {
+            inner.innerHTML = `
+              <img class="thumb" src="${escapeHtml(ch.image)}" alt="${escapeHtml(ch.label || ch.id)}" loading="lazy" />
+            `;
+          } else {
+            inner.innerHTML = `
+              <div class="icon">${escapeHtml(ch.icon || "•")}</div>
+              <div class="label">${escapeHtml(ch.id)}</div>
+            `;
+          }
+
+          cell.appendChild(inner);
           cell.addEventListener("click", () => onSelectCharacter(ch.id));
         }
 
@@ -489,6 +528,29 @@
         if (id) onSelectCharacter(id);
       });
     });
+  }
+
+  // -----------------------------
+  // Focus overlay
+  // -----------------------------
+  function openFocus(src, altText) {
+    if (!src) return;
+
+    // Avoid needless reload flicker
+    if (elFocusImage.getAttribute("src") !== src) {
+      elFocusImage.setAttribute("src", src);
+    }
+    elFocusImage.setAttribute("alt", altText || "");
+
+    elFocusOverlay.classList.add("open");
+    elFocusOverlay.setAttribute("aria-hidden", "false");
+    isFocusOpen = true;
+  }
+
+  function closeFocus() {
+    elFocusOverlay.classList.remove("open");
+    elFocusOverlay.setAttribute("aria-hidden", "true");
+    isFocusOpen = false;
   }
 
   // -----------------------------
