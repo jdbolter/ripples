@@ -1,6 +1,7 @@
 /* gpt.js
    RIPPLES — End-User Interface (2-column layout)
    + photoreal thumbnails + focus overlay expand/collapse
+   Simplified: ONLY THOUGHTS + FEARS (no LONGING, no autoplay)
    Depends on: scenes.js providing window.SCENES and window.SCENE_ORDER
    Requires index.html elements: #focusOverlay, #focusImage
 */
@@ -12,8 +13,9 @@
     throw new Error("Missing SCENES/SCENE_ORDER. Ensure scenes.js is loaded before gpt.js.");
   }
 
-  const ACTIVATIONS = ["THOUGHTS", "FEARS", "LONGING"];
-  const ACT_CLASS = { THOUGHTS: "thoughts", FEARS: "fears", LONGING: "longing" };
+  // ONLY two activations now
+  const ACTIVATIONS = ["THOUGHTS", "FEARS"];
+  const ACT_CLASS = { THOUGHTS: "thoughts", FEARS: "fears" };
 
   // -----------------------------
   // DOM
@@ -29,11 +31,8 @@
 
   const btnThoughts = byId("btnThoughts");
   const btnFears = byId("btnFears");
-  const btnLonging = byId("btnLonging");
 
-  const elAutoplayToggle = byId("autoplayToggle");
-
-  // NEW: focus overlay
+  // focus overlay
   const elFocusOverlay = byId("focusOverlay");
   const elFocusImage = byId("focusImage");
 
@@ -45,7 +44,8 @@
     let tick = 0;
     let selectedId = null;
 
-    const drift = {}; // drift[characterId] = { THOUGHTS:0, FEARS:0, LONGING:0 }
+    // drift + avoidance now only track THOUGHTS/FEARS
+    const drift = {}; // drift[characterId] = { THOUGHTS:0, FEARS:0 }
     const used = {};  // used[characterId][activation] = Set(index)
     let audit = [];
 
@@ -152,7 +152,7 @@
     }
 
     function getDrift(id) {
-      if (!drift[id]) drift[id] = { THOUGHTS: 0, FEARS: 0, LONGING: 0 };
+      if (!drift[id]) drift[id] = { THOUGHTS: 0, FEARS: 0 };
       return drift[id];
     }
 
@@ -183,36 +183,13 @@
       };
     }
 
-    function chooseAmbientMove() {
-      const sc = getScene();
-      const pool = sc.ambientBehaviors || [];
-      if (!pool.length) {
-        const ch = sc.characters[0];
-        return ch ? { characterId: ch.id, activation: "THOUGHTS" } : null;
-      }
-      const total = pool.reduce((a, b) => a + (b.probability || 0), 0) || 1;
-      let r = Math.random() * total;
-      for (const item of pool) {
-        r -= (item.probability || 0);
-        if (r <= 0) return { characterId: item.character, activation: item.activation };
-      }
-      return { characterId: pool[0].character, activation: pool[0].activation };
-    }
-
-    return { listScenes, loadScene, getScene, snapshot, selectCharacter, activate, chooseAmbientMove };
+    return { listScenes, loadScene, getScene, snapshot, selectCharacter, activate };
   })();
 
   // -----------------------------
   // UI STATE
   // -----------------------------
-  let isAutoplay = false;
-  let autoplayTimer = null;
   let lastWorldMode = "baseline";
-
-  // Fixed pace (ms) for end-user experience
-  const AUTOPLAY_INTERVAL_MS = 3200;
-
-  // Focus overlay state
   let isFocusOpen = false;
 
   // -----------------------------
@@ -239,7 +216,6 @@
 
   function bindUI() {
     elScenarioSelect.addEventListener("change", () => {
-      stopAutoplayIfRunning();
       closeFocus();
       const snap = engine.loadScene(elScenarioSelect.value);
       render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
@@ -247,9 +223,6 @@
 
     btnThoughts.addEventListener("click", () => onActivate("THOUGHTS"));
     btnFears.addEventListener("click", () => onActivate("FEARS"));
-    btnLonging.addEventListener("click", () => onActivate("LONGING"));
-
-    elAutoplayToggle.addEventListener("click", toggleAutoplay);
 
     // Focus overlay: click to close
     elFocusOverlay.addEventListener("click", (e) => {
@@ -271,11 +244,9 @@
       if (k === "ArrowLeft") { e.preventDefault(); cycleScene(-1); }
       if (k === "ArrowRight") { e.preventDefault(); cycleScene(1); }
 
-      if (k === " ") { e.preventDefault(); toggleAutoplay(); }
-
+      // Only T and F now
       if (k === "t" || k === "T") onActivate("THOUGHTS");
       if (k === "f" || k === "F") onActivate("FEARS");
-      if (k === "l" || k === "L") onActivate("LONGING");
     });
 
     window.addEventListener("resize", () => {
@@ -294,13 +265,12 @@
     const sc = engine.getScene();
     const ch = sc.characters.find(c => c.id === id);
 
-    // NEW: open focus overlay if this character has an image
     if (ch?.image) openFocus(ch.image, ch.label || ch.id);
     else closeFocus();
 
     if (lastWorldMode !== "ripple") {
       if (ch) {
-        const baseline = sc.meta.baseline + `\n\n[Listening to: ${ch.label}. Press T / F / L.]`;
+        const baseline = sc.meta.baseline + `\n\n[Listening to: ${ch.label}. Press T / F.]`;
         setWorldtext(baseline, { mode: "baseline" });
       }
     }
@@ -331,7 +301,6 @@
     const next = (idx + dir + scenes.length) % scenes.length;
     elScenarioSelect.value = scenes[next].id;
 
-    stopAutoplayIfRunning();
     closeFocus();
     const snap = engine.loadScene(scenes[next].id);
     render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
@@ -350,7 +319,6 @@
     const enabled = !!snapshot.selection.characterId;
     btnThoughts.disabled = !enabled;
     btnFears.disabled = !enabled;
-    btnLonging.disabled = !enabled;
 
     elScenarioSelect.value = snapshot.meta.sceneId;
 
@@ -358,7 +326,7 @@
     renderLinks(snapshot);
     renderReplay(snapshot);
 
-    // Keep focus overlay image in sync if open and selection changed via replay/link
+    // Keep focus overlay image in sync if selection changed via replay/link
     if (snapshot.selection.characterId) {
       const sc = engine.getScene();
       const ch = sc.characters.find(c => c.id === snapshot.selection.characterId);
@@ -470,7 +438,7 @@
     if (!snapshot.audit.length) {
       const d = document.createElement("div");
       d.className = "help";
-      d.textContent = "No replay items yet. Select a character in the scene and trigger THOUGHTS / FEARS / LONGING.";
+      d.textContent = "No replay items yet. Select a character and trigger THOUGHTS or FEARS.";
       elAuditLog.appendChild(d);
       return;
     }
@@ -503,7 +471,6 @@
     const sc = engine.getScene();
     let html = escapeHtml(String(text));
 
-    // Clickable character ids + labels
     const tokens = [];
     for (const ch of sc.characters) {
       tokens.push({ key: ch.label, id: ch.id });
@@ -536,7 +503,6 @@
   function openFocus(src, altText) {
     if (!src) return;
 
-    // Avoid needless reload flicker
     if (elFocusImage.getAttribute("src") !== src) {
       elFocusImage.setAttribute("src", src);
     }
@@ -574,47 +540,6 @@
       cell.appendChild(ring);
       window.setTimeout(() => ring.remove(), 1600);
     }
-  }
-
-  // -----------------------------
-  // Autoplay (fixed pace)
-  // -----------------------------
-  function toggleAutoplay() {
-    isAutoplay = !isAutoplay;
-    elAutoplayToggle.classList.toggle("on", isAutoplay);
-    elAutoplayToggle.setAttribute("aria-checked", String(isAutoplay));
-
-    if (isAutoplay) startAutoplay();
-    else stopAutoplay();
-  }
-
-  function stopAutoplayIfRunning() {
-    if (isAutoplay) {
-      isAutoplay = false;
-      elAutoplayToggle.classList.remove("on");
-      elAutoplayToggle.setAttribute("aria-checked", "false");
-      stopAutoplay();
-    }
-  }
-
-  function startAutoplay() {
-    const snap = engine.snapshot();
-    if (!snap.selection.characterId) {
-      const first = snap.characters[0];
-      if (first) onSelectCharacter(first.id);
-    }
-
-    autoplayTimer = setInterval(() => {
-      const move = engine.chooseAmbientMove();
-      if (!move) return;
-      onSelectCharacter(move.characterId);
-      onActivate(move.activation);
-    }, AUTOPLAY_INTERVAL_MS);
-  }
-
-  function stopAutoplay() {
-    clearInterval(autoplayTimer);
-    autoplayTimer = null;
   }
 
   // -----------------------------

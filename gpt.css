@@ -1,6 +1,7 @@
 /* gpt.css
    RIPPLES — 2-column layout (grid dominates ~2/3, text ~1/3)
-   + photoreal thumbnails + focus overlay
+   + photoreal thumbnails + focus overlay (animated, no cropping)
+   + simplified buttons (outline-only, readable)
 */
 
 :root{
@@ -8,7 +9,7 @@
   --term-text: #4af626;      /* thoughts */
   --term-dim: #1e5c12;
   --term-alert: #ff3333;     /* fears */
-  --term-gold: #ffd700;      /* longing */
+  --term-gold: #ffd700;      /* (unused now) */
   --term-cyan: #00ffff;
 
   --grid-line: #0a1f0a;
@@ -136,13 +137,14 @@ body{
   font-size: 12px;
 }
 
+/* Keycaps: keep them subtle (no filled/white boxes) */
 .k{
-  border: 1px solid rgba(74,246,38,0.25);
+  border: 1px solid rgba(74,246,38,0.20);
   padding: 1px 6px;
   border-radius: 6px;
   font-size: 11px;
   color: rgba(74,246,38,0.9);
-  background: rgba(74,246,38,0.03);
+  background: transparent;
 }
 
 /* Inputs */
@@ -173,7 +175,7 @@ select:focus{
   height: 100%;
   min-height: 0;
   display:flex;
-  overflow: hidden; /* important so overlay corners match */
+  overflow: hidden; /* so overlay corners match */
 }
 
 .grid{
@@ -225,7 +227,7 @@ select:focus{
   50%{ transform: translateY(-1px); }
 }
 
-/* The cell contents */
+/* cell contents */
 .grid-entity{
   display:flex;
   flex-direction: column;
@@ -254,7 +256,7 @@ select:focus{
   white-space: nowrap;
 }
 
-/* NEW: photoreal thumbnails */
+/* photoreal thumbnails */
 .grid-entity.has-photo{
   padding: 0;
 }
@@ -262,7 +264,7 @@ select:focus{
 .grid-entity .thumb{
   width: 100%;
   height: 100%;
-  object-fit: cover; /* fills square; good for thumbnails */
+  object-fit: cover; /* fill square thumbnail */
   filter: grayscale(100%) contrast(1.05);
   opacity: 0.92;
   transform: scale(1.02);
@@ -272,7 +274,7 @@ select:focus{
   opacity: 1;
 }
 
-/* SVG adjacency links */
+/* adjacency links */
 .links{
   position:absolute;
   inset: 10px;
@@ -286,9 +288,8 @@ select:focus{
   stroke-linecap: round;
 }
 
-
 /* ===========================
-   Focus overlay (full-scene image) — animated + no cropping
+   Focus overlay (animated + no cropping)
    =========================== */
 
 .focus-overlay{
@@ -300,7 +301,6 @@ select:focus{
   box-shadow: 0 0 30px rgba(0,0,0,0.55);
   z-index: 5;
 
-  /* IMPORTANT: do NOT use display:none if you want animation */
   display: flex;
   align-items: stretch;
   justify-content: stretch;
@@ -316,7 +316,7 @@ select:focus{
   transition:
     opacity 220ms ease,
     transform 220ms ease,
-    visibility 0ms linear 220ms; /* delay visibility off until fade completes */
+    visibility 0ms linear 220ms;
 }
 
 .focus-overlay.open{
@@ -328,23 +328,19 @@ select:focus{
   transition:
     opacity 220ms ease,
     transform 220ms ease,
-    visibility 0ms; /* visible immediately */
+    visibility 0ms;
 }
 
-/* Full image: NO CROPPING */
 .focus-overlay img{
   width: 100%;
   height: 100%;
-
-  object-fit: contain;         /* key fix */
-  object-position: center;     /* safe default */
+  object-fit: contain;         /* NO CROPPING in expanded view */
+  object-position: center;
   background: rgba(0,0,0,0.55);
-
   filter: grayscale(100%) contrast(1.05);
   border-radius: 14px;
 }
 
-/* Hint */
 .focus-hint{
   position:absolute;
   right: 12px;
@@ -361,10 +357,53 @@ select:focus{
   user-select:none;
 }
 
-/* When focus overlay is open, dim links slightly */
 .focus-overlay.open ~ .links line{
   stroke: rgba(74,246,38,0.10);
 }
+
+/* ===========================
+   Buttons (THOUGHTS / FEARS only)
+   =========================== */
+
+.vectors{
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.btn{
+  border: 1px solid rgba(74,246,38,0.65);
+  background: transparent;
+  color: var(--term-text);
+  padding: 14px 12px;
+  border-radius: 16px;
+  cursor:pointer;
+  transition: transform var(--transition), border var(--transition), box-shadow var(--transition), opacity var(--transition), background var(--transition);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  user-select:none;
+}
+
+.btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px rgba(74,246,38,0.10);
+  border-color: rgba(74,246,38,0.85);
+  background: rgba(74,246,38,0.04);
+}
+
+.btn:active{ transform: translateY(0); }
+
+.btn:disabled{
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform:none;
+  box-shadow:none;
+  background: transparent;
+}
+
+.btn.thoughts{ color: var(--term-text); border-color: rgba(74,246,38,0.70); }
+.btn.fears{ color: var(--term-alert); border-color: rgba(255,51,51,0.70); }
 
 /* ===========================
    Right: Worldtext + Replay
@@ -462,12 +501,10 @@ select:focus{
 /* Activation color tags */
 .thoughts{ color: var(--term-text); }
 .fears{ color: var(--term-alert); }
-.longing{ color: var(--term-gold); }
 
 /* Ripple + flash */
 .flash.thoughts{ box-shadow: 0 0 30px rgba(74,246,38,0.55); }
 .flash.fears{ box-shadow: 0 0 30px rgba(255,51,51,0.55); }
-.flash.longing{ box-shadow: 0 0 30px rgba(255,215,0,0.55); }
 
 .ripple-ring{
   position:absolute;
@@ -491,10 +528,6 @@ select:focus{
 .ripple-ring.fears{
   border-color: rgba(255,51,51,0.95);
   filter: drop-shadow(0 0 10px rgba(255,51,51,0.35));
-}
-.ripple-ring.longing{
-  border-color: rgba(255,215,0,0.95);
-  filter: drop-shadow(0 0 10px rgba(255,215,0,0.35));
 }
 
 @keyframes ripple-expand{
