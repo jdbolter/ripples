@@ -21,23 +21,19 @@
 
       <!-- SCENE -->
       <section class="panel" id="scenePanel">
-        <div class="panel-header">
-          <div class="panel-title">SCENE</div>
-          <div class="row">
-            <span class="k">←</span>
-            <span class="k">→</span>
-            <select id="scenarioSelect" aria-label="Scene select">
-              <!-- populated by JS -->
-            </select>
-            <span class="pill">TICK: <span id="tickLabel">0</span></span>
-            <span class="pill" id="scenarioPill">—</span>
-          </div>
+        <!-- simplified header: dropdown only -->
+        <div class="panel-header scene-header">
+          <select id="scenarioSelect" aria-label="Scene select">
+            <!-- populated by JS -->
+          </select>
         </div>
 
         <div class="panel-body grid-wrap" id="gridWrap">
-          <!-- Focus overlay (hidden by default; JS toggles .open) -->
+          <!-- Focus overlay (animated by CSS; JS toggles .open) -->
           <div class="focus-overlay" id="focusOverlay" aria-hidden="true" title="Click to return (Esc)">
             <img id="focusImage" alt="" />
+            <!-- onboarding / prompt text (used when no character selected) -->
+            <div class="focus-message" id="focusMessage"></div>
             <div class="focus-hint">
               <span class="k">Esc</span> or click to return
             </div>
@@ -53,8 +49,6 @@
 
       <!-- BUTTONS (no title, no help text, no autoplay, no longing) -->
       <section class="panel" id="attentionPanel">
-        <!-- header intentionally removed -->
-
         <div class="panel-body">
           <div class="vectors">
             <button class="btn thoughts" id="btnThoughts" disabled>

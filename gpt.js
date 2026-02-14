@@ -2,8 +2,10 @@
    RIPPLES — End-User Interface (2-column layout)
    + photoreal thumbnails + focus overlay expand/collapse
    Simplified: ONLY THOUGHTS + FEARS (no LONGING, no autoplay)
+   + onboarding prompt overlay: "Select a character" (CLICK-THROUGH)
+   + preload/decode scene images so FIRST selection animates smoothly (no pop)
    Depends on: scenes.js providing window.SCENES and window.SCENE_ORDER
-   Requires index.html elements: #focusOverlay, #focusImage
+   Requires index.html elements: #focusOverlay, #focusImage, #focusMessage
 */
 
 (() => {
@@ -13,7 +15,6 @@
     throw new Error("Missing SCENES/SCENE_ORDER. Ensure scenes.js is loaded before gpt.js.");
   }
 
-  // ONLY two activations now
   const ACTIVATIONS = ["THOUGHTS", "FEARS"];
   const ACT_CLASS = { THOUGHTS: "thoughts", FEARS: "fears" };
 
@@ -21,12 +22,10 @@
   // DOM
   // -----------------------------
   const elScenarioSelect = byId("scenarioSelect");
-  const elScenarioPill = byId("scenarioPill");
   const elGrid = byId("grid");
   const elLinks = byId("linkLayer");
   const elWorldtext = byId("worldtext");
   const elAuditLog = byId("auditLog");
-  const elTickLabel = byId("tickLabel");
   const elSelectedPill = byId("selectedPill");
 
   const btnThoughts = byId("btnThoughts");
@@ -35,6 +34,7 @@
   // focus overlay
   const elFocusOverlay = byId("focusOverlay");
   const elFocusImage = byId("focusImage");
+  const elFocusMessage = byId("focusMessage");
 
   // -----------------------------
   // ENGINE
@@ -44,7 +44,6 @@
     let tick = 0;
     let selectedId = null;
 
-    // drift + avoidance now only track THOUGHTS/FEARS
     const drift = {}; // drift[characterId] = { THOUGHTS:0, FEARS:0 }
     const used = {};  // used[characterId][activation] = Set(index)
     let audit = [];
@@ -191,6 +190,7 @@
   // -----------------------------
   let lastWorldMode = "baseline";
   let isFocusOpen = false;
+  let focusMode = "none"; // "none" | "prompt" | "photo"
 
   // -----------------------------
   // Init
@@ -201,7 +201,12 @@
 
     const firstSceneId = engine.listScenes()[0]?.id || Object.keys(window.SCENES)[0];
     const snap = engine.loadScene(firstSceneId);
+
+    // Preload/decode images so first selection animates smoothly
+    preloadSceneImages(engine.getScene());
+
     render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
+    showSelectPromptIfNeeded();
   }
 
   function populateScenes() {
@@ -218,23 +223,28 @@
     elScenarioSelect.addEventListener("change", () => {
       closeFocus();
       const snap = engine.loadScene(elScenarioSelect.value);
+
+      // Preload/decode images for new scene
+      preloadSceneImages(engine.getScene());
+
       render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
+      showSelectPromptIfNeeded();
     });
 
     btnThoughts.addEventListener("click", () => onActivate("THOUGHTS"));
     btnFears.addEventListener("click", () => onActivate("FEARS"));
 
-    // Focus overlay: click to close
+    // Overlay click only matters for PHOTO mode (prompt is click-through via CSS)
     elFocusOverlay.addEventListener("click", (e) => {
       e.preventDefault();
-      closeFocus();
+      if (focusMode === "photo") closeFocus();
     });
 
     window.addEventListener("keydown", (e) => {
       const k = e.key;
 
       if (k === "Escape") {
-        if (isFocusOpen) {
+        if (isFocusOpen && focusMode === "photo") {
           e.preventDefault();
           closeFocus();
         }
@@ -244,7 +254,6 @@
       if (k === "ArrowLeft") { e.preventDefault(); cycleScene(-1); }
       if (k === "ArrowRight") { e.preventDefault(); cycleScene(1); }
 
-      // Only T and F now
       if (k === "t" || k === "T") onActivate("THOUGHTS");
       if (k === "f" || k === "F") onActivate("FEARS");
     });
@@ -265,21 +274,21 @@
     const sc = engine.getScene();
     const ch = sc.characters.find(c => c.id === id);
 
-    if (ch?.image) openFocus(ch.image, ch.label || ch.id);
-    else closeFocus();
+    // dismiss prompt (if present)
+    if (focusMode === "prompt") closeFocus();
 
-    if (lastWorldMode !== "ripple") {
-      if (ch) {
-        const baseline = sc.meta.baseline + `\n\n[Listening to: ${ch.label}. Press T / F.]`;
-        setWorldtext(baseline, { mode: "baseline" });
-      }
-    }
+    if (ch?.image) openFocusImage(ch.image, ch.label || ch.id);
+    else closeFocus();
+    
   }
 
   function onActivate(activation) {
     const snapBefore = engine.snapshot();
     const selectedId = snapBefore.selection.characterId;
-    if (!selectedId) return;
+    if (!selectedId) {
+      openPrompt("Select a character");
+      return;
+    }
 
     const sc = engine.getScene();
     const ch = sc.characters.find(c => c.id === selectedId);
@@ -303,16 +312,22 @@
 
     closeFocus();
     const snap = engine.loadScene(scenes[next].id);
+
+    preloadSceneImages(engine.getScene());
+
     render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
+    showSelectPromptIfNeeded();
+  }
+
+  function showSelectPromptIfNeeded() {
+    const snap = engine.snapshot();
+    if (!snap.selection.characterId) openPrompt("Select a character");
   }
 
   // -----------------------------
   // Render
   // -----------------------------
   function render(snapshot, opts = {}) {
-    elScenarioPill.textContent = snapshot.meta.label;
-    elTickLabel.textContent = String(snapshot.meta.tick);
-
     if (!snapshot.selection.characterId) elSelectedPill.textContent = "NO CHARACTER";
     else elSelectedPill.textContent = snapshot.selection.characterId.toUpperCase();
 
@@ -326,14 +341,13 @@
     renderLinks(snapshot);
     renderReplay(snapshot);
 
-    // Keep focus overlay image in sync if selection changed via replay/link
-    if (snapshot.selection.characterId) {
+    // Keep focus overlay image in sync if selection changed via replay/link.
+    // Don't override the onboarding prompt.
+    if (snapshot.selection.characterId && focusMode !== "prompt") {
       const sc = engine.getScene();
       const ch = sc.characters.find(c => c.id === snapshot.selection.characterId);
-      if (ch?.image) openFocus(ch.image, ch.label || ch.id);
+      if (ch?.image) openFocusImage(ch.image, ch.label || ch.id);
       else closeFocus();
-    } else {
-      closeFocus();
     }
 
     if (opts.forceWorldtext != null) {
@@ -498,10 +512,28 @@
   }
 
   // -----------------------------
-  // Focus overlay
+  // Focus overlay modes
   // -----------------------------
-  function openFocus(src, altText) {
+  function openPrompt(message) {
+    focusMode = "prompt";
+    elFocusOverlay.classList.add("prompt-mode"); // CSS makes this click-through & lighter
+
+    elFocusImage.style.display = "none";
+    elFocusMessage.textContent = message || "Select a character";
+
+    elFocusOverlay.classList.add("open");
+    elFocusOverlay.setAttribute("aria-hidden", "false");
+    isFocusOpen = true;
+  }
+
+  function openFocusImage(src, altText) {
     if (!src) return;
+
+    focusMode = "photo";
+    elFocusOverlay.classList.remove("prompt-mode");
+
+    elFocusImage.style.display = "";
+    elFocusMessage.textContent = "";
 
     if (elFocusImage.getAttribute("src") !== src) {
       elFocusImage.setAttribute("src", src);
@@ -514,9 +546,26 @@
   }
 
   function closeFocus() {
+    focusMode = "none";
+    elFocusOverlay.classList.remove("prompt-mode");
     elFocusOverlay.classList.remove("open");
     elFocusOverlay.setAttribute("aria-hidden", "true");
     isFocusOpen = false;
+  }
+
+  // -----------------------------
+  // Image preload/decode (prevents first-click pop)
+  // -----------------------------
+  function preloadSceneImages(scene) {
+    if (!scene?.characters) return;
+    for (const ch of scene.characters) {
+      if (!ch.image) continue;
+      const img = new Image();
+      img.src = ch.image;
+      if (img.decode) {
+        img.decode().catch(() => { /* ignore */ });
+      }
+    }
   }
 
   // -----------------------------
