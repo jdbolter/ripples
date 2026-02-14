@@ -1,11 +1,16 @@
 /* gpt.js
    RIPPLES — End-User Interface (2-column layout)
-   + photoreal thumbnails + focus overlay expand/collapse
-   Simplified: ONLY THOUGHTS + FEARS (no LONGING, no autoplay)
-   + onboarding prompt overlay: "Select a character" (CLICK-THROUGH)
-   + preload/decode scene images so FIRST selection animates smoothly (no pop)
+   New interaction model:
+   - Click a character => opens photo + immediately produces a monologue (DEFAULT channel)
+   - Whisper text + click Whisper => re-generates monologue (stub now: rotates to a different monologue)
+   - Traces log records both "LISTEN" and "WHISPER" events
+   - API-ready stubs: buildPromptContext() + requestMonologue() (local now, OpenAI later)
+
    Depends on: scenes.js providing window.SCENES and window.SCENE_ORDER
-   Requires index.html elements: #focusOverlay, #focusImage, #focusMessage
+   Requires index.html elements:
+     #scenarioSelect, #grid, #linkLayer, #worldtext, #auditLog, #selectedPill
+     #focusOverlay, #focusImage, #focusMessage
+     #whisperInput, #whisperSend
 */
 
 (() => {
@@ -15,8 +20,9 @@
     throw new Error("Missing SCENES/SCENE_ORDER. Ensure scenes.js is loaded before gpt.js.");
   }
 
-  const ACTIVATIONS = ["THOUGHTS", "FEARS"];
-  const ACT_CLASS = { THOUGHTS: "thoughts", FEARS: "fears" };
+  // Single implicit channel for now
+  const DEFAULT_CHANNEL = "THOUGHTS";
+  const EVENT_KIND = { LISTEN: "LISTEN", WHISPER: "WHISPER" };
 
   // -----------------------------
   // DOM
@@ -28,24 +34,31 @@
   const elAuditLog = byId("auditLog");
   const elSelectedPill = byId("selectedPill");
 
-  const btnThoughts = byId("btnThoughts");
-  const btnFears = byId("btnFears");
+  // Whisper UI
+  const elWhisperInput = byId("whisperInput");
+  const btnWhisperSend = byId("whisperSend");
 
-  // focus overlay
+  // Focus overlay
   const elFocusOverlay = byId("focusOverlay");
   const elFocusImage = byId("focusImage");
   const elFocusMessage = byId("focusMessage");
 
   // -----------------------------
-  // ENGINE
+  // ENGINE (scene state + rotation)
   // -----------------------------
   const engine = (() => {
     let sceneId = window.SCENE_ORDER[0]?.id || Object.keys(window.SCENES)[0];
     let tick = 0;
     let selectedId = null;
 
-    const drift = {}; // drift[characterId] = { THOUGHTS:0, FEARS:0 }
-    const used = {};  // used[characterId][activation] = Set(index)
+    // rotation memory per character/channel so Whisper/LISTEN can "move" through the pool
+    const cursor = {}; // cursor[characterId][channel] = lastIndexUsed
+
+    // Whisper memory (for later prompts)
+    const lastWhisper = {}; // lastWhisper[characterId] = string
+    const whisperHistory = []; // {tick, characterId, text, time}
+
+    // Traces
     let audit = [];
 
     function loadScene(newSceneId) {
@@ -54,8 +67,9 @@
       tick = 0;
       selectedId = null;
       audit = [];
-      for (const k of Object.keys(drift)) delete drift[k];
-      for (const k of Object.keys(used)) delete used[k];
+      for (const k of Object.keys(cursor)) delete cursor[k];
+      for (const k of Object.keys(lastWhisper)) delete lastWhisper[k];
+      whisperHistory.length = 0;
       return snapshot({ worldtext: getScene().meta.baseline, mode: "baseline" });
     }
 
@@ -67,107 +81,72 @@
       return snapshot();
     }
 
-    function activate(activation) {
-      if (!ACTIVATIONS.includes(activation)) throw new Error(`Bad activation: ${activation}`);
-      if (!selectedId) return snapshot({ worldtext: getScene().meta.baseline, mode: "baseline" });
+    function getSelectedId() { return selectedId; }
 
-      const sc = getScene();
-      const ch = sc.characters.find(c => c.id === selectedId);
-      if (!ch) return snapshot({ worldtext: sc.meta.baseline, mode: "baseline" });
-
-      const primaryText = pickMonologue(sc, ch.id, activation);
-
-      // Ripple = drift nudges neighbors
-      const neighbors = (ch.adjacentTo || []).slice();
-      for (const nbId of neighbors) applyDrift(nbId, activation, ch);
-
-      audit.unshift({
+    function recordWhisper(characterId, text) {
+      const clean = String(text || "").trim();
+      lastWhisper[characterId] = clean;
+      whisperHistory.push({
         tick,
         time: new Date().toLocaleTimeString(),
-        characterId: ch.id,
-        characterLabel: ch.label,
-        activation,
-        text: primaryText
+        characterId,
+        text: clean
       });
+    }
 
+    function getLastWhisper(characterId) {
+      return lastWhisper[characterId] || "";
+    }
+
+    function getWhisperHistory(limit = 10) {
+      return whisperHistory.slice(-limit);
+    }
+
+    function nextMonologue(characterId, channel, reason) {
+      const sc = getScene();
+
+      const pool = sc.monologues?.[characterId]?.[channel];
+      if (!pool || !pool.length) {
+        const seed = sc.seeds?.[characterId]?.[channel] || "";
+        return seed ? `${seed}\n\n(There is no full monologue pool for this character/channel.)`
+          : "(No monologue available.)";
+      }
+
+      if (!cursor[characterId]) cursor[characterId] = {};
+      const last = Number.isInteger(cursor[characterId][channel]) ? cursor[characterId][channel] : -1;
+
+      // A: rotate to a different monologue each time.
+      // For whisper, rotate forward; for listen, also rotate forward.
+      const next = (last + 1) % pool.length;
+
+      cursor[characterId][channel] = next;
+      return pool[next];
+    }
+
+    function pushTrace(entry) {
+      audit.unshift(entry);
+      audit = audit.slice(0, 80);
+    }
+
+    function newTrace({ kind, characterId, channel, text, whisperText = "" }) {
+      const sc = getScene();
+      const ch = sc.characters.find(c => c.id === characterId);
+      const label = ch?.label || characterId;
+
+      const entry = {
+        tick,
+        time: new Date().toLocaleTimeString(),
+        kind,
+        characterId,
+        characterLabel: label,
+        channel,
+        whisperText,
+        text
+      };
+
+      pushTrace(entry);
       tick++;
-      return snapshot({ worldtext: primaryText, mode: "ripple" });
-    }
-
-    function pickMonologue(sc, characterId, activation) {
-      const arr = sc.monologues?.[characterId]?.[activation];
-      if (!arr || !arr.length) {
-        const seed = sc.seeds?.[characterId]?.[activation] || "";
-        return seed ? `${seed}\n\n(There is no full monologue yet for this activation.)` :
-          "(No monologue available.)";
-      }
-
-      const d = getDrift(characterId)[activation];
-      const preferred = bandIndex(arr.length, d);
-      const chosen = chooseWithAvoidance(characterId, activation, arr.length, preferred);
-      markUsed(characterId, activation, chosen);
-      return arr[chosen];
-    }
-
-    function chooseWithAvoidance(characterId, activation, n, preferredIndex) {
-      const order = [preferredIndex];
-      for (let step = 1; step < n; step++) {
-        const a = preferredIndex - step;
-        const b = preferredIndex + step;
-        if (a >= 0) order.push(a);
-        if (b < n) order.push(b);
-      }
-
-      const usedSet = getUsedSet(characterId, activation);
-      for (const idx of order) {
-        if (!usedSet.has(idx)) return idx;
-      }
-      usedSet.clear();
-      return preferredIndex;
-    }
-
-    function bandIndex(n, driftScalar) {
-      const d = clamp(driftScalar, 0, 2);
-      const t = d / 2;
-      return Math.round(t * (n - 1));
-    }
-
-    function applyDrift(targetId, activation, sourceChar) {
-      const s = driftStrength(sourceChar);
-      const d = getDrift(targetId);
-
-      for (const a of ACTIVATIONS) {
-        if (a === activation) d[a] += 0.20 * s;
-        else d[a] = Math.max(0, d[a] - 0.05 * s);
-      }
-      for (const a of ACTIVATIONS) d[a] = clamp(d[a], 0, 2);
-    }
-
-    function driftStrength(sourceChar) {
-      const s = (sourceChar?.sensitivity || "medium").toLowerCase();
-      if (s === "low") return 0.6;
-      if (s === "high") return 1.2;
-      return 1.0;
-    }
-
-    function getDrift(id) {
-      if (!drift[id]) drift[id] = { THOUGHTS: 0, FEARS: 0 };
-      return drift[id];
-    }
-
-    function getUsedSet(id, activation) {
-      if (!used[id]) used[id] = {};
-      if (!used[id][activation]) used[id][activation] = new Set();
-      return used[id][activation];
-    }
-
-    function markUsed(id, activation, idx) {
-      const s = getUsedSet(id, activation);
-      s.add(idx);
-      if (s.size > 12) {
-        s.clear();
-        s.add(idx);
-      }
+      return entry;
     }
 
     function snapshot(extra = {}) {
@@ -182,7 +161,19 @@
       };
     }
 
-    return { listScenes, loadScene, getScene, snapshot, selectCharacter, activate };
+    return {
+      listScenes,
+      loadScene,
+      getScene,
+      snapshot,
+      selectCharacter,
+      getSelectedId,
+      nextMonologue,
+      newTrace,
+      recordWhisper,
+      getLastWhisper,
+      getWhisperHistory
+    };
   })();
 
   // -----------------------------
@@ -202,7 +193,6 @@
     const firstSceneId = engine.listScenes()[0]?.id || Object.keys(window.SCENES)[0];
     const snap = engine.loadScene(firstSceneId);
 
-    // Preload/decode images so first selection animates smoothly
     preloadSceneImages(engine.getScene());
 
     render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
@@ -224,17 +214,24 @@
       closeFocus();
       const snap = engine.loadScene(elScenarioSelect.value);
 
-      // Preload/decode images for new scene
       preloadSceneImages(engine.getScene());
 
       render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
       showSelectPromptIfNeeded();
     });
 
-    btnThoughts.addEventListener("click", () => onActivate("THOUGHTS"));
-    btnFears.addEventListener("click", () => onActivate("FEARS"));
+    // Whisper button
+    btnWhisperSend.addEventListener("click", onWhisperSend);
 
-    // Overlay click only matters for PHOTO mode (prompt is click-through via CSS)
+    // Cmd/Ctrl+Enter sends whisper
+    elWhisperInput.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        onWhisperSend();
+      }
+    });
+
+    // Overlay click closes only in PHOTO mode (prompt is click-through via CSS)
     elFocusOverlay.addEventListener("click", (e) => {
       e.preventDefault();
       if (focusMode === "photo") closeFocus();
@@ -253,9 +250,6 @@
 
       if (k === "ArrowLeft") { e.preventDefault(); cycleScene(-1); }
       if (k === "ArrowRight") { e.preventDefault(); cycleScene(1); }
-
-      if (k === "t" || k === "T") onActivate("THOUGHTS");
-      if (k === "f" || k === "F") onActivate("FEARS");
     });
 
     window.addEventListener("resize", () => {
@@ -268,39 +262,111 @@
   // Actions
   // -----------------------------
   function onSelectCharacter(id) {
-    const snap = engine.selectCharacter(id);
-    render(snap);
-
+    engine.selectCharacter(id);
     const sc = engine.getScene();
     const ch = sc.characters.find(c => c.id === id);
 
-    // dismiss prompt (if present)
+    // Update UI selection pill immediately
+    elSelectedPill.textContent = (ch?.label || id || "NO CHARACTER").toUpperCase();
+
+    // Dismiss prompt (if present)
     if (focusMode === "prompt") closeFocus();
 
+    // Open photo
     if (ch?.image) openFocusImage(ch.image, ch.label || ch.id);
     else closeFocus();
-    
+
+    // Immediately "listen" => request monologue (stub now: local rotation)
+    requestMonologue({
+      characterId: id,
+      channel: DEFAULT_CHANNEL,
+      kind: EVENT_KIND.LISTEN,
+      whisperText: null
+    });
   }
 
-  function onActivate(activation) {
-    const snapBefore = engine.snapshot();
-    const selectedId = snapBefore.selection.characterId;
+  function onWhisperSend() {
+    const selectedId = engine.getSelectedId();
     if (!selectedId) {
       openPrompt("Select a character");
       return;
     }
 
+    const whisper = String(elWhisperInput.value || "").trim();
+    if (!whisper) {
+      // No-op if empty; keep it minimal
+      return;
+    }
+
+    engine.recordWhisper(selectedId, whisper);
+
+    // Stub behavior (A): rotate to a different monologue (same channel) and log WHISPER.
+    requestMonologue({
+      characterId: selectedId,
+      channel: DEFAULT_CHANNEL,
+      kind: EVENT_KIND.WHISPER,
+      whisperText: whisper
+    });
+
+    // Optional: clear after send (keeps it “ritual” rather than “chat”)
+    elWhisperInput.value = "";
+  }
+
+  function requestMonologue({ characterId, channel, kind, whisperText }) {
+    // --- API-ready stubs ---
+    // In future:
+    //   const prompt = buildPromptContext({characterId, channel, whisperText});
+    //   const text = await openaiGenerate(prompt);
+    // For now: rotate local pool.
+    const text = engine.nextMonologue(characterId, channel, kind);
+
+    engine.newTrace({
+      kind,
+      characterId,
+      channel,
+      whisperText: whisperText || "",
+      text
+    });
+
+    // Visual ripple (simple): on listen/whisper, ring the selected cell and neighbors
     const sc = engine.getScene();
-    const ch = sc.characters.find(c => c.id === selectedId);
+    const ch = sc.characters.find(c => c.id === characterId);
     if (ch) {
-      rippleAtCharacter(ch.id, activation, 1.0);
+      rippleAtCharacter(ch.id, "thoughts", 1.0);
       (ch.adjacentTo || []).forEach((nbId, i) => {
-        setTimeout(() => rippleAtCharacter(nbId, activation, 0.55), 220 + i * 110);
+        setTimeout(() => rippleAtCharacter(nbId, "thoughts", 0.55), 220 + i * 110);
       });
     }
 
-    const snap = engine.activate(activation);
-    render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
+    // Render worldtext + traces
+    setWorldtext(text, { mode: "ripple" });
+    renderReplay(engine.snapshot());
+
+    // Ensure grid selection highlight stays correct
+    renderGrid(engine.snapshot());
+    renderLinks(engine.snapshot());
+  }
+
+  function buildPromptContext({ characterId, channel, whisperText }) {
+    // Placeholder for future OpenAI prompt construction.
+    // Keep this signature stable so API integration is drop-in.
+    const sc = engine.getScene();
+    const ch = sc.characters.find(c => c.id === characterId);
+
+    return {
+      scene: sc.meta,
+      baseline: sc.meta.baseline,
+      character: {
+        id: ch?.id,
+        label: ch?.label,
+        sensitivity: ch?.sensitivity,
+        adjacentTo: ch?.adjacentTo || []
+      },
+      channel,
+      lastWhisper: engine.getLastWhisper(characterId),
+      whisperText: whisperText || "",
+      recentWhispers: engine.getWhisperHistory(6)
+    };
   }
 
   function cycleScene(dir) {
@@ -328,12 +394,14 @@
   // Render
   // -----------------------------
   function render(snapshot, opts = {}) {
-    if (!snapshot.selection.characterId) elSelectedPill.textContent = "NO CHARACTER";
-    else elSelectedPill.textContent = snapshot.selection.characterId.toUpperCase();
-
-    const enabled = !!snapshot.selection.characterId;
-    btnThoughts.disabled = !enabled;
-    btnFears.disabled = !enabled;
+    // Selection pill shows label if possible
+    if (!snapshot.selection.characterId) {
+      elSelectedPill.textContent = "NO CHARACTER";
+    } else {
+      const sc = engine.getScene();
+      const ch = sc.characters.find(c => c.id === snapshot.selection.characterId);
+      elSelectedPill.textContent = (ch?.label || snapshot.selection.characterId).toUpperCase();
+    }
 
     elScenarioSelect.value = snapshot.meta.sceneId;
 
@@ -341,18 +409,9 @@
     renderLinks(snapshot);
     renderReplay(snapshot);
 
-    // Keep focus overlay image in sync if selection changed via replay/link.
-    // Don't override the onboarding prompt.
-    if (snapshot.selection.characterId && focusMode !== "prompt") {
-      const sc = engine.getScene();
-      const ch = sc.characters.find(c => c.id === snapshot.selection.characterId);
-      if (ch?.image) openFocusImage(ch.image, ch.label || ch.id);
-      else closeFocus();
-    }
-
     if (opts.forceWorldtext != null) {
-      setWorldtext(opts.forceWorldtext, { mode: opts.mode || "ripple" });
-    } else if (lastWorldMode == null) {
+      setWorldtext(opts.forceWorldtext, { mode: opts.mode || "baseline" });
+    } else {
       setWorldtext(snapshot.scene.baseline, { mode: "baseline" });
     }
   }
@@ -452,7 +511,7 @@
     if (!snapshot.audit.length) {
       const d = document.createElement("div");
       d.className = "help";
-      d.textContent = "No replay items yet. Select a character and trigger THOUGHTS or FEARS.";
+      d.textContent = "No traces yet.";
       elAuditLog.appendChild(d);
       return;
     }
@@ -461,16 +520,18 @@
       const item = document.createElement("div");
       item.className = "audit-item";
 
+      const tag = entry.kind === EVENT_KIND.WHISPER ? "WHISPER" : "LISTEN";
+      const tagClass = entry.kind === EVENT_KIND.WHISPER ? "fears" : "thoughts";
+
       item.innerHTML = `
         <div class="row" style="justify-content:space-between;">
-          <span><span class="k">T${entry.tick}</span> ${escapeHtml(entry.characterId)} → <span class="${ACT_CLASS[entry.activation]}">${escapeHtml(entry.activation)}</span></span>
+          <span><span class="k">${escapeHtml(tag)}</span> ${escapeHtml(entry.characterId)} </span>
           <span class="help" style="margin:0;">${escapeHtml(entry.time)}</span>
         </div>
       `;
 
       item.addEventListener("click", () => {
         onSelectCharacter(entry.characterId);
-        rippleAtCharacter(entry.characterId, entry.activation, 1.0);
         setWorldtext(entry.text, { mode: "ripple" });
       });
 
@@ -479,15 +540,16 @@
   }
 
   function setWorldtext(text, opts = {}) {
-    const mode = opts.mode || "ripple";
+    const mode = opts.mode || "baseline";
     lastWorldMode = mode;
 
     const sc = engine.getScene();
     let html = escapeHtml(String(text));
 
+    // Make character ids/labels clickable
     const tokens = [];
     for (const ch of sc.characters) {
-      tokens.push({ key: ch.label, id: ch.id });
+      if (ch.label) tokens.push({ key: ch.label, id: ch.id });
       tokens.push({ key: ch.id, id: ch.id });
     }
     tokens.sort((a, b) => b.key.length - a.key.length);
@@ -516,7 +578,7 @@
   // -----------------------------
   function openPrompt(message) {
     focusMode = "prompt";
-    elFocusOverlay.classList.add("prompt-mode"); // CSS makes this click-through & lighter
+    elFocusOverlay.classList.add("prompt-mode");
 
     elFocusImage.style.display = "none";
     elFocusMessage.textContent = message || "Select a character";
@@ -554,7 +616,7 @@
   }
 
   // -----------------------------
-  // Image preload/decode (prevents first-click pop)
+  // Image preload/decode (best-effort)
   // -----------------------------
   function preloadSceneImages(scene) {
     if (!scene?.characters) return;
@@ -562,28 +624,26 @@
       if (!ch.image) continue;
       const img = new Image();
       img.src = ch.image;
-      if (img.decode) {
-        img.decode().catch(() => { /* ignore */ });
-      }
+      if (img.decode) img.decode().catch(() => {});
     }
   }
 
   // -----------------------------
   // Visual ripple only
   // -----------------------------
-  function rippleAtCharacter(characterId, activation, intensity) {
+  function rippleAtCharacter(characterId, cls, intensity) {
     const cell = Array.from(elGrid.querySelectorAll(".grid-cell.has-entity"))
       .find(c => c.dataset.characterId === characterId);
     if (!cell) return;
 
-    const cls = ACT_CLASS[activation] || "thoughts";
+    const klass = cls || "thoughts";
 
-    cell.classList.add("flash", cls);
-    window.setTimeout(() => cell.classList.remove("flash", cls), 420);
+    cell.classList.add("flash", klass);
+    window.setTimeout(() => cell.classList.remove("flash", klass), 420);
 
     for (let i = 0; i < 2; i++) {
       const ring = document.createElement("div");
-      ring.className = `ripple-ring ${cls}`;
+      ring.className = `ripple-ring ${klass}`;
       ring.style.opacity = String(0.90 * intensity);
       ring.style.animationDelay = `${i * 110}ms`;
       cell.appendChild(ring);
@@ -599,8 +659,6 @@
     if (!el) throw new Error(`Missing element #${id} in HTML.`);
     return el;
   }
-
-  function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, (m) => ({

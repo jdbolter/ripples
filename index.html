@@ -2,97 +2,78 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RIPPLES — A Listening Experience</title>
-
-  <!-- Font (optional) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ripples — Reading Room</title>
   <link rel="stylesheet" href="gpt.css" />
 </head>
 
 <body>
   <div class="app">
 
-    <!-- CENTER -->
-    <section class="center-stack">
+    <!-- LEFT: Scene -->
+    <div class="panel" id="scenePanel">
+      <div class="panel-header scene-header">
+        <select id="scenarioSelect" aria-label="Scene">
+          <!-- populated by JS -->
+        </select>
+      </div>
 
-      <!-- SCENE -->
-      <section class="panel" id="scenePanel">
-        <!-- simplified header: dropdown only -->
-        <div class="panel-header scene-header">
-          <select id="scenarioSelect" aria-label="Scene select">
-            <!-- populated by JS -->
-          </select>
+      <div class="panel-body grid-wrap" id="sceneWrap">
+
+        <!-- Focus overlay -->
+        <div class="focus-overlay" id="focusOverlay" aria-hidden="true">
+          <img id="focusImage" alt="" />
+          <div class="focus-message" id="focusMessage"></div>
+          <div class="focus-hint"><span class="k">Esc</span> or click to return</div>
         </div>
 
-        <div class="panel-body grid-wrap" id="gridWrap">
-          <!-- Focus overlay (animated by CSS; JS toggles .open) -->
-          <div class="focus-overlay" id="focusOverlay" aria-hidden="true" title="Click to return (Esc)">
-            <img id="focusImage" alt="" />
-            <!-- onboarding / prompt text (used when no character selected) -->
-            <div class="focus-message" id="focusMessage"></div>
-            <div class="focus-hint">
-              <span class="k">Esc</span> or click to return
-            </div>
-          </div>
+        <!-- Link layer -->
+        <svg class="links" id="linkLayer" preserveAspectRatio="none"></svg>
 
-          <svg class="links" id="linkLayer"></svg>
+        <!-- Grid -->
+        <div class="grid" id="grid" aria-label="Scene grid"></div>
 
-          <div class="grid" id="grid">
-            <!-- grid cells inserted by JS -->
-          </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-stack">
+
+      <!-- Character monologue (taller) -->
+      <div class="panel" id="textPanel">
+        <div class="panel-header">
+          <div class="pill" id="selectedPill">NO CHARACTER</div>
         </div>
-      </section>
+        <div class="panel-body worldtext" id="worldtext" aria-live="polite"></div>
+      </div>
 
-      <!-- BUTTONS (no title, no help text, no autoplay, no longing) -->
-      <section class="panel" id="attentionPanel">
+      <!-- Whisper -->
+      <div class="panel" id="whisperPanel">
         <div class="panel-body">
-          <div class="vectors">
-            <button class="btn thoughts" id="btnThoughts" disabled>
-              THOUGHTS <span class="k">T</span>
-            </button>
-            <button class="btn fears" id="btnFears" disabled>
-              FEARS <span class="k">F</span>
-            </button>
+          <textarea
+            id="whisperInput"
+            rows="4"
+            aria-label="Whisper text"
+          ></textarea>
+
+          <div class="row" style="margin-top:10px; justify-content:flex-end;">
+            <button class="btn" id="whisperSend" type="button">Whisper</button>
           </div>
         </div>
-      </section>
-    </section>
-
-    <!-- RIGHT -->
-    <section class="panel" id="rightPanel">
-      <div class="panel-header">
-        <div class="panel-title">WORLDTEXT</div>
-        <div class="pill" id="selectedPill">NO CHARACTER</div>
       </div>
 
-      <div class="panel-body right-stack">
-
-        <div class="worldtext flicker" id="worldtext">
-          <!-- injected by JS -->
+      <!-- Traces -->
+      <div class="panel" id="replayPanel">
+        <div class="panel-header">
+          <div class="panel-title">Traces</div>
         </div>
-
-        <section class="panel nested" id="replayPanel">
-          <div class="panel-header">
-            <div class="panel-title">REPLAY</div>
-            <div class="pill">click to replay</div>
-          </div>
-          <div class="panel-body">
-            <div class="audit" id="auditLog">
-              <!-- populated by JS -->
-            </div>
-          </div>
-        </section>
-
+        <div class="panel-body audit" id="auditLog"></div>
       </div>
-    </section>
+
+    </div>
 
   </div>
 
-  <!-- IMPORTANT: scenes.js must load BEFORE gpt.js -->
   <script src="scenes.js"></script>
   <script src="gpt.js"></script>
 </body>

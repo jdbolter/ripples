@@ -1,17 +1,16 @@
 /* gpt.css
    RIPPLES — 2-column layout (grid dominates ~2/3, text ~1/3)
    + photoreal thumbnails + focus overlay (animated, no cropping, smoother fade/scale)
-   + simplified buttons (outline-only, readable)
    + onboarding prompt overlay (click-through, does not black out grid)
+   + right column: monologue dominates; whisper + traces pushed down; traces flush to bottom
+   + whisper textarea styled to match terminal palette (no white box)
 */
 
 :root{
   --term-bg: #050a05;
-  --term-text: #4af626;      /* thoughts */
+  --term-text: #4af626;
   --term-dim: #1e5c12;
-  --term-alert: #ff3333;     /* fears */
-  --term-cyan: #00ffff;
-
+  --term-alert: #ff3333;
   --grid-line: #0a1f0a;
 
   --cols: 8;
@@ -39,7 +38,7 @@ body{
 }
 
 /* ===========================
-   Layout (2 columns: 2/3 + 1/3)
+   Layout
    =========================== */
 
 .app{
@@ -48,21 +47,6 @@ body{
   grid-template-columns: 2fr 1fr;
   gap: 10px;
   padding: 10px;
-}
-
-.center-stack{
-  display:flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 0;
-}
-
-#scenePanel{
-  flex: 1 1 auto;
-  min-height: 0;
-}
-#attentionPanel{
-  flex: 0 0 auto;
 }
 
 /* ===========================
@@ -101,15 +85,6 @@ body{
   overflow: auto;
 }
 
-/* Nested panels */
-.panel.nested{
-  border-radius: 14px;
-  box-shadow: none;
-}
-.panel.nested .panel-header{
-  border-bottom: 1px solid rgba(74,246,38,0.12);
-}
-
 /* ===========================
    Common UI
    =========================== */
@@ -137,7 +112,6 @@ body{
   font-size: 12px;
 }
 
-/* Keycaps: subtle (no filled/white boxes) */
 .k{
   border: 1px solid rgba(74,246,38,0.20);
   padding: 1px 6px;
@@ -146,9 +120,6 @@ body{
   color: rgba(74,246,38,0.9);
   background: transparent;
 }
-
-/* Inputs */
-select{ accent-color: var(--term-text); }
 
 select{
   background: rgba(5,10,5,0.85);
@@ -175,8 +146,12 @@ select:focus{
 }
 
 /* ===========================
-   Center: Grid (Scene)
+   Left: Scene / Grid
    =========================== */
+
+#scenePanel{
+  min-height: 0;
+}
 
 .grid-wrap{
   position: relative;
@@ -236,7 +211,6 @@ select:focus{
   50%{ transform: translateY(-1px); }
 }
 
-/* cell contents */
 .grid-entity{
   display:flex;
   flex-direction: column;
@@ -249,7 +223,6 @@ select:focus{
   pointer-events:none;
 }
 
-/* Default (emoji/icon) */
 .grid-entity .icon{
   font-size: 22px;
   text-shadow: 0 0 12px rgba(74,246,38,0.25);
@@ -266,22 +239,18 @@ select:focus{
 }
 
 /* photoreal thumbnails */
-.grid-entity.has-photo{
-  padding: 0;
-}
+.grid-entity.has-photo{ padding: 0; }
 
 .grid-entity .thumb{
   width: 100%;
   height: 100%;
-  object-fit: cover; /* fill square thumbnail */
+  object-fit: cover;
   filter: grayscale(100%) contrast(1.05);
   opacity: 0.92;
   transform: scale(1.02);
 }
 
-.grid-cell.selected .grid-entity .thumb{
-  opacity: 1;
-}
+.grid-cell.selected .grid-entity .thumb{ opacity: 1; }
 
 /* adjacency links */
 .links{
@@ -298,7 +267,7 @@ select:focus{
 }
 
 /* ===========================
-   Focus overlay (animated + no cropping + smoother fade/scale)
+   Focus overlay (animated + no cropping + slower image fade/scale)
    =========================== */
 
 .focus-overlay{
@@ -314,7 +283,6 @@ select:focus{
   align-items: stretch;
   justify-content: stretch;
 
-  /* closed state */
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -340,39 +308,33 @@ select:focus{
     visibility 0ms;
 }
 
-/* Prompt mode should not visually black out the scene (and should be click-through) */
+/* Prompt mode: click-through + keep scene visible */
 .focus-overlay.prompt-mode{
-  pointer-events: none;                 /* allow click-through */
-  background: rgba(0,0,0,0.20);         /* lighter dim than 0.78 */
+  pointer-events: none;
+  background: rgba(0,0,0,0.20);
   border-color: rgba(74,246,38,0.12);
   box-shadow: none;
 }
 
-/* Hide image in prompt mode */
-.focus-overlay.prompt-mode img{
-  opacity: 0;
-}
-
-/* Hide hint in prompt mode */
-.focus-overlay.prompt-mode .focus-hint{
-  display: none;
-}
+.focus-overlay.prompt-mode img{ opacity: 0; }
+.focus-overlay.prompt-mode .focus-hint{ display: none; }
 
 .focus-overlay img{
   width: 100%;
   height: 100%;
-  object-fit: contain;         /* NO CROPPING in expanded view */
+  object-fit: contain;
   object-position: center;
   background: rgba(0,0,0,0.55);
   filter: grayscale(100%) contrast(1.05);
   border-radius: 14px;
 
-  /* smoother fade/scale for the image itself */
   opacity: 0;
-  transform: scale(1.03);
+  transform: scale(1.02);
+
+  /* You can slow these further */
   transition:
-  opacity 1200ms ease,
-  transform 1500ms cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 1200ms ease,
+    transform 1500ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .focus-overlay.open img{
@@ -396,10 +358,7 @@ select:focus{
   user-select:none;
 }
 
-/* ===========================
-   Focus overlay message (onboarding)
-   =========================== */
-
+/* onboarding message */
 .focus-message{
   position: absolute;
   left: 50%;
@@ -416,7 +375,6 @@ select:focus{
   pointer-events: none;
 }
 
-/* Make the onboarding message more legible without nuking the scene */
 .focus-overlay.prompt-mode .focus-message{
   font-size: 20px;
   color: rgba(74,246,38,0.98);
@@ -426,26 +384,132 @@ select:focus{
   border-radius: 14px;
 }
 
-/* When overlay is open, soften link lines slightly */
 .focus-overlay.open ~ .links line{
   stroke: rgba(74,246,38,0.10);
 }
 
 /* ===========================
-   Buttons (THOUGHTS / FEARS only)
+   Right column: monologue dominates; whisper + traces pushed down
    =========================== */
 
-.vectors{
-  display:grid;
-  grid-template-columns: repeat(2, 1fr);
+.right-stack{
+  display:flex;
+  flex-direction: column;
   gap: 10px;
+  min-height: 0;
+  height: 100%;
 }
+
+/* Make monologue panel take most of the column height */
+#textPanel{
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Ensure worldtext grows with panel */
+#textPanel .panel-body.worldtext{
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.worldtext{
+  position: relative;
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid rgba(74,246,38,0.18);
+  background: rgba(5,10,5,0.70);
+  overflow:auto;
+  white-space: pre-wrap;
+}
+
+.worldtext::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.03) 0px,
+    rgba(255,255,255,0.03) 1px,
+    rgba(0,0,0,0) 3px,
+    rgba(0,0,0,0) 6px
+  );
+  opacity: 0.10;
+  mix-blend-mode: overlay;
+  border-radius: 14px;
+}
+
+.entity-link{
+  color: var(--term-text);
+  text-shadow: 0 0 12px rgba(74,246,38,0.25);
+  border-bottom: 1px dotted rgba(74,246,38,0.45);
+  cursor:pointer;
+  transition: opacity var(--transition);
+}
+.entity-link:hover{ opacity: 0.85; }
+
+/* Whisper stays compact and sits lower naturally */
+#whisperPanel{
+  flex: 0 0 auto;
+}
+
+/* Style whisper textarea to match terminal palette (no white box) */
+#whisperInput{
+  width: 100%;
+  resize: vertical;
+  min-height: 92px;
+
+  background: rgba(5,10,5,0.70);
+  color: rgba(74,246,38,0.95);
+  border: 1px solid rgba(74,246,38,0.18);
+  border-radius: 14px;
+  padding: 10px 12px;
+  outline: none;
+  font: inherit;
+}
+
+#whisperInput:focus{
+  border-color: rgba(74,246,38,0.55);
+  box-shadow: 0 0 0 3px rgba(74,246,38,0.12);
+}
+
+/* Traces fills remaining bottom space and reaches the bottom of the column */
+#replayPanel{
+  flex: 0 1 260px;   /* adjust up/down if you want more/less Traces height */
+  min-height: 200px;
+}
+
+.audit{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.audit-item{
+  border: 1px solid rgba(74,246,38,0.16);
+  border-radius: 14px;
+  padding: 8px 10px;
+  cursor:pointer;
+  background: rgba(74,246,38,0.02);
+  transition: border var(--transition), box-shadow var(--transition), transform var(--transition);
+  font-size: 12px;
+}
+
+.audit-item:hover{
+  border-color: rgba(74,246,38,0.35);
+  box-shadow: 0 0 0 3px rgba(74,246,38,0.08);
+  transform: translateY(-1px);
+}
+
+/* ===========================
+   Buttons
+   =========================== */
 
 .btn{
   border: 1px solid rgba(74,246,38,0.65);
   background: transparent;
   color: var(--term-text);
-  padding: 14px 12px;
+  padding: 12px 12px;
   border-radius: 16px;
   cursor:pointer;
   transition: transform var(--transition), border var(--transition), box-shadow var(--transition), opacity var(--transition), background var(--transition);
@@ -471,106 +535,6 @@ select:focus{
   box-shadow:none;
   background: transparent;
 }
-
-.btn.thoughts{ color: var(--term-text); border-color: rgba(74,246,38,0.70); }
-.btn.fears{ color: var(--term-alert); border-color: rgba(255,51,51,0.70); }
-
-/* ===========================
-   Right: Worldtext + Replay
-   =========================== */
-
-.right-stack{
-  display:flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 0;
-  height: 100%;
-}
-
-.worldtext{
-  position: relative;
-  border-radius: 14px;
-  padding: 12px;
-  border: 1px solid rgba(74,246,38,0.18);
-  background: rgba(5,10,5,0.70);
-  overflow:auto;
-  white-space: pre-wrap;
-
-  flex: 1 1 auto;
-  min-height: 320px;
-}
-
-#replayPanel{
-  flex: 0 0 220px;
-  min-height: 220px;
-}
-
-.worldtext::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(255,255,255,0.03) 0px,
-    rgba(255,255,255,0.03) 1px,
-    rgba(0,0,0,0) 3px,
-    rgba(0,0,0,0) 6px
-  );
-  opacity: 0.10;
-  mix-blend-mode: overlay;
-  border-radius: 14px;
-}
-
-.worldtext.flicker{
-  animation: flicker 2.8s infinite;
-}
-
-@keyframes flicker{
-  0%,100%{ opacity: 1; }
-  10%{ opacity: 0.98; }
-  12%{ opacity: 1; }
-  19%{ opacity: 0.97; }
-  22%{ opacity: 1; }
-  68%{ opacity: 0.98; }
-  70%{ opacity: 1; }
-}
-
-.entity-link{
-  color: var(--term-text);
-  text-shadow: 0 0 12px rgba(74,246,38,0.25);
-  border-bottom: 1px dotted rgba(74,246,38,0.45);
-  cursor:pointer;
-  transition: opacity var(--transition);
-}
-.entity-link:hover{ opacity: 0.85; }
-
-/* Replay list */
-.audit{
-  display:flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.audit-item{
-  border: 1px solid rgba(74,246,38,0.16);
-  border-radius: 14px;
-  padding: 8px 10px;
-  cursor:pointer;
-  background: rgba(74,246,38,0.02);
-  transition: border var(--transition), box-shadow var(--transition), transform var(--transition);
-  font-size: 12px;
-}
-
-.audit-item:hover{
-  border-color: rgba(74,246,38,0.35);
-  box-shadow: 0 0 0 3px rgba(74,246,38,0.08);
-  transform: translateY(-1px);
-}
-
-/* Activation color tags */
-.thoughts{ color: var(--term-text); }
-.fears{ color: var(--term-alert); }
 
 /* Ripple + flash */
 .flash.thoughts{ box-shadow: 0 0 30px rgba(74,246,38,0.55); }
@@ -616,5 +580,4 @@ select:focus{
     grid-template-columns: 1fr;
   }
   #replayPanel{ flex: 0 0 auto; }
-  .worldtext{ min-height: 280px; }
 }
