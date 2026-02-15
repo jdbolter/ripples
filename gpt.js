@@ -409,11 +409,14 @@
     // Dismiss prompt (if present)
     if (focusMode === "prompt") closeFocus();
 
-    // Open photo
-    if (ch?.image) openFocusImage(ch.image, ch.label || ch.id);
-    else closeFocus();
+    // Open photo AFTER a short delay so the ripple is visible beneath
+    if (ch?.image) {
+      window.setTimeout(() => openFocusImage(ch.image, ch.label || ch.id), 220);
+    } else {
+      closeFocus();
+    }
 
-    // Immediately "listen" => request monologue (stub now: local rotation)
+    // Immediately "listen" => request monologue
     void requestMonologue({
       characterId: id,
       channel: DEFAULT_CHANNEL,
@@ -422,33 +425,58 @@
     });
   }
 
-  function onWhisperSend() {
-    const selectedId = engine.getSelectedId();
-    if (!selectedId) {
-      openPrompt("Select a character");
-      return;
-    }
-
-    const whisper = String(elWhisperInput.value || "").trim();
-    if (!whisper) {
-      // No-op if empty; keep it minimal
-      return;
-    }
-
-    engine.recordWhisper(selectedId, whisper);
-
-    // Stub behavior (A): rotate to a different monologue (same channel) and log WHISPER.
-    void requestMonologue({
-      characterId: selectedId,
-      channel: DEFAULT_CHANNEL,
-      kind: EVENT_KIND.WHISPER,
-      whisperText: whisper
-    });
-
-    // Optional: clear after send (keeps it “ritual” rather than “chat”)
-    elWhisperInput.value = "";
+function onWhisperSend() {
+  const selectedId = engine.getSelectedId();
+  if (!selectedId) {
+    openPrompt("Select a character");
+    return;
   }
 
+  const whisper = String(elWhisperInput.value || "").trim();
+  if (!whisper) {
+    return;
+  }
+
+  engine.recordWhisper(selectedId, whisper);
+
+  // Begin generating new monologue (API or local)
+  void requestMonologue({
+    characterId: selectedId,
+    channel: DEFAULT_CHANNEL,
+    kind: EVENT_KIND.WHISPER,
+    whisperText: whisper
+  });
+
+  // -------------------------------------------------
+  // TEMPORARILY HIDE PHOTO → SHOW RIPPLE → RESTORE
+  // -------------------------------------------------
+
+  let restorePhoto = null;
+
+  if (focusMode === "photo") {
+    restorePhoto = {
+      src: elFocusImage.getAttribute("src"),
+      alt: elFocusImage.getAttribute("alt") || ""
+    };
+    closeFocus(); // reveal grid
+  }
+
+  // Trigger ripple after brief delay (so close animation starts)
+  window.setTimeout(() => {
+    flashRippleFor(selectedId);
+
+    // Restore photo after ripple animation completes
+    if (restorePhoto && restorePhoto.src) {
+      window.setTimeout(() => {
+        openFocusImage(restorePhoto.src, restorePhoto.alt);
+      }, 1900); // slightly longer than 900ms flash duration
+    }
+
+  }, 240);
+
+  // Clear whisper field
+    elWhisperInput.value = "";
+}
   async function requestMonologue({ characterId, channel, kind, whisperText }) {
     if (isGenerating) return;
     isGenerating = true;
@@ -482,16 +510,6 @@
       whisperText: whisperText || "",
       text
     });
-
-    // Visual ripple: ring the selected cell and neighbors
-    const sc = engine.getScene();
-    const ch = sc.characters.find(c => c.id === characterId);
-    if (ch) {
-      rippleAtCharacter(ch.id, "thoughts", 1.0);
-      (ch.adjacentTo || []).forEach((nbId, i) => {
-        setTimeout(() => rippleAtCharacter(nbId, "thoughts", 0.55), 220 + i * 110);
-      });
-    }
 
     setWorldtext(text, { mode: "ripple" });
     renderReplay(engine.snapshot());
@@ -783,6 +801,29 @@
   // -----------------------------
   // Visual ripple only
   // -----------------------------
+
+  function flashRippleFor(characterId) {
+    const sc = engine.getScene();
+    const ch = sc.characters.find(c => c.id === characterId);
+    if (!ch) return;
+
+    // If a full-screen photo is open, briefly fade it so the grid ripples can be seen.
+    if (isFocusOpen && focusMode === "photo") {
+      elFocusOverlay.style.opacity = "0.05";
+      window.setTimeout(() => {
+        elFocusOverlay.style.opacity = "";
+      }, 1600);
+    }
+
+    // Selected character
+    rippleAtCharacter(ch.id, "thoughts", 1.0);
+
+    // Adjacent characters
+    (ch.adjacentTo || []).forEach((nbId, i) => {
+      window.setTimeout(() => rippleAtCharacter(nbId, "thoughts", 0.55), 180 + i * 110);
+    });
+  }
+
   function rippleAtCharacter(characterId, cls, intensity) {
     const cell = Array.from(elGrid.querySelectorAll(".grid-cell.has-entity"))
       .find(c => c.dataset.characterId === characterId);
@@ -791,7 +832,7 @@
     const klass = cls || "thoughts";
 
     cell.classList.add("flash", klass);
-    window.setTimeout(() => cell.classList.remove("flash", klass), 420);
+    window.setTimeout(() => cell.classList.remove("flash", klass), 900);
 
     for (let i = 0; i < 2; i++) {
       const ring = document.createElement("div");
