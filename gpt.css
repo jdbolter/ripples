@@ -581,3 +581,91 @@ select:focus{
   }
   #replayPanel{ flex: 0 0 auto; }
 }
+
+
+/* ===========================
+   API Key Modal (client-side key entry)
+   =========================== */
+
+.api-modal{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.api-modal.hidden{
+  display: none;
+}
+
+.api-modal-inner{
+  width: 420px;
+  max-width: 90%;
+  background: rgba(10,15,10,0.95);
+  border: 1px solid rgba(74,246,38,0.25);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(0,0,0,0.6);
+}
+
+.api-modal-inner h2{
+  margin: 0 0 10px 0;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(74,246,38,0.95);
+}
+
+.api-help{
+  font-size: 13px;
+  opacity: 0.75;
+  margin: 0 0 16px 0;
+  color: rgba(74,246,38,0.85);
+}
+
+#apiKeyInput{
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(74,246,38,0.25);
+  color: rgba(74,246,38,0.95);
+  border-radius: 10px;
+  outline: none;
+}
+
+#apiKeyInput:focus{
+  border-color: rgba(74,246,38,0.55);
+  box-shadow: 0 0 0 3px rgba(74,246,38,0.12);
+}
+
+.api-actions{
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.api-actions button{
+  flex: 1;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid rgba(74,246,38,0.55);
+  color: rgba(74,246,38,0.92);
+  border-radius: 12px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: transform var(--transition), border var(--transition), box-shadow var(--transition), background var(--transition), opacity var(--transition);
+}
+
+.api-actions button:hover{
+  transform: translateY(-1px);
+  border-color: rgba(74,246,38,0.85);
+  box-shadow: 0 0 0 3px rgba(74,246,38,0.10);
+  background: rgba(74,246,38,0.04);
+}
+
+.api-actions button:active{
+  transform: translateY(0);
+}

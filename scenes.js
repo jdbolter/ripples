@@ -1,6 +1,11 @@
 /* scenes.js
    RIPPLES — Wings of Desire (Library Reading Room)
-   Photoreal image support via character.image
+   Refactor: authorable prompt materials + character dossiers + initial psyche + motifs
+   Backward-compatible with current gpt.js:
+     - window.SCENE_ORDER
+     - window.SCENES[sceneId].meta.cols/rows/baseline
+     - window.SCENES[sceneId].characters[] (id/label/image/position/adjacentTo)
+     - window.SCENES[sceneId].monologues[characterId].THOUGHTS (array of strings)
 */
 
 window.SCENE_ORDER = [
@@ -23,6 +28,67 @@ Pages turn. Shoes shift softly.
 No one speaks, but everyone is thinking.`
     },
 
+    /* =========================================================
+       Prompt materials (authorable)
+       These are NOT yet used by gpt.js, but are ready for API prompts.
+       ========================================================= */
+    prompts: {
+
+      // Global rules for the generator (system-level in OpenAI terms)
+      system:
+`You write interior monologues for anonymous people in a large library reading room, in the spirit of contemplative European cinema.
+You never explain the system, never mention "prompts" or "models," and you never adopt a chatty assistant tone.
+
+Core constraint: the monologue is not a reply to the user. The user’s presence (a "whisper") only bends attention indirectly.
+Avoid direct second-person address ("you said...") and avoid question/answer dialogue.
+Do not explicitly mention angels unless the scene prompt allows it. Keep it ambiguous and human.
+
+Style:
+- English.
+- Present tense, first person singular.
+- Reflective, vague, allusive; concrete sensory detail + drifting association.
+- Minimal plot, no sudden scene changes, no melodrama.
+- Subtle rhythmic line breaks are allowed; avoid heavy poetry formatting.
+- 120–200 words.
+
+Output: plain text only.`,
+
+      // Scene framing to be included in each generation
+      scene:
+`Setting: a high-ceilinged reading room in late afternoon.
+Ambient: dust in light beams; muted footsteps; the soft rasp of turning pages; distant chairs shifting.
+People keep their distance; their inner lives are louder than their bodies.
+The atmosphere encourages private confession without confession being spoken.`,
+
+      // How to incorporate the whisper
+      whisperRule:
+`If a whisper is present, treat it as an atmospheric pressure, not a conversational turn.
+The monologue should not quote it or answer it.
+Instead, let it alter mood, attention, or imagery: a phrase becomes a weight, a warmth, a doubt, a brief alignment.
+No direct address to the whisperer.`,
+
+      // Optional: a small "shape" guidance you can rotate later
+      structureHint:
+`A good monologue often begins with a sensory observation, drifts into memory or self-assessment, and ends with a softened unresolved turn (not a punchline).`
+    },
+
+    // Scene motifs (can be used to seed generations or as a palette)
+    motifs: [
+      "high windows",
+      "pale light",
+      "paper dust",
+      "hands and fingers",
+      "names half-remembered",
+      "coat fabric",
+      "quiet rules",
+      "small sounds in silence",
+      "time folding",
+      "margins and annotations"
+    ],
+
+    /* =========================================================
+       Characters (authorable + backward-compatible fields)
+       ========================================================= */
     characters: [
 
       {
@@ -32,7 +98,16 @@ No one speaks, but everyone is thinking.`
         image: "images/old_man_coat_bw.png",
         position: { x: 2, y: 1 },
         sensitivity: "medium",
-        adjacentTo: ["young_woman", "student", "man_in_hat"]
+        adjacentTo: ["young_woman", "student", "man_in_hat"],
+
+        // NEW authorable fields
+        dossier:
+`An elderly man in a heavy coat, slightly bowed. He holds a book close, as if light is scarce.
+He moves carefully, conserving effort. His dignity is quiet, not performative.
+He is attentive to margins, to the evidence of other readers, to time passing through objects.`,
+        voice: ["measured", "precise about sensation", "restrained tenderness"],
+        psyche0: { tension: 0.35, clarity: 0.55, openness: 0.30, drift: 0.40 },
+        motifSeeds: ["coat fabric", "margins", "names half-remembered", "pale light"]
       },
 
       {
@@ -42,7 +117,15 @@ No one speaks, but everyone is thinking.`
         image: "images/young_woman.png",
         position: { x: 4, y: 1 },
         sensitivity: "high",
-        adjacentTo: ["old_man", "man_in_hat"]
+        adjacentTo: ["old_man", "man_in_hat"],
+
+        dossier:
+`A young woman seated near the window. She reads with intensity, but the intensity keeps slipping into self-consciousness.
+She is poised between ambition and fatigue, between choosing and postponing.
+She registers the room as a kind of mirror she tries not to look into.`,
+        voice: ["quick internal pivots", "image-driven", "held breath"],
+        psyche0: { tension: 0.45, clarity: 0.65, openness: 0.55, drift: 0.50 },
+        motifSeeds: ["high windows", "pale light", "corridors", "future narrowing"]
       },
 
       {
@@ -52,7 +135,15 @@ No one speaks, but everyone is thinking.`
         image: "images/student.png",
         position: { x: 1, y: 2 },
         sensitivity: "medium",
-        adjacentTo: ["old_man", "librarian"]
+        adjacentTo: ["old_man", "librarian"],
+
+        dossier:
+`A young student, slightly scruffy, hovering by shelves and tables as if unsure where to belong.
+He is hungry for mastery but embarrassed by his own hunger.
+He rehearses competence internally while feeling watched by the silence.`,
+        voice: ["restless", "self-correcting", "spare humor that doesn’t land"],
+        psyche0: { tension: 0.55, clarity: 0.50, openness: 0.35, drift: 0.45 },
+        motifSeeds: ["notes", "measurement", "forgery among originals", "quiet rules"]
       },
 
       {
@@ -62,7 +153,15 @@ No one speaks, but everyone is thinking.`
         image: "images/librarian.png",
         position: { x: 3, y: 3 },
         sensitivity: "low",
-        adjacentTo: ["student", "man_in_hat"]
+        adjacentTo: ["student", "man_in_hat"],
+
+        dossier:
+`A middle-aged librarian at a desk: orderly, slender, studious.
+Her attention is divided: she performs administrative calm while feeling a vague concern she won’t name.
+She protects the room’s silence but wonders what it costs.`,
+        voice: ["observational", "architectural metaphors", "quiet unease"],
+        psyche0: { tension: 0.40, clarity: 0.70, openness: 0.25, drift: 0.35 },
+        motifSeeds: ["silence as architecture", "systems", "missing volume", "dust"]
       },
 
       {
@@ -72,125 +171,135 @@ No one speaks, but everyone is thinking.`
         image: "images/man_in_hat.png",
         position: { x: 5, y: 2 },
         sensitivity: "medium",
-        adjacentTo: ["old_man", "young_woman", "librarian"]
+        adjacentTo: ["old_man", "young_woman", "librarian"],
+
+        dossier:
+`A middle-aged man entering with a hat and briefcase. He pauses as if the act of arriving is a decision he hasn’t finished making.
+He carries a private shame or simply a private heaviness; it is hard to tell.
+The reading room feels like permission and danger at once.`,
+        voice: ["plainspoken drift", "self-judging", "soft metaphysical recoil"],
+        psyche0: { tension: 0.50, clarity: 0.55, openness: 0.30, drift: 0.55 },
+        motifSeeds: ["thresholds", "coat and hat", "permission", "unfinished life"]
       }
 
     ],
 
-    ambientBehaviors: [
-      { character: "old_man", activation: "THOUGHTS", probability: 3 },
-      { character: "young_woman", activation: "LONGING", probability: 2 },
-      { character: "student", activation: "FEARS", probability: 2 },
-      { character: "librarian", activation: "THOUGHTS", probability: 1 },
-      { character: "man_in_hat", activation: "THOUGHTS", probability: 1 }
-    ],
-
+    /* =========================================================
+       Backward-compatible seeds (optional fallback)
+       ========================================================= */
     seeds: {
       old_man: {
-        THOUGHTS: "The print is smaller than it used to be.",
-        FEARS: "What if I forget this page tomorrow?",
-        LONGING: "I want one more year of clarity."
+        THOUGHTS: "The print is smaller than it used to be."
       }
     },
 
+    /* =========================================================
+       Backward-compatible monologues
+       Current gpt.js rotates through monologues[characterId].THOUGHTS only.
+       ========================================================= */
     monologues: {
 
       old_man: {
-
         THOUGHTS: [
-`The words seem to arrive from a great distance now, as if they had to travel across years before reaching my eyes. I hold the book closer, not only to see, but to feel the weight of it, the quiet insistence that something still matters enough to be printed, bound, preserved. The coat around my shoulders carries the faint scent of winters I have already survived. I think about how many rooms like this I have sat in, how many arguments I have followed patiently across the page. Once, I read quickly, almost greedily. Now I read as one walks through a garden in late autumn, aware that each leaf is singular, that each step is deliberate. The mind does not move as swiftly, but it lingers more deeply. I am not certain whether this is loss or refinement. Perhaps both.`,
+`The book is heavier than it needs to be, or my hands are less willing than they were. I hold it close to the window-light and pretend it’s only the print that has changed. The coat on my shoulders remembers winters that felt permanent; it carries the shape of my body like a patient witness. I smooth the page and listen to the small scratch of paper against paper, as if that sound could confirm I am still here.
 
-`The margins hold more than commentary; they hold time. Someone else once pressed a pencil into this paper, marking what struck them as necessary. I trace those faint lines and imagine the hand that made them—young, perhaps, or restless, or certain. I find myself in conversation not only with the author but with that unknown reader. There is comfort in this layered attention. Even now, when names sometimes evade me and days blur at the edges, the act of reading remains intact. It is a narrow bridge, but it holds. I think of all that has fallen away—ambition, urgency, the need to be correct. What remains is this: to follow a thought patiently to its end, and to recognize oneself, still capable of understanding, still capable of wonder.`,
+Someone once wrote in the margins—faded pencil, a careful hand. I trace the line of an old argument and feel, briefly, that I am not reading alone. The room is full of private endurance. The words arrive slowly now, but they arrive. I follow them the way you follow a path in fog: not by seeing far, but by trusting the next step.`,
 
-`The room hums, though no one speaks. I feel part of that quiet mechanism, one figure among many, yet distinctly singular. The younger ones sit with straight backs and urgent eyes; they believe the future is something to be constructed. For me, it has become something to be interpreted. I do not seek revelation anymore. I seek continuity. The page before me is not dramatic, yet it steadies me. In the careful turning of paper, I measure my own persistence. I am not finished yet. The words have not withdrawn from me. They hesitate, perhaps, but they still consent to be read. And as long as they do, I will remain here, attentive, grateful for this small, durable clarity.`
-        ],
+`I used to read for hours without lifting my head, as if the world outside the book had agreed to wait. Now my neck complains, my eyes water, and the letters shimmer at the edges like distant figures. But the mind still recognizes the shape of a sentence, the way an idea leans forward and then withdraws. The discipline returns: patience, again and again.
 
-        FEARS: [
-`There are moments when the letters loosen and scatter, when I must blink twice to gather them again. In those instants I feel the ground tilt slightly, as if the certainty I once possessed were only provisional. I fear not the end itself, but the gradual dimming—the subtle erosion that leaves one aware yet unable to participate fully. What if I begin to nod at arguments I no longer grasp? What if I pretend to understand, to preserve the dignity of habit? The room would not notice. It would continue its soft respiration. Yet inside, something essential would have slipped out of reach. That is what unsettles me: not death, but the quiet thinning of comprehension, the possibility that meaning might recede before I am ready to relinquish it.`,
+There is a comfort in this public silence. No one asks anything of me. I don’t have to be quick, or witty, or useful. I only have to attend. The page gives me a task that does not measure me. Even when a name slips away—an author, a friend, a street—I can still hold a thought long enough to feel its warmth. That is not nothing.`,
 
-`Sometimes I test myself, recalling dates, passages, the names of those long gone. They rise slowly, as if from underwater. I worry that one day they will not rise at all. I think of the mind as a library of its own, shelves carefully ordered through decades. What happens when volumes go missing? When a corridor leads nowhere? I fear the embarrassment of absence, the hollow moment when a familiar face yields no corresponding name. More than that, I fear the loss of inward continuity—the story I have told myself about who I have been. If that thread frays, what remains? A coat, a chair, a book held too close to the light. I grip the page gently, as though steadiness might be contagious.`
-        ],
+`The margins are generous. The kind of generosity paper offers without meaning to. I find myself reading not only the printed lines but the small accidents: a stain that might be coffee, a faint crease where someone dog-eared a corner, the slight darkening at the lower edge where many thumbs have rested. Time leaves fingerprints.
 
-        LONGING: [
-`I would like one more year of clear mornings...`
+I can feel my own body folding inward, almost without permission. The bow of the neck, the protective tilt. Still, the argument unfolds, and I am capable of following it. The room keeps its steady hum. A chair shifts; a page turns; a cough is swallowed. It is all so careful. I think: perhaps this is what remains—attention, practiced quietly, until it becomes a kind of mercy.`
         ]
       },
 
       young_woman: {
-
         THOUGHTS: [
-`The light at the window seems to choose me as much as I choose it. It falls across the table, across my hands, illuminating the page but also exposing the tremor beneath my stillness. I read the same sentence twice, not because it is difficult, but because I am elsewhere—imagining another life unfolding parallel to this one. The old man across the room reads as if time were something he has already negotiated with. I read as if time were something I must still confront. I wonder whether the book is shaping me quietly, altering the architecture of my thoughts without announcement. There is comfort in the anonymity here. No one demands that I declare who I will become. For now, I am only a figure bent over a page, listening to the faint interior voice that persists beneath ambition.`,
+`I sit where the light is best, as if light were a vote for my future. The window makes a private stage of the table, and I pretend I’m here only for the book. But the room keeps offering other presences: the old man’s careful hands, the student’s restless hovering, the librarian’s composed face that looks slightly elsewhere. Everyone is performing calm. Everyone is also leaking.
 
-`Sometimes I watch the dust in the sunlight instead of the words. It drifts without urgency, suspended in brightness. I envy that suspension. My thoughts feel more directional, as if they are always moving toward a decision I have not yet made. The future hovers just beyond articulation. I imagine cities I have never seen, rooms I have not entered, versions of myself that speak with more assurance. Yet here, in this narrow square of light, I am simply present. The book is not extraordinary, but it anchors me. It reminds me that attention itself can be an act of resistance against distraction, against fear. Perhaps what I am building is not a career or a narrative, but a capacity for sustained inwardness. That may be enough.`,
+The sentence in front of me keeps breaking into possibilities. I underline, then regret the underline. I imagine the years ahead as a corridor that narrows, then widen it again in my mind, as if imagination could change architecture. I want to choose something without flinching. Instead I cultivate competence like a small fire and worry it will go out when no one is watching.
 
-`I sense the others around me as constellations rather than individuals—points of thought glowing faintly across the room. The old man, the student, the librarian: each carries a private weather. I imagine stepping briefly into their minds, inhabiting their histories. Would I recognize myself there? Or would I dissolve into their preoccupations? The book rests open before me, but I am also reading the room, reading the posture of bodies, the tilt of heads. It feels as though something invisible moves between us, a current of silent awareness. I do not know where it originates. I only know that it touches me lightly, and I sit very still, afraid to disturb it.`
-        ],
+Sometimes, without warning, the silence amplifies me. My thoughts grow louder than my body. I look up and see only people reading, and I feel the strange tenderness of it: so much interior weather, contained inside coats and sleeves and polite posture.`,
 
-        FEARS: [
-`There are afternoons when the quiet magnifies everything I have postponed. I fear the narrowing of possibility more than failure itself. What if I wake one morning and discover that the choices I avoided have solidified around me, forming a life by default? The women I see in reflections—on trains, in offices—sometimes carry an expression I cannot decipher. It is not unhappiness exactly, but a kind of settled compromise. I am afraid of inheriting that look. The book in front of me speaks of clarity, of intellectual courage, yet I hesitate at smaller thresholds: a letter not sent, a question not asked, a departure not undertaken. I fear the inertia that disguises itself as prudence.`,
+`The page is open, but my attention keeps drifting to the glass: the faint reflection of my own face layered over shelves and light. It’s an unhelpful mirror. I don’t want to become a person who watches herself living. And yet I do, all the time—correcting my expression, rehearsing decisions, revising the past as if it were an essay.
 
-`At times I feel as though I am being measured by invisible criteria. Am I progressing quickly enough? Reading widely enough? Loving boldly enough? The metrics are imagined, yet they exert pressure. I fear that my interior life, rich and intricate as it feels, might appear insubstantial from the outside. What if I am merely rehearsing seriousness, performing depth? The old man reads with a gravity that seems earned. I fear that mine is provisional, dependent on circumstance. Beneath the composed posture, beneath the neat arrangement of notes, there is a tremor of doubt: that I might never feel entirely certain of my direction, and that this uncertainty will follow me long after I leave this room.`
-        ],
+I try to focus on the book. The words are intelligent; they are orderly. They promise that if I follow them far enough, the world will clarify. But what I feel is the opposite: the more I learn, the more I notice the places where my certainty is borrowed. I am afraid of being ordinary in the particular way I will become ordinary: not loudly, but by drift, by small accommodations, by choosing what is easiest to explain.
 
-        LONGING: [
-`I want to leave this city...`
+Still, there is the window-light on the table, the calm geometry of pages. It is a kind of shelter. I breathe and let the sentence hold me for a moment.`,
+
+`The old man turns the pages as if the paper could bruise. I envy that tenderness toward an object, toward time. My own gestures are too quick, as if speed could protect me from doubt. I keep thinking there is a correct tempo for a life, and I am already behind it.
+
+I read and feel a kind of longing that has no clear address. Not for a person, not for a place—more like for a version of myself who doesn’t hesitate. The room is full of people who look settled into their roles, and I don’t know whether that settles me or frightens me. The librarian’s desk looks like an anchor; the student’s scattered notes look like weather. Even the silence feels organized, like an institution.
+
+Sometimes I want someone to notice the way I look at books—as if the books are not only information but proof that I am capable of devotion. Then I hate myself for wanting to be seen. I return to the page. I let the light do what it does: illuminate without judging.`
         ]
       },
 
       student: {
-
         THOUGHTS: [
-`The shelves rise like a forest of arguments, each spine a narrow doorway into another mind. I stand among them pretending to search for a title, but in truth I am trying to orient myself. I feel perpetually on the verge of understanding, as though comprehension were a step away yet never fully secured. The old man reads with a patience that unsettles me; he seems to inhabit knowledge rather than pursue it. I chase it anxiously, underlining, annotating, trying to trap meaning before it slips. I suspect that what I call ambition is partly fear—fear of being ordinary, of contributing nothing distinct. Still, there is a quiet thrill in discovering a passage that aligns with my own unarticulated thought. In those moments, the world feels briefly coherent.`,
+`I hold my notes like a passport I’m afraid won’t be accepted. The shelves are too tall; the titles look confident. I look up for a book and feel my face arrange itself into seriousness, as if seriousness were the entry fee. Somewhere behind me a chair shifts and I interpret it as judgment, even though no one is looking. Silence makes me paranoid; it also makes me honest.
 
-`The room carries an atmosphere of deliberation. Even the air feels studious. I watch the young woman at the window, the way she pauses before turning a page. I wonder whether she experiences the same internal acceleration I do. My notes accumulate rapidly, yet I am unsure whether they form a structure or merely a pile. Sometimes I imagine myself years from now, returning to these pages and recognizing in them the early outline of a voice. Other times I fear they will appear naive, overly earnest. For now, I remain suspended between imitation and originality, trying to locate a tone that feels unmistakably mine. The books do not instruct me how to become myself. They only demonstrate how others have done so.`
-        ],
+I keep thinking that if I finish one chapter, the next will open like a door. But it’s never a door. It’s another wall, another set of terms I’m supposed to know already. I envy the old man’s steadiness—how he reads without rushing, how he seems to have made peace with time. I envy the young woman too, though I can’t name why. Maybe it’s her ability to sit still inside herself.
 
-        FEARS: [
-`Failure rarely arrives dramatically. I suspect it is quieter, a gradual concession to comfort. I fear that I will adjust downward, recalibrating my expectations until they align with what is easily attainable. The exams are only symbols; beneath them lies a more persistent anxiety—that I may never transcend my current limits. I compare myself constantly, measuring my thoughts against authors long dead, against peers who seem more fluent, more assured. The comparison is unfair, yet irresistible. I worry that I am assembling a life from borrowed fragments, that I will never produce something that feels irrevocably mine.`,
+I’m afraid of failing quietly. Not failing dramatically—quietly, like dust settling. I want a moment of certainty that feels earned. Instead I revise sentences in my mind, measure my worth by pages, and pretend the book can’t feel my hunger.`,
 
-`Sometimes, standing before the shelves, I feel dwarfed not by the quantity of knowledge but by its permanence. These books endure; my attention flickers. What if my mind proves too undisciplined, too scattered, to sustain depth? I fear the exposure of inadequacy, the moment when confidence falters publicly. I fear the subtle disappointment in a mentor’s expression, the polite acknowledgment that I am competent but not exceptional. Beneath all of it lies a more intimate dread: that my desire to matter may outpace my capacity to do so. I close the book gently, as if restraint might disguise urgency.`
-        ],
+`The library makes everything look official. Even my doubts feel like they should be catalogued. I try to locate a particular volume and end up tracing spines with my finger as if touch could translate titles into confidence. My hair is uncooperative; my shirt is slightly wrinkled; I suddenly remember my accent and how it sounds in seminars. The room is full of people who have learned to appear composed, and I do not yet know the trick.
 
-        LONGING: [
-`I want to surprise myself...`
+In my head I rehearse explanations for my own life: why I am here, what I’m working toward, what I will become. The explanations are tidy. The feelings underneath them are not. There is a persistent fear that I’m a forgery among originals, that someone will ask a simple question and my careful posture will collapse.
+
+And still—there are moments when the text catches, when an argument aligns with something I’ve sensed but never named. In those moments, the room feels less like a test. It feels like a shared shelter where thinking is allowed to be slow.`,
+
+`I find the book I want, finally, and it isn’t even the right edition. I stand there holding it, and the embarrassment is irrational but immediate, like heat. I think of my friends, of my parents, of the voice in my head that keeps score. I want to surprise myself with competence, to feel inevitability instead of effort. I want to walk to a table and open the book and know, without bargaining, that I belong here.
+
+The librarian looks up for a second and then returns to her work. The glance is neutral, and I still read it as a verdict. That’s the problem: I keep turning neutrality into meaning. I keep making the room into a mirror that shows me my failures.
+
+I take the wrong edition anyway. I tell myself: begin somewhere. The page will either open or it won’t. The act of opening it is already a small defiance against the part of me that wants to flee.`
         ]
       },
 
       librarian: {
-
         THOUGHTS: [
-`The room appears orderly, yet beneath its arrangement lies a constant negotiation. Books arrive, books depart, small disruptions ripple outward. I have learned to anticipate these movements, to maintain equilibrium without calling attention to it. Still, there are moments when my gaze drifts beyond the ledger in front of me. I imagine the lives unfolding at each table—the private dramas, the restrained hopes. My own thoughts move more slowly, perhaps more cautiously. I once believed this position would be temporary, a waypoint rather than a destination. Over time it has become a vantage point instead. I witness continuity. I witness repetition. There is dignity in preservation, though it rarely announces itself loudly.`,
+`The room regulates itself. It is a kind of breathing: pages, pauses, the small re-settling of bodies in chairs. I watch the quiet the way other people watch weather. A missing book is a disturbance; a whispered conversation is a crack; even a phone screen is a flare. I keep the rules without believing they are moral. They are simply the architecture that makes this place possible.
 
-`Administrative tasks accumulate with a steady indifference to mood. Forms, entries, small corrections. I perform them with competence, yet my attention occasionally detaches, hovering above the desk as though observing a different woman at work. I wonder when concentration began to require effort. The young student moves with restless intent; the old man reads with deliberate gravity. I occupy a middle ground, neither beginning nor concluding. The silence here is not empty; it is structured. I take comfort in that structure, even as I question where my own narrative has settled within it. The room depends on invisible labor. I have become fluent in invisibility.`
-        ],
+Today my hands move through familiar tasks—stamps, lists, small administrative completions—and my mind drifts slightly to the side, where a vague concern sits like an unopened letter. It is not dramatic. It is persistent. I think of years passing, of institutions outliving individuals, of the way care can become invisible once it works.
 
-        FEARS: [
-`Disorder does not frighten me for its own sake, but for what it reveals. A misplaced volume is manageable; a neglected system suggests a deeper unraveling. I fear becoming inattentive, allowing small omissions to accumulate until they form a pattern. There are days when my concentration thins unexpectedly, when the names on the page blur into abstraction. I worry that this inattentiveness mirrors something more personal—a quiet withdrawal from aspiration. The desk anchors me, yet it also confines. What if I have mistaken stability for fulfillment? What if I have accepted maintenance in place of expansion?`,
+Sometimes I want to sit at one of the tables as an ordinary reader. Just once, without interruption, without responsibility. To open a book and let it take me somewhere that isn’t order. But then a chair shifts, a student hovers, someone looks lost, and I return to the desk. The desk is a promise: if I remain here, the room will remain itself.`,
 
-`Occasionally, I sense a dissatisfaction that has no clear object. It hovers just beyond articulation, a faint disquiet. I fear that if I examine it too closely, it will demand action. The others appear absorbed in futures or pasts; I remain here, in the present tense of procedure. I fear that this present might solidify into permanence. The administrative rhythm is steady, almost hypnotic. It can carry one forward without reflection. Yet in quieter moments, I recognize a longing for a different form of engagement—one less procedural, more immediate. I straighten the stack of forms before me, as if alignment on paper might imply alignment within.`
-        ],
+`I notice patterns. That is my habit and my burden. The same kinds of people choose the same tables. The same times of day bring the same restlessness. Even silence has variations, and I can tell when it is fragile. I can tell when someone is about to break it, not on purpose—by accident, by grief, by a thought that becomes too heavy to carry alone.
 
-        LONGING: [
-`I would like to read during my shift...`
+There is an old man reading as if the book were a relic. There is a young woman by the window who turns pages too quickly and then slows, as if remembering she is visible. There is a student who hovers near shelves like a question. And a man entering who looks unsure whether he is allowed. I see them and feel, unexpectedly, a tenderness that doesn’t belong to procedure.
+
+And then I feel the faint unhappiness again, the concern I won’t name. Perhaps it is simply the knowledge that I keep this calm, and it will not keep me. The institution is a sea wall. The water rises anyway.`,
+
+`The desk has corners worn smooth by years of wrists. I rest my hand on it and feel time like a texture. My work is made of small preventions: preventing loss, preventing noise, preventing the slow drift into disorder. Most days I am proud of it. Today I am tired of it. Not tired in the body—tired in the attention. The attention wants to go elsewhere.
+
+I imagine choosing a book at random, letting the spine decide. I imagine sitting near the high windows and reading without watching the door. But I know myself: even as a reader I would still count footsteps, still measure the room’s quiet like a pulse. Silence is a kind of responsibility once you’ve held it long enough.
+
+Someone will ask me a question in a moment. I can feel it approaching. I straighten papers; I align a stack. The room continues to hum. I continue to guard it. Somewhere in that continuation, I hope there is something like meaning.`
         ]
       },
 
       man_in_hat: {
-
         THOUGHTS: [
-`Entering the building feels like crossing a threshold into neutrality. The street outside carries its expectations; here, I am temporarily unassigned. I remove my hat and coat carefully, as though divesting myself of a role. The briefcase contains papers that suggest purpose, yet I hesitate before opening it. I find myself observing the others—each absorbed in an interior dialogue. The young woman reads with a kind of fragile intensity; the old man reads as if preserving something sacred. I wonder what expression I wear in their peripheral vision. Do I appear decisive? Distracted? I feel neither. I feel suspended between identities, unsure which one will assert itself once I sit down.`,
+`I come in to warm up. That is what I tell myself. Then I stay. The reading room has a peculiar permission: to stand still, to be unproductive without being accused. I hold my hat and briefcase like props from another life. For a moment I don’t know where to put my hands. I watch other people reading as if they are hiding, or waiting, or praying. I can’t decide which one I am.
 
-`The lockers click shut behind me with a small finality. I imagine placing not only garments but also uncertainties inside them. It does not work, of course. The uncertainties accompany me upstairs. I think about conversations left unresolved, about decisions deferred. The library offers a temporary reprieve from articulation. No one here demands an account. I can stand still without explanation. Yet stillness carries its own implications. It invites introspection, and introspection rarely flatters. I watch my reflection faintly in the polished surface of a cabinet and attempt to read it. The image resists clarity, offering only a suggestion of who I might be becoming.`
-        ],
+The old man’s hands are careful with the book, as if the object were the last stable thing in the world. The librarian’s desk looks like a boundary line. The young woman at the window seems to be negotiating with herself. The student hovers with that particular hunger of the young: the hunger to be certain. I feel my own life as a draft, unfinished, full of crossed-out intentions.
 
-        FEARS: [
-`There is a fear that I have mistaken postponement for deliberation. I tell myself that I am gathering information, weighing options, but sometimes I suspect that I am merely avoiding commitment. The briefcase contains proposals, drafts, outlines of potential futures. None feel inevitable. I fear choosing wrongly, but I fear equally the absence of choice. The middle ground can become habitual. Standing here, coat folded over my arm, I feel the weight of unfinished decisions pressing quietly against my composure.`,
+I think about the locker where I will put my coat. The small ritual of leaving things behind. It occurs to me that I don’t know what I’m leaving behind anymore. The quiet is dangerous in that way. It makes room for thoughts I normally outrun.`,
 
-`I am uneasy with the idea of being deciphered. The librarian glances up briefly; I wonder what she perceives. A man in transit? A man uncertain? I fear that my hesitation is more visible than I intend. There is also a subtler fear: that even after I choose, even after I commit, the restlessness will persist. That uncertainty is not a phase but a permanent undercurrent. The room’s quiet intensifies this awareness. I cannot outrun it here. I can only stand within it, acknowledging that the ambiguity I carry is not external circumstance but internal weather.`
-        ],
+`There is a kind of shame that doesn’t attach to a single act. It attaches to a pattern. I carry it like I carry the briefcase: not always heavy, but always present. I stand at the threshold of the room and feel the strange hope of anonymity. No one here knows me. That should be relief. Instead it feels like exposure. As if, without recognition, there is nothing to hold my shape.
 
-        LONGING: [
-`I want to choose a direction...`
+I watch people reading and think: their minds are elsewhere, and their bodies remain politely here. I envy that separation. My mind and body keep colliding. I keep rehearsing conversations I won’t have, apologies that don’t land, decisions I postpone because postponement feels like control.
+
+The light in the room is pale and steady. It falls on tables as if it has been instructed to do so. I want an instruction like that for myself. Not a grand purpose. Just a direction I can follow without bargaining. A small yes that doesn’t dissolve into habit.`,
+
+`I put the hat in my hands and imagine putting my restlessness away with it. The thought is almost funny. Restlessness is not an object. It is a weather system. It follows you inside. The library is not a cure. It is a mirror with a soft frame.
+
+Still, there is something here: a calm that does not demand confession. The silence accepts me without asking why I’ve come. That acceptance unsettles me. I realize how often I seek friction just to confirm I exist. Here, the lack of friction makes my thoughts louder. I hear myself more clearly than I want to.
+
+I look toward the high windows. I think about the city outside—its noise, its errands, its speed. The reading room feels like a pause in the film of the day. I stand in that pause and feel, briefly, the possibility of being less unfinished. Not finished—just less scattered. As if the mind could settle like dust into a pattern.`
         ]
       }
 

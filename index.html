@@ -1,77 +1,76 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ripples — Reading Room</title>
   <link rel="stylesheet" href="gpt.css" />
 </head>
-
 <body>
+
   <div class="app">
 
-    <!-- LEFT: Scene -->
-    <div class="panel" id="scenePanel">
-      <div class="panel-header scene-header">
-        <select id="scenarioSelect" aria-label="Scene">
-          <!-- populated by JS -->
-        </select>
-      </div>
+    <!-- LEFT: Scene panel -->
+    <section id="scenePanel" class="panel">
+      <header class="panel-header scene-header">
+        <select id="scenarioSelect"></select>
+      </header>
 
-      <div class="panel-body grid-wrap" id="sceneWrap">
+      <div class="panel-body grid-wrap">
+        <div id="grid" class="grid"></div>
+        <svg id="linkLayer" class="links" preserveAspectRatio="none"></svg>
 
-        <!-- Focus overlay -->
-        <div class="focus-overlay" id="focusOverlay" aria-hidden="true">
+        <!-- Focus Overlay -->
+        <div id="focusOverlay" class="focus-overlay" aria-hidden="true">
           <img id="focusImage" alt="" />
-          <div class="focus-message" id="focusMessage"></div>
-          <div class="focus-hint"><span class="k">Esc</span> or click to return</div>
+          <div id="focusMessage" class="focus-message"></div>
+          <div class="focus-hint">Esc or click to return</div>
         </div>
-
-        <!-- Link layer -->
-        <svg class="links" id="linkLayer" preserveAspectRatio="none"></svg>
-
-        <!-- Grid -->
-        <div class="grid" id="grid" aria-label="Scene grid"></div>
-
       </div>
-    </div>
+    </section>
 
-    <!-- RIGHT COLUMN -->
-    <div class="right-stack">
+    <!-- RIGHT: Stack of panels -->
+    <section class="right-stack">
 
-      <!-- Character monologue (taller) -->
-      <div class="panel" id="textPanel">
-        <div class="panel-header">
-          <div class="pill" id="selectedPill">NO CHARACTER</div>
-        </div>
-        <div class="panel-body worldtext" id="worldtext" aria-live="polite"></div>
-      </div>
+      <!-- Monologue panel -->
+      <section id="textPanel" class="panel">
+        <header class="panel-header">
+          <div id="selectedPill" class="panel-title">NO CHARACTER</div>
+        </header>
+        <div id="worldtext" class="panel-body worldtext"></div>
+      </section>
 
-      <!-- Whisper -->
-      <div class="panel" id="whisperPanel">
+      <!-- Whisper panel (no title; just button) -->
+      <section id="whisperPanel" class="panel">
         <div class="panel-body">
-          <textarea
-            id="whisperInput"
-            rows="4"
-            aria-label="Whisper text"
-          ></textarea>
-
-          <div class="row" style="margin-top:10px; justify-content:flex-end;">
-            <button class="btn" id="whisperSend" type="button">Whisper</button>
+          <textarea id="whisperInput" aria-label="Whisper"></textarea>
+          <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+            <button id="whisperSend" class="btn">Whisper</button>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Traces -->
-      <div class="panel" id="replayPanel">
-        <div class="panel-header">
-          <div class="panel-title">Traces</div>
-        </div>
+      <!-- Traces panel -->
+      <section id="replayPanel" class="panel">
         <div class="panel-body audit" id="auditLog"></div>
+      </section>
+
+    </section>
+  </div>
+
+  <!-- API Key Modal -->
+  <div id="apiModal" class="api-modal">
+    <div class="api-modal-inner">
+      <h2>Enter OpenAI API Key</h2>
+      <p class="api-help">
+        Your key is used only in this browser session and is not stored.
+      </p>
+      <input type="password" id="apiKeyInput" placeholder="sk-..." autocomplete="off" />
+      <div class="api-actions">
+        <button id="apiSubmit">Continue</button>
+        <button id="apiSkip">Skip (Local Mode)</button>
       </div>
-
     </div>
-
   </div>
 
   <script src="scenes.js"></script>

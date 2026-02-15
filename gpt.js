@@ -24,6 +24,10 @@
   const DEFAULT_CHANNEL = "THOUGHTS";
   const EVENT_KIND = { LISTEN: "LISTEN", WHISPER: "WHISPER" };
 
+  // OpenAI (client-side key entry)
+  let userApiKey = null;
+  let isGenerating = false;
+
   // -----------------------------
   // DOM
   // -----------------------------
@@ -42,6 +46,12 @@
   const elFocusOverlay = byId("focusOverlay");
   const elFocusImage = byId("focusImage");
   const elFocusMessage = byId("focusMessage");
+
+  // API Key Modal
+  const elApiModal = byId("apiModal");
+  const elApiKeyInput = byId("apiKeyInput");
+  const btnApiSubmit = byId("apiSubmit");
+  const btnApiSkip = byId("apiSkip");
 
   // -----------------------------
   // ENGINE (scene state + rotation)
@@ -220,6 +230,28 @@
       showSelectPromptIfNeeded();
     });
 
+    // API key modal
+    btnApiSubmit.addEventListener("click", () => {
+      const val = String(elApiKeyInput.value || "").trim();
+      userApiKey = val || null;
+      elApiModal.classList.add("hidden");
+      elApiKeyInput.value = "";
+    });
+
+    btnApiSkip.addEventListener("click", () => {
+      userApiKey = null;
+      elApiModal.classList.add("hidden");
+      elApiKeyInput.value = "";
+    });
+
+    // Enter submits key
+    elApiKeyInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        btnApiSubmit.click();
+      }
+    });
+
     // Whisper button
     btnWhisperSend.addEventListener("click", onWhisperSend);
 
@@ -277,7 +309,7 @@
     else closeFocus();
 
     // Immediately "listen" => request monologue (stub now: local rotation)
-    requestMonologue({
+    void requestMonologue({
       characterId: id,
       channel: DEFAULT_CHANNEL,
       kind: EVENT_KIND.LISTEN,
@@ -301,7 +333,7 @@
     engine.recordWhisper(selectedId, whisper);
 
     // Stub behavior (A): rotate to a different monologue (same channel) and log WHISPER.
-    requestMonologue({
+    void requestMonologue({
       characterId: selectedId,
       channel: DEFAULT_CHANNEL,
       kind: EVENT_KIND.WHISPER,
@@ -312,13 +344,28 @@
     elWhisperInput.value = "";
   }
 
-  function requestMonologue({ characterId, channel, kind, whisperText }) {
-    // --- API-ready stubs ---
-    // In future:
-    //   const prompt = buildPromptContext({characterId, channel, whisperText});
-    //   const text = await openaiGenerate(prompt);
-    // For now: rotate local pool.
-    const text = engine.nextMonologue(characterId, channel, kind);
+  async function requestMonologue({ characterId, channel, kind, whisperText }) {
+    if (isGenerating) return;
+    isGenerating = true;
+
+    let text = "";
+
+    // Optional: quick UI feedback
+    // (don’t overwrite a good monologue; just show a brief marker)
+    setWorldtext("…", { mode: "baseline" });
+
+    try {
+      if (userApiKey) {
+        text = await generateFromOpenAI({ characterId, channel, whisperText });
+      } else {
+        text = engine.nextMonologue(characterId, channel, kind);
+      }
+    } catch (err) {
+      console.error("OpenAI generation failed; falling back to local.", err);
+      text = engine.nextMonologue(characterId, channel, kind);
+    } finally {
+      isGenerating = false;
+    }
 
     engine.newTrace({
       kind,
@@ -328,7 +375,7 @@
       text
     });
 
-    // Visual ripple (simple): on listen/whisper, ring the selected cell and neighbors
+    // Visual ripple: ring the selected cell and neighbors
     const sc = engine.getScene();
     const ch = sc.characters.find(c => c.id === characterId);
     if (ch) {
@@ -338,11 +385,8 @@
       });
     }
 
-    // Render worldtext + traces
     setWorldtext(text, { mode: "ripple" });
     renderReplay(engine.snapshot());
-
-    // Ensure grid selection highlight stays correct
     renderGrid(engine.snapshot());
     renderLinks(engine.snapshot());
   }
@@ -668,6 +712,123 @@
 
   function escapeRegExp(str) {
     return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  // -----------------------------
+  // OpenAI (Responses API)
+  // -----------------------------
+  async function generateFromOpenAI({ characterId, channel, whisperText }) {
+    const sc = engine.getScene();
+    const ch = sc.characters.find(c => c.id === characterId);
+
+    const sys = (sc.prompts && sc.prompts.system) ? sc.prompts.system :
+      "You write short interior monologues. Plain text only.";
+
+    const sceneFrame = (sc.prompts && sc.prompts.scene) ? sc.prompts.scene : (sc.meta?.baseline || "");
+    const whisperRule = (sc.prompts && sc.prompts.whisperRule) ? sc.prompts.whisperRule :
+      "If a whisper is present, it bends mood indirectly; do not answer it directly.";
+
+    const dossier = (ch && ch.dossier) ? ch.dossier : "";
+
+    const whisperClean = String(whisperText || "").trim();
+
+    const whisperImpact = whisperClean
+      ? [
+          "WHISPER IMPACT (MANDATORY):",
+          "- Do NOT quote the whisper and do NOT address the whisperer.",
+          "- Let the whisper noticeably bend the monologue’s mood and imagery.",
+          "- Incorporate ONE concrete image implied by the whisper (an object, place, bodily sensation, or sound).",
+          "- Make the final sentence carry an aftertaste of the whisper (unease, tenderness, recognition, dread, etc.).",
+          "- Keep it subtle but unmistakable: the reader should feel a shift compared to a non-whisper monologue.",
+          ""
+        ].join("\n")
+      : [
+          "(No whisper present.)",
+          ""
+        ].join("\n");
+
+    const userPrompt = [
+      "Generate an interior monologue.",
+      "Length: 75–100 words.",
+      "Present tense. First person.",
+      "Allusive, impressionistic, understated.",
+      "Plain text only.",
+      "",
+      "Hard constraints:",
+      "- No direct second-person reply to a whisper.",
+      "- No meta-talk (no mention of prompts, models, AI, system).",
+      "- No dialogue formatting; this is interior thought.",
+      "",
+      "Scene:",
+      sceneFrame,
+      "",
+      "Character:",
+      dossier,
+      "",
+      whisperRule,
+      "",
+      whisperImpact,
+      `Whisper (do not quote): ${whisperClean || "(none)"}`
+    ].join("\n");
+
+    const resp = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${userApiKey}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        input: [
+          { role: "system", content: sys },
+          { role: "user", content: userPrompt }
+        ],
+        // Keep tight: ~75–100 words
+        max_output_tokens: 160
+      })
+    });
+
+    if (!resp.ok) {
+      const errText = await safeReadText(resp);
+      throw new Error(`OpenAI HTTP ${resp.status}: ${errText}`);
+    }
+
+    const data = await resp.json();
+    const text = extractResponseText(data);
+    return postprocessMonologue(text);
+  }
+
+  function extractResponseText(data) {
+    // Responses API typically returns data.output[].content[].text
+    try {
+      const out = data && data.output;
+      if (Array.isArray(out)) {
+        for (const item of out) {
+          const content = item && item.content;
+          if (!Array.isArray(content)) continue;
+          for (const part of content) {
+            if (part && typeof part.text === "string" && part.text.trim()) {
+              return part.text;
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    // Fallbacks (defensive)
+    if (typeof data?.output_text === "string") return data.output_text;
+    return "(No text returned.)";
+  }
+
+  function postprocessMonologue(text) {
+    // Light cleanup only — keep it plain.
+    const t = String(text || "").trim();
+    // Remove surrounding quotes if the model adds them.
+    return t.replace(/^“|^"/, "").replace(/”$|"$/, "").trim();
+  }
+
+  async function safeReadText(resp) {
+    try { return await resp.text(); } catch (_) { return ""; }
   }
 
   // -----------------------------
