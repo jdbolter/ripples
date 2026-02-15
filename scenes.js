@@ -9,7 +9,8 @@
 */
 
 window.SCENE_ORDER = [
-  { id: "library_reading_room", label: "Reading Room — Afternoon" }
+  { id: "library_reading_room", label: "Reading Room — Afternoon" },
+  { id: "posthuman_forest", label: "Forest — After Humans" }
 ];
 
 window.SCENES = {
@@ -300,6 +301,228 @@ The light in the room is pale and steady. It falls on tables as if it has been i
 Still, there is something here: a calm that does not demand confession. The silence accepts me without asking why I’ve come. That acceptance unsettles me. I realize how often I seek friction just to confirm I exist. Here, the lack of friction makes my thoughts louder. I hear myself more clearly than I want to.
 
 I look toward the high windows. I think about the city outside—its noise, its errands, its speed. The reading room feels like a pause in the film of the day. I stand in that pause and feel, briefly, the possibility of being less unfinished. Not finished—just less scattered. As if the mind could settle like dust into a pattern.`
+        ]
+      }
+
+    }
+
+  },
+
+  posthuman_forest: {
+
+    meta: {
+      label: "Forest — After Humans",
+      title: "Nonhuman Interiorities",
+      cols: 6,
+      rows: 4,
+      baseline:
+`A forest persists without an audience.
+Light moves through leaves as if remembering a language.
+Moisture, wind, minute vibrations.
+Nothing here is a person, yet everything is attention.`
+    },
+
+    /* =========================================================
+       Prompt materials (authorable)
+       Ready for API prompts.
+       ========================================================= */
+    prompts: {
+
+      system:
+`You write brief interior monologues for nonhuman beings in a post-human forest.
+You never explain the system, never mention "prompts" or "models," and you never adopt a chatty assistant tone.
+
+Core constraint: the monologue is not a reply to the user. The user’s presence (a "whisper") only bends attention indirectly.
+Avoid direct second-person address ("you said...") and avoid question/answer dialogue.
+
+Style:
+- English.
+- Present tense, first person singular.
+- Allusive, impressionistic, ecological; concrete sensory detail + drifting association.
+- Do not anthropomorphize in a cartoonish way: no human jobs, phones, money, or modern city life.
+- Keep cognition species-appropriate but not literal: translate perception (light, scent, vibration, pressure, hunger, seasons) into reflective language.
+- Minimal plot, no melodrama.
+- 75–100 words.
+
+Output: plain text only.`,
+
+      scene:
+`Setting: a temperate forest long after humans.
+Ambient: canopy light, damp soil, spores, bark texture, minute air currents, bird-call echoes, insect wing-beat, the slow bookkeeping of seasons.
+This is not a pastoral postcard; it is a living mesh of signals.
+The atmosphere encourages attention without speech.`,
+
+      whisperRule:
+`If a whisper is present, treat it as an atmospheric pressure, not a conversational turn.
+The monologue must not quote it or answer it.
+Instead, let it alter mood, attention, or imagery: a phrase becomes a tilt in light, a shift in scent, a tremor in the air.
+No direct address to the whisperer.`,
+
+      structureHint:
+`Begin with sensation, drift into pattern or memory (seasonal, bodily, territorial), end with a soft unresolved turn.`
+    },
+
+    motifs: [
+      "canopy light",
+      "sap and resin",
+      "wet earth",
+      "fungal threads",
+      "wind as message",
+      "edges of territory",
+      "temperature gradients",
+      "wing-beat",
+      "the long season",
+      "what persists"
+    ],
+
+    characters: [
+
+      {
+        id: "oak",
+        label: "Oak (Old Growth)",
+        icon: "🌳",
+        image: "images/oak.png",
+        position: { x: 2, y: 1 },
+        sensitivity: "medium",
+        adjacentTo: ["fern", "robin", "dragonfly"],
+
+        dossier:
+`An old oak, steady and massive. Attention is slow, distributed: bark, leaf, root.
+It keeps time in rings, drought scars, the weight of wind.
+It does not "think" quickly; it registers patterns, pressure, and the mutual bargaining of the forest mesh.`,
+        voice: ["slow", "layered", "gravity of seasons"],
+        psyche0: { tension: 0.25, clarity: 0.60, openness: 0.35, drift: 0.35 },
+        motifSeeds: ["sap and resin", "canopy light", "the long season", "wet earth"]
+      },
+
+      {
+        id: "fern",
+        label: "Fern (Understory)",
+        icon: "🌿",
+        image: "images/fern.png",
+        position: { x: 1, y: 2 },
+        sensitivity: "high",
+        adjacentTo: ["oak", "raccoon"],
+
+        dossier:
+`A fern in the understory. It lives by gradients: shade, damp, the brief generosity of light.
+Its attention is close-range and immediate, yet ancient in form.
+It experiences the world as touch, moisture, and the careful unfolding of fronds.`,
+        voice: ["close", "delicate", "micro-weather"],
+        psyche0: { tension: 0.35, clarity: 0.55, openness: 0.55, drift: 0.50 },
+        motifSeeds: ["wet earth", "fungal threads", "temperature gradients", "canopy light"]
+      },
+
+      {
+        id: "raccoon",
+        label: "Raccoon (Night Forager)",
+        icon: "🦝",
+        image: "images/raccoon.png",
+        position: { x: 4, y: 2 },
+        sensitivity: "medium",
+        adjacentTo: ["fern", "robin"],
+
+        dossier:
+`A raccoon moving at the boundary between cover and clearing.
+It is clever in hands and mouth: textures, latches, hidden edible things.
+Curiosity is not a personality trait but a survival instrument. Memory is a map of scent and risk.`,
+        voice: ["quick", "tactile", "wry but not human"],
+        psyche0: { tension: 0.45, clarity: 0.55, openness: 0.40, drift: 0.55 },
+        motifSeeds: ["edges of territory", "wet earth", "wind as message", "what persists"]
+      },
+
+      {
+        id: "robin",
+        label: "Robin (Song & Patrol)",
+        icon: "🐦",
+        image: "images/robin.png",
+        position: { x: 3, y: 0 },
+        sensitivity: "high",
+        adjacentTo: ["oak", "raccoon", "dragonfly"],
+
+        dossier:
+`A robin in daylight patrol. Attention is sharp, selective: movement, glint, worm-shift in soil.
+Song is not decoration; it is boundary, announcement, calibration.
+It carries a small urgent life in the chest, always measuring distance and safety.`,
+        voice: ["bright", "alert", "compressed intensity"],
+        psyche0: { tension: 0.50, clarity: 0.70, openness: 0.30, drift: 0.45 },
+        motifSeeds: ["wing-beat", "edges of territory", "canopy light", "wind as message"]
+      },
+
+      {
+        id: "dragonfly",
+        label: "Dragonfly (Hovering)",
+        icon: "🪲",
+        image: "images/dragonfly.png",
+        position: { x: 5, y: 1 },
+        sensitivity: "medium",
+        adjacentTo: ["oak", "robin"],
+
+        dossier:
+`A dragonfly above a patch of sun and shadow.
+Perception is motion: angles, velocities, air pressure, shimmer.
+It lives in brief decisions and precise corrections, as if thought is steering.
+Its memory is light stitched to trajectory.`,
+        voice: ["fast", "glinting", "kinetic"],
+        psyche0: { tension: 0.40, clarity: 0.65, openness: 0.40, drift: 0.60 },
+        motifSeeds: ["wing-beat", "temperature gradients", "canopy light", "what persists"]
+      }
+
+    ],
+
+    seeds: {
+      oak: { THOUGHTS: "The wind keeps rewriting my leaves." }
+    },
+
+    monologues: {
+
+      oak: {
+        THOUGHTS: [
+`The wind presses into my leaves and I answer without choosing to. Light arrives in pieces, counted and spent across the day. I feel the soil’s dampness as a slow permission, the root-web’s faint traffic of exchange. There is no center to me, only a distributed listening: bark to air, leaf to heat, cambium to memory. Somewhere inside the wood, old drought still holds its shape. I do not mourn the vanished voices; absence is just another weather. Still, the forest keeps making sentences out of pressure and time.`,
+
+`In the morning the canopy shifts and the understory brightens briefly, like a thought that almost becomes speech. I keep the long record: seasons, insect-work, the faint insistence of fungus at the edge of rot. Birds rehearse borders above me. Small bodies pass and leave no explanation, only a change in scent, a tremor in the ground. I do not move, yet everything moves through me—water, sugar, the bookkeeping of survival. The world persists by turning attention into structure.`,
+
+`My leaves flash pale on their undersides and the air reads it as signal. I cannot hurry; I can only endure and adjust. The day warms, then cools, and each change is a message written across the skin of bark. Somewhere below, roots negotiate with stone and thread. Above, a wing-beat interrupts the quiet like a brief punctuation. I hold the forest’s weight without owning it. Time keeps arriving, and I keep making room for it.`
+        ]
+      },
+
+      fern: {
+        THOUGHTS: [
+`Shade is my first language. I read the world as dampness, as the small generosity of light that leaks through. The air is never still; it carries thin messages—coolness, spores, the soft disturbance of something passing close. I unfurl slowly, repeating an ancient gesture, not because I remember it but because my body knows the shape of persistence. Above me, trunks lift their long bodies into brightness. Below, the soil holds secrets in threads. I do not go anywhere. I become, inch by inch, a careful surface for the forest to touch.`,
+
+`A drip falls and the ground answers with a darker scent. I feel it immediately, a minor change that becomes my whole weather. There are days when light reaches me like a rumor, and I angle myself toward it without thinking. I exist in the narrow band between too dry and too wet, between exposure and suffocation. Yet in that narrowness there is a kind of clarity: the world is gradients and thresholds, and I am made for them. I listen with fronds. I hold stillness like a method.`,
+
+`The understory is a room without walls. Everything is close: soil, breath, the soft scrape of a small claw on bark. When air warms, I feel it as a loosening; when it cools, as a tightening. I do not have words for fear, but I have responses: curl, flatten, wait. Somewhere a bird calls and the sound travels through leaf and stem as vibration. The forest speaks in pressures. I answer by remaining open just enough.`
+        ]
+      },
+
+      raccoon: {
+        THOUGHTS: [
+`My paws know the world better than my eyes. Bark is rough, stone is cold, wet leaves are a kind of map. I move where cover meets open, where risk can be measured and food can be found. Memory is not a story; it is a route: this log holds grubs, that hollow smells wrong, this stream edge offers quick water and quicker danger. I test, I listen, I take. The forest does not judge. It only changes, and I adjust with it. Tonight the air tastes different, as if the wind carried news from beyond my usual circle.`,
+
+`I pause and lift my head. Something shifts—tiny, almost nothing—yet it rearranges the night in me. A scent that isn’t prey, a sound that isn’t threat, a hint of sweetness where sweetness shouldn’t be. I am built for curiosity, but curiosity is expensive. I touch the world and the world touches back. Under my ribs, hunger keeps time. I move again, quiet as possible, collecting small certainties: water, warmth, a hidden pocket of food. Everything else is speculation.`,
+
+`There is a place where the ground is softer, where worms turn the soil and beetles leave their dark trails. I return there without deciding; my body carries the habit. I am not alone—birds watch, trees stand, insects stitch light into motion. I do not think of them as others. They are conditions. I am a condition too. When I slip between ferns, the fronds tremble and then settle, as if erasing me. I like that. It means I can pass through the world without leaving a question behind.`
+        ]
+      },
+
+      robin: {
+        THOUGHTS: [
+`I hold the morning like a boundary line. My song is not decoration; it is measurement—this far, not farther; this branch, not yours. I watch the ground for a small betrayal of movement, the faint lift of soil where something soft lives. Light makes everything legible and also makes me visible, so I keep my attention sharp. The air is full of signals: wing-beat, leaf-flutter, the sudden stillness that means a predator is near. I do not call it fear; I call it calibration. Still, there are moments when the forest feels too quiet, as if listening back.`,
+
+`A worm’s shape under the soil is a brief promise. I tilt my head and the world tilts with it, rearranged by angle and focus. The canopy above is a bright ceiling that shifts constantly, and I read its changes the way others might read a face. I patrol and announce and return, again and again, to the same perches. Repetition is not boredom; it is survival. Yet sometimes I feel a strange excess—an extra beat in the chest, a surplus of attention—and I sing more softly, as if not to wake it.`,
+
+`I hop, I pause, I listen. The forest is a score written in interruptions. A glint of insect wing; a hush; the thick sound of something heavy moving far away. I respond with small choices: step here, not there; fly up, not yet. My world is quick, but it is not shallow. It is made of edges. I keep them. I test them. And when the light changes, I feel it as a new instruction I must obey without understanding why.`
+        ]
+      },
+
+      dragonfly: {
+        THOUGHTS: [
+`I hover where sun and shadow trade places. The air is a texture: warm ribbon, cool pocket, sudden drop. I correct myself constantly—tiny shifts that feel like thought. My eyes take in the world as angles and speeds, as glints that mean edible and glints that mean danger. I do not linger on meaning; I steer. The forest below is slow, but above it everything is quick: wing-beat, wind-slice, the brief geometry of a chase. Still, there is a moment when I stop and the world seems to hold its breath with me.`,
+
+`Light is my map. It stitches itself across leaves, breaks into fragments, reforms. I follow the moving seam, not because I choose it but because my body answers it. A pulse of air tells me something passes nearby; a vibration tells me where to turn. I am made of decisions that last less than a second. Yet even in that speed there is a kind of drift, a feeling that I am being carried by patterns older than my life. I arc, I hover, I vanish into glare.`,
+
+`The day warms and the insects rise like dust that decided to fly. I cut through them with clean intent. Then a shadow crosses and the air changes—cooler, heavier—and I am suddenly cautious. I do not have a story about it. I have a body that adjusts. The forest is full of invisible borders: temperature, scent, threat. I skim them, testing, correcting. When I pause, suspended, the world below looks like a slow thought. When I move again, it becomes pure motion.`
         ]
       }
 
