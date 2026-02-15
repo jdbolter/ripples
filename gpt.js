@@ -68,6 +68,107 @@
     const lastWhisper = {}; // lastWhisper[characterId] = string
     const whisperHistory = []; // {tick, characterId, text, time}
 
+    // Psychic drift state (persistent per character, per scene)
+    // Values are normalized to [0, 1]
+    const psyche = {}; // psyche[characterId] = { tension, clarity, openness, drift }
+
+    function initPsycheForScene() {
+      const sc = getScene();
+      for (const ch of (sc.characters || [])) {
+        const p0 = ch.psyche0 || {};
+        psyche[ch.id] = {
+          tension: clamp01(numOr(p0.tension, 0.35)),
+          clarity: clamp01(numOr(p0.clarity, 0.55)),
+          openness: clamp01(numOr(p0.openness, 0.40)),
+          drift: clamp01(numOr(p0.drift, 0.45))
+        };
+      }
+    }
+
+    function getPsyche(id) {
+      const p = psyche[id];
+      if (!p) return { tension: 0.35, clarity: 0.55, openness: 0.40, drift: 0.45 };
+      // return a copy
+      return { tension: p.tension, clarity: p.clarity, openness: p.openness, drift: p.drift };
+    }
+
+    function applyRipple({ sourceId, kind, whisperText }) {
+      const sc = getScene();
+      const src = sc.characters.find(c => c.id === sourceId);
+      if (!src) return;
+
+      // Ensure psyche exists
+      if (!psyche[sourceId]) initPsycheForScene();
+
+      // Compute delta for source
+      const delta = computeDelta(kind, whisperText);
+      applyDeltaTo(sourceId, delta, 1.0);
+
+      // Diffuse to adjacency list only (measurable but contained)
+      const nbs = (src.adjacentTo || []).slice();
+      for (const nbId of nbs) {
+        applyDeltaTo(nbId, delta, 0.45);
+      }
+
+      // Small stabilization: over time drift tends to rise slightly, clarity tends to fall slightly
+      // (kept subtle so the system doesn't run away)
+      for (const ch of (sc.characters || [])) {
+        if (!psyche[ch.id]) continue;
+        psyche[ch.id].drift = clamp01(psyche[ch.id].drift + 0.003);
+        psyche[ch.id].clarity = clamp01(psyche[ch.id].clarity - 0.001);
+      }
+    }
+
+    function computeDelta(kind, whisperText) {
+      // Baselines
+      let tension = 0;
+      let clarity = 0;
+      let openness = 0;
+      let drift = 0;
+
+      if (kind === EVENT_KIND.WHISPER) {
+        // Whisper is a strong perturbation
+        openness += 0.10;
+        drift += 0.08;
+        clarity -= 0.02;
+
+        // Very lightweight lexical valence heuristic
+        const w = String(whisperText || "").toLowerCase();
+        const neg = ["fear", "danger", "blood", "die", "dead", "dark", "cold", "threat", "loss", "gone", "alone", "unsafe", "panic"];
+        const pos = ["warm", "light", "forgive", "tender", "safe", "home", "quiet", "kind", "hold", "soft"];
+
+        if (neg.some(k => w.includes(k))) tension += 0.10;
+        if (pos.some(k => w.includes(k))) { tension -= 0.04; clarity += 0.02; openness += 0.03; }
+
+        // If whisper is very short, it can feel like a jab
+        if (w && w.length < 18) tension += 0.04;
+      } else {
+        // LISTEN is a lighter drift: attention opens slightly
+        openness += 0.03;
+        drift += 0.02;
+        clarity += 0.01;
+        tension -= 0.01;
+      }
+
+      return { tension, clarity, openness, drift };
+    }
+
+    function applyDeltaTo(id, delta, scale) {
+      if (!psyche[id]) return;
+      psyche[id].tension = clamp01(psyche[id].tension + delta.tension * scale);
+      psyche[id].clarity = clamp01(psyche[id].clarity + delta.clarity * scale);
+      psyche[id].openness = clamp01(psyche[id].openness + delta.openness * scale);
+      psyche[id].drift = clamp01(psyche[id].drift + delta.drift * scale);
+
+      // Couplings for realism
+      // Higher tension slightly reduces openness; higher drift slightly reduces clarity.
+      psyche[id].openness = clamp01(psyche[id].openness - 0.02 * psyche[id].tension);
+      psyche[id].clarity = clamp01(psyche[id].clarity - 0.03 * psyche[id].drift);
+    }
+
+    function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+    function numOr(v, d) { return (typeof v === "number" && Number.isFinite(v)) ? v : d; }
+
     // Traces
     let audit = [];
 
@@ -80,6 +181,8 @@
       for (const k of Object.keys(cursor)) delete cursor[k];
       for (const k of Object.keys(lastWhisper)) delete lastWhisper[k];
       whisperHistory.length = 0;
+      for (const k of Object.keys(psyche)) delete psyche[k];
+      initPsycheForScene();
       return snapshot({ worldtext: getScene().meta.baseline, mode: "baseline" });
     }
 
@@ -182,7 +285,9 @@
       newTrace,
       recordWhisper,
       getLastWhisper,
-      getWhisperHistory
+      getWhisperHistory,
+      getPsyche,
+      applyRipple
     };
   })();
 
@@ -353,6 +458,9 @@
     // Optional: quick UI feedback
     // (don’t overwrite a good monologue; just show a brief marker)
     setWorldtext("…", { mode: "baseline" });
+
+    // Update persistent psychic drift BEFORE generating text
+    engine.applyRipple({ sourceId: characterId, kind, whisperText });
 
     try {
       if (userApiKey) {
@@ -730,6 +838,24 @@
 
     const dossier = (ch && ch.dossier) ? ch.dossier : "";
 
+    const ps = engine.getPsyche(characterId);
+    const psycheBlock = [
+      "Current psychic state (0–1):",
+      `- tension: ${ps.tension.toFixed(2)}`,
+      `- clarity: ${ps.clarity.toFixed(2)}`,
+      `- openness: ${ps.openness.toFixed(2)}`,
+      `- drift: ${ps.drift.toFixed(2)}`
+    ].join("\n");
+
+    const stateStyleMap = [
+      "State-to-style mapping (follow):",
+      "- Higher tension => tighter, sharper imagery; slightly shorter sentences.",
+      "- Higher drift => more associative, wandering structure; softer transitions.",
+      "- Higher clarity => more concrete sensory detail and specificity.",
+      "- Higher openness => more permeability to atmosphere and others; gentler boundaries.",
+      "Do not mention these numbers explicitly."
+    ].join("\n");
+
     const whisperClean = String(whisperText || "").trim();
 
     const whisperImpact = whisperClean
@@ -764,6 +890,10 @@
       "",
       "Character:",
       dossier,
+      "",
+      psycheBlock,
+      "",
+      stateStyleMap,
       "",
       whisperRule,
       "",
