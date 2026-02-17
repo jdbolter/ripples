@@ -1,20 +1,27 @@
 /* gpt.js
    RIPPLES — End-User Interface (2-column layout)
-   New interaction model:
+
+   Interaction model:
    - Click a character => opens photo + immediately produces a monologue (DEFAULT channel)
-   - Whisper text + click Whisper => re-generates monologue (stub now: rotates to a different monologue)
-   - Traces log records both "LISTEN" and "WHISPER" events
-   - API-ready stubs: buildPromptContext() + requestMonologue() (local now, OpenAI later)
+   - Whisper text + click Whisper => re-generates monologue; whisper causes visible ripple
+   - Traces log records both "LISTEN" and "WHISPER" events + psyche snapshot per trace
+   - API mode: a SINGLE OpenAI call returns BOTH monologue + psyche delta (semantic)
+   - Local mode: deterministic monologue rotation + heuristic delta
 
    Depends on: scenes.js providing window.SCENES and window.SCENE_ORDER
    Requires index.html elements:
      #scenarioSelect, #grid, #linkLayer, #worldtext, #auditLog, #selectedPill
      #focusOverlay, #focusImage, #focusMessage
      #whisperInput, #whisperSend
+     #apiModal, #apiKeyInput, #apiSubmit, #apiSkip
 */
 
 (() => {
   "use strict";
+
+  // Build marker (helps confirm browser is loading this exact file)
+  const __RIPPLES_BUILD__ = "2026-02-17-fix-text.format.name";
+  console.log("[RIPPLES] gpt.js loaded", __RIPPLES_BUILD__);
 
   if (!window.SCENES || !window.SCENE_ORDER) {
     throw new Error("Missing SCENES/SCENE_ORDER. Ensure scenes.js is loaded before gpt.js.");
@@ -54,7 +61,7 @@
   const btnApiSkip = byId("apiSkip");
 
   // -----------------------------
-  // ENGINE (scene state + rotation)
+  // ENGINE (scene state + rotation + psyche)
   // -----------------------------
   const engine = (() => {
     let sceneId = window.SCENE_ORDER[0]?.id || Object.keys(window.SCENES)[0];
@@ -88,11 +95,10 @@
     function getPsyche(id) {
       const p = psyche[id];
       if (!p) return { tension: 0.35, clarity: 0.55, openness: 0.40, drift: 0.45 };
-      // return a copy
       return { tension: p.tension, clarity: p.clarity, openness: p.openness, drift: p.drift };
     }
 
-    function applyRipple({ sourceId, kind, whisperText }) {
+    function applyRipple({ sourceId, kind, whisperText, deltaOverride = null }) {
       const sc = getScene();
       const src = sc.characters.find(c => c.id === sourceId);
       if (!src) return;
@@ -100,8 +106,12 @@
       // Ensure psyche exists
       if (!psyche[sourceId]) initPsycheForScene();
 
-      // Compute delta for source
-      const delta = computeDelta(kind, whisperText);
+      // Compute delta for source (override wins)
+      const delta =
+        (deltaOverride && typeof deltaOverride === "object")
+          ? sanitizeDelta(deltaOverride)
+          : computeDelta(kind, whisperText);
+
       applyDeltaTo(sourceId, delta, 1.0);
 
       // Diffuse to adjacency list only (measurable but contained)
@@ -110,8 +120,7 @@
         applyDeltaTo(nbId, delta, 0.45);
       }
 
-      // Small stabilization: over time drift tends to rise slightly, clarity tends to fall slightly
-      // (kept subtle so the system doesn't run away)
+      // Small stabilization: drift rises slightly, clarity falls slightly (subtle)
       for (const ch of (sc.characters || [])) {
         if (!psyche[ch.id]) continue;
         psyche[ch.id].drift = clamp01(psyche[ch.id].drift + 0.003);
@@ -120,30 +129,34 @@
     }
 
     function computeDelta(kind, whisperText) {
-      // Baselines
       let tension = 0;
       let clarity = 0;
       let openness = 0;
       let drift = 0;
 
       if (kind === EVENT_KIND.WHISPER) {
-        // Whisper is a strong perturbation
         openness += 0.10;
         drift += 0.08;
         clarity -= 0.02;
 
-        // Very lightweight lexical valence heuristic
+        // Lightweight heuristic (LOCAL MODE / fallback only)
         const w = String(whisperText || "").toLowerCase();
-        const neg = ["fear", "danger", "blood", "die", "dead", "dark", "cold", "threat", "loss", "gone", "alone", "unsafe", "panic"];
-        const pos = ["warm", "light", "forgive", "tender", "safe", "home", "quiet", "kind", "hold", "soft"];
+
+        const neg = [
+          "fear","danger","blood","die","dead","dark","cold","threat","loss","gone","alone","unsafe","panic",
+          "sad","sorrow","grief","cry","tears","depressed","depress","misery","hopeless","lonely"
+        ];
+        const pos = [
+          "warm","light","forgive","tender","safe","home","quiet","kind","hold","soft",
+          "happy","joy","joyful","smile","glad","delight","hope","bright"
+        ];
 
         if (neg.some(k => w.includes(k))) tension += 0.10;
         if (pos.some(k => w.includes(k))) { tension -= 0.04; clarity += 0.02; openness += 0.03; }
 
-        // If whisper is very short, it can feel like a jab
         if (w && w.length < 18) tension += 0.04;
       } else {
-        // LISTEN is a lighter drift: attention opens slightly
+        // LISTEN is a lighter drift
         openness += 0.03;
         drift += 0.02;
         clarity += 0.01;
@@ -153,14 +166,26 @@
       return { tension, clarity, openness, drift };
     }
 
+    // IMPORTANT: Coerce numeric strings from the model ("0.06") into real numbers.
+    function sanitizeDelta(d) {
+      return {
+        tension: clampDelta(numCoerce(d?.tension, 0)),
+        clarity: clampDelta(numCoerce(d?.clarity, 0)),
+        openness: clampDelta(numCoerce(d?.openness, 0)),
+        drift: clampDelta(numCoerce(d?.drift, 0))
+      };
+    }
+    function clampDelta(x) { return Math.max(-0.20, Math.min(0.20, x)); }
+
     function applyDeltaTo(id, delta, scale) {
       if (!psyche[id]) return;
+
       psyche[id].tension = clamp01(psyche[id].tension + delta.tension * scale);
       psyche[id].clarity = clamp01(psyche[id].clarity + delta.clarity * scale);
       psyche[id].openness = clamp01(psyche[id].openness + delta.openness * scale);
       psyche[id].drift = clamp01(psyche[id].drift + delta.drift * scale);
 
-      // Couplings for realism
+      // Couplings for realism:
       // Higher tension slightly reduces openness; higher drift slightly reduces clarity.
       psyche[id].openness = clamp01(psyche[id].openness - 0.02 * psyche[id].tension);
       psyche[id].clarity = clamp01(psyche[id].clarity - 0.03 * psyche[id].drift);
@@ -168,6 +193,14 @@
 
     function clamp01(x) { return Math.max(0, Math.min(1, x)); }
     function numOr(v, d) { return (typeof v === "number" && Number.isFinite(v)) ? v : d; }
+    function numCoerce(v, fallback) {
+      if (typeof v === "number" && Number.isFinite(v)) return v;
+      if (typeof v === "string") {
+        const n = Number(v);
+        if (Number.isFinite(n)) return n;
+      }
+      return fallback;
+    }
 
     // Traces
     let audit = [];
@@ -215,7 +248,7 @@
       return whisperHistory.slice(-limit);
     }
 
-    function nextMonologue(characterId, channel, reason) {
+    function nextMonologue(characterId, channel) {
       const sc = getScene();
 
       const pool = sc.monologues?.[characterId]?.[channel];
@@ -228,10 +261,7 @@
       if (!cursor[characterId]) cursor[characterId] = {};
       const last = Number.isInteger(cursor[characterId][channel]) ? cursor[characterId][channel] : -1;
 
-      // A: rotate to a different monologue each time.
-      // For whisper, rotate forward; for listen, also rotate forward.
       const next = (last + 1) % pool.length;
-
       cursor[characterId][channel] = next;
       return pool[next];
     }
@@ -254,7 +284,8 @@
         characterLabel: label,
         channel,
         whisperText,
-        text
+        text,
+        psyche: getPsyche(characterId) // snapshot at time of trace
       };
 
       pushTrace(entry);
@@ -349,7 +380,6 @@
       elApiKeyInput.value = "";
     });
 
-    // Enter submits key
     elApiKeyInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -403,20 +433,17 @@
     const sc = engine.getScene();
     const ch = sc.characters.find(c => c.id === id);
 
-    // Update UI selection pill immediately
     elSelectedPill.textContent = (ch?.label || id || "NO CHARACTER").toUpperCase();
 
-    // Dismiss prompt (if present)
     if (focusMode === "prompt") closeFocus();
 
-    // Open photo AFTER a short delay so the ripple is visible beneath
+    // Open photo slightly delayed (aesthetic)
     if (ch?.image) {
       window.setTimeout(() => openFocusImage(ch.image, ch.label || ch.id), 220);
     } else {
       closeFocus();
     }
 
-    // Immediately "listen" => request monologue
     void requestMonologue({
       characterId: id,
       channel: DEFAULT_CHANNEL,
@@ -425,80 +452,85 @@
     });
   }
 
-function onWhisperSend() {
-  const selectedId = engine.getSelectedId();
-  if (!selectedId) {
-    openPrompt("Select a character");
-    return;
-  }
-
-  const whisper = String(elWhisperInput.value || "").trim();
-  if (!whisper) {
-    return;
-  }
-
-  engine.recordWhisper(selectedId, whisper);
-
-  // Begin generating new monologue (API or local)
-  void requestMonologue({
-    characterId: selectedId,
-    channel: DEFAULT_CHANNEL,
-    kind: EVENT_KIND.WHISPER,
-    whisperText: whisper
-  });
-
-  // -------------------------------------------------
-  // TEMPORARILY HIDE PHOTO → SHOW RIPPLE → RESTORE
-  // -------------------------------------------------
-
-  let restorePhoto = null;
-
-  if (focusMode === "photo") {
-    restorePhoto = {
-      src: elFocusImage.getAttribute("src"),
-      alt: elFocusImage.getAttribute("alt") || ""
-    };
-    closeFocus(); // reveal grid
-  }
-
-  // Trigger ripple after brief delay (so close animation starts)
-  window.setTimeout(() => {
-    flashRippleFor(selectedId);
-
-    // Restore photo after ripple animation completes
-    if (restorePhoto && restorePhoto.src) {
-      window.setTimeout(() => {
-        openFocusImage(restorePhoto.src, restorePhoto.alt);
-      }, 1900); // slightly longer than 900ms flash duration
+  function onWhisperSend() {
+    const selectedId = engine.getSelectedId();
+    if (!selectedId) {
+      openPrompt("Select a character");
+      return;
     }
 
-  }, 240);
+    const whisper = String(elWhisperInput.value || "").trim();
+    if (!whisper) return;
 
-  // Clear whisper field
+    engine.recordWhisper(selectedId, whisper);
+
+    // Begin generating new monologue (API or local)
+    void requestMonologue({
+      characterId: selectedId,
+      channel: DEFAULT_CHANNEL,
+      kind: EVENT_KIND.WHISPER,
+      whisperText: whisper
+    });
+
+    // TEMPORARILY HIDE PHOTO → SHOW RIPPLE → RESTORE (slow cinematic cycle)
+    let restorePhoto = null;
+
+    if (focusMode === "photo") {
+      restorePhoto = {
+        src: elFocusImage.getAttribute("src"),
+        alt: elFocusImage.getAttribute("alt") || ""
+      };
+      closeFocus();
+    }
+
+    window.setTimeout(() => {
+      flashRippleFor(selectedId);
+
+      if (restorePhoto && restorePhoto.src) {
+        window.setTimeout(() => {
+          openFocusImage(restorePhoto.src, restorePhoto.alt);
+        }, 1900);
+      }
+    }, 240);
+
     elWhisperInput.value = "";
-}
+  }
+
   async function requestMonologue({ characterId, channel, kind, whisperText }) {
     if (isGenerating) return;
     isGenerating = true;
 
     let text = "";
 
-    // Optional: quick UI feedback
-    // (don’t overwrite a good monologue; just show a brief marker)
     setWorldtext("…", { mode: "baseline" });
 
-    // Update persistent psychic drift BEFORE generating text
-    engine.applyRipple({ sourceId: characterId, kind, whisperText });
+    // Drift update strategy:
+    // - Local mode (no API): applyRipple BEFORE selecting from pool.
+    // - API mode + WHISPER: model returns a delta; applyRipple AFTER generation using that delta.
+    const useModelDelta = !!userApiKey && kind === EVENT_KIND.WHISPER;
+    if (!useModelDelta) {
+      engine.applyRipple({ sourceId: characterId, kind, whisperText });
+    }
 
     try {
       if (userApiKey) {
-        text = await generateFromOpenAI({ characterId, channel, whisperText });
+        const out = await generateFromOpenAI({ characterId, channel, whisperText, kind });
+        text = out.text;
+
+        if (useModelDelta && out.delta) {
+          engine.applyRipple({
+            sourceId: characterId,
+            kind,
+            whisperText,
+            deltaOverride: out.delta
+          });
+        }
       } else {
-        text = engine.nextMonologue(characterId, channel, kind);
+        text = engine.nextMonologue(characterId, channel);
       }
     } catch (err) {
       console.error("OpenAI generation failed; falling back to local.", err);
-      text = engine.nextMonologue(characterId, channel, kind);
+      text = engine.nextMonologue(characterId, channel);
     } finally {
       isGenerating = false;
     }
@@ -512,31 +544,10 @@ function onWhisperSend() {
     });
 
     setWorldtext(text, { mode: "ripple" });
-    renderReplay(engine.snapshot());
-    renderGrid(engine.snapshot());
-    renderLinks(engine.snapshot());
-  }
-
-  function buildPromptContext({ characterId, channel, whisperText }) {
-    // Placeholder for future OpenAI prompt construction.
-    // Keep this signature stable so API integration is drop-in.
-    const sc = engine.getScene();
-    const ch = sc.characters.find(c => c.id === characterId);
-
-    return {
-      scene: sc.meta,
-      baseline: sc.meta.baseline,
-      character: {
-        id: ch?.id,
-        label: ch?.label,
-        sensitivity: ch?.sensitivity,
-        adjacentTo: ch?.adjacentTo || []
-      },
-      channel,
-      lastWhisper: engine.getLastWhisper(characterId),
-      whisperText: whisperText || "",
-      recentWhispers: engine.getWhisperHistory(6)
-    };
+    const snap = engine.snapshot();
+    renderReplay(snap);
+    renderGrid(snap);
+    renderLinks(snap);
   }
 
   function cycleScene(dir) {
@@ -564,7 +575,6 @@ function onWhisperSend() {
   // Render
   // -----------------------------
   function render(snapshot, opts = {}) {
-    // Selection pill shows label if possible
     if (!snapshot.selection.characterId) {
       elSelectedPill.textContent = "NO CHARACTER";
     } else {
@@ -691,11 +701,14 @@ function onWhisperSend() {
       item.className = "audit-item";
 
       const tag = entry.kind === EVENT_KIND.WHISPER ? "WHISPER" : "LISTEN";
-      const tagClass = entry.kind === EVENT_KIND.WHISPER ? "fears" : "thoughts";
+      const ps = entry.psyche || engine.getPsyche(entry.characterId);
+      const psycheDebug = ps
+        ? ` t=${ps.tension.toFixed(2)} c=${ps.clarity.toFixed(2)} o=${ps.openness.toFixed(2)} d=${ps.drift.toFixed(2)}`
+        : "";
 
       item.innerHTML = `
         <div class="row" style="justify-content:space-between;">
-          <span><span class="k">${escapeHtml(tag)}</span> ${escapeHtml(entry.characterId)} </span>
+          <span><span class="k">${escapeHtml(tag)}</span> ${escapeHtml(entry.characterId)}${psycheDebug}</span>
           <span class="help" style="margin:0;">${escapeHtml(entry.time)}</span>
         </div>
       `;
@@ -716,7 +729,6 @@ function onWhisperSend() {
     const sc = engine.getScene();
     let html = escapeHtml(String(text));
 
-    // Make character ids/labels clickable
     const tokens = [];
     for (const ch of sc.characters) {
       if (ch.label) tokens.push({ key: ch.label, id: ch.id });
@@ -801,7 +813,6 @@ function onWhisperSend() {
   // -----------------------------
   // Visual ripple only
   // -----------------------------
-
   function flashRippleFor(characterId) {
     const sc = engine.getScene();
     const ch = sc.characters.find(c => c.id === characterId);
@@ -815,10 +826,8 @@ function onWhisperSend() {
       }, 1600);
     }
 
-    // Selected character
     rippleAtCharacter(ch.id, "thoughts", 1.0);
 
-    // Adjacent characters
     (ch.adjacentTo || []).forEach((nbId, i) => {
       window.setTimeout(() => rippleAtCharacter(nbId, "thoughts", 0.55), 180 + i * 110);
     });
@@ -864,14 +873,17 @@ function onWhisperSend() {
   }
 
   // -----------------------------
-  // OpenAI (Responses API)
+  // OpenAI (Responses API) — single call returns {monologue, delta}
+  //
+  // CRITICAL FIX FOR YOUR 400:
+  // `name` must be at text.format.name (NOT inside a json_schema wrapper).
   // -----------------------------
-  async function generateFromOpenAI({ characterId, channel, whisperText }) {
+  async function generateFromOpenAI({ characterId, channel, whisperText, kind }) {
     const sc = engine.getScene();
     const ch = sc.characters.find(c => c.id === characterId);
 
     const sys = (sc.prompts && sc.prompts.system) ? sc.prompts.system :
-      "You write short interior monologues. Plain text only.";
+      "You write short interior monologues.";
 
     const sceneFrame = (sc.prompts && sc.prompts.scene) ? sc.prompts.scene : (sc.meta?.baseline || "");
     const whisperRule = (sc.prompts && sc.prompts.whisperRule) ? sc.prompts.whisperRule :
@@ -904,9 +916,9 @@ function onWhisperSend() {
           "WHISPER IMPACT (MANDATORY):",
           "- Do NOT quote the whisper and do NOT address the whisperer.",
           "- Let the whisper noticeably bend the monologue’s mood and imagery.",
-          "- Incorporate ONE concrete image implied by the whisper (an object, place, bodily sensation, or sound).",
+          "- Incorporate ONE concrete image implied by the whisper (object/place/bodily sensation/sound).",
           "- Make the final sentence carry an aftertaste of the whisper (unease, tenderness, recognition, dread, etc.).",
-          "- Keep it subtle but unmistakable: the reader should feel a shift compared to a non-whisper monologue.",
+          "- Keep it subtle but unmistakable.",
           ""
         ].join("\n")
       : [
@@ -919,8 +931,10 @@ function onWhisperSend() {
       "Length: 75–100 words.",
       "Present tense. First person.",
       "Allusive, impressionistic, understated.",
-      "Plain text only.",
-      "",
+      "Do not rely on dust, light, shadow, air, or silence as primary imagery.",
+      "Introduce at least one new concrete sensory anchor.",
+      "Output must be JSON only (no markdown, no extra text).",
+      "Avoid repeating imagery or nouns from recent monologues.",
       "Hard constraints:",
       "- No direct second-person reply to a whisper.",
       "- No meta-talk (no mention of prompts, models, AI, system).",
@@ -939,8 +953,60 @@ function onWhisperSend() {
       whisperRule,
       "",
       whisperImpact,
-      `Whisper (do not quote): ${whisperClean || "(none)"}`
+      `Whisper (do not quote): ${whisperClean || "(none)"}`,
+      "",
+      "Return JSON with:",
+      "- monologue: string (75–100 words)",
+      "- delta: object with numeric fields tension, clarity, openness, drift (each in [-0.15, 0.15])",
+      "Delta semantics:",
+      "- Interpret the whisper holistically (meaning, tone, implication), not keywords.",
+      "- The delta represents how the whisper alters the character’s internal state.",
+      "- Keep deltas modest; do not jump to extremes.",
+      "- If whisper is empty/none, delta should be near 0."
     ].join("\n");
+
+    const requestPayload = {
+      model: "gpt-4.1-mini",
+      input: [
+        { role: "system", content: sys },
+        { role: "user", content: userPrompt }
+      ],
+
+      // ✅ Correct structured output shape for Responses:
+      //    name is directly under format (text.format.name)
+      text: {
+        format: {
+          type: "json_schema",
+          name: "ripples_monologue",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            required: ["monologue", "delta"],
+            properties: {
+              monologue: { type: "string" },
+              delta: {
+                type: "object",
+                additionalProperties: false,
+                required: ["tension", "clarity", "openness", "drift"],
+                properties: {
+                  tension: { type: "number" },
+                  clarity: { type: "number" },
+                  openness: { type: "number" },
+                  drift: { type: "number" }
+                }
+              }
+            }
+          }
+        }
+      },
+
+      max_output_tokens: 240
+    };
+
+    // Debug: inspect in DevTools
+    window.__lastOpenAIRequest = requestPayload;
+    console.log("[RIPPLES] sending request text.format", requestPayload?.text?.format);
 
     const resp = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -948,15 +1014,7 @@ function onWhisperSend() {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${userApiKey}`
       },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        input: [
-          { role: "system", content: sys },
-          { role: "user", content: userPrompt }
-        ],
-        // Keep tight: ~75–100 words
-        max_output_tokens: 160
-      })
+      body: JSON.stringify(requestPayload)
     });
 
     if (!resp.ok) {
@@ -965,12 +1023,18 @@ function onWhisperSend() {
     }
 
     const data = await resp.json();
-    const text = extractResponseText(data);
-    return postprocessMonologue(text);
+    window.__lastOpenAIResponse = data; // Debug: inspect raw response
+    const payload = extractResponseJson(data);
+
+    const monologue = postprocessMonologue(payload?.monologue);
+    const delta = payload?.delta || null;
+
+    return { text: monologue, delta };
   }
 
-  function extractResponseText(data) {
-    // Responses API typically returns data.output[].content[].text
+  function extractResponseJson(data) {
+    const candidates = [];
+
     try {
       const out = data && data.output;
       if (Array.isArray(out)) {
@@ -978,23 +1042,35 @@ function onWhisperSend() {
           const content = item && item.content;
           if (!Array.isArray(content)) continue;
           for (const part of content) {
+            // Responses commonly use {type:"output_text", text:"..."}
             if (part && typeof part.text === "string" && part.text.trim()) {
-              return part.text;
+              candidates.push(part.text.trim());
             }
           }
         }
       }
     } catch (_) {}
 
-    // Fallbacks (defensive)
-    if (typeof data?.output_text === "string") return data.output_text;
-    return "(No text returned.)";
+    if (typeof data?.output_text === "string" && data.output_text.trim()) {
+      candidates.push(data.output_text.trim());
+    }
+
+    for (const s of candidates) {
+      const txt = s.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+      try {
+        const obj = JSON.parse(txt);
+        if (obj && typeof obj === "object") return obj;
+      } catch (_) {}
+    }
+
+    return {
+      monologue: "(No JSON returned.)",
+      delta: { tension: 0, clarity: 0, openness: 0, drift: 0 }
+    };
   }
 
   function postprocessMonologue(text) {
-    // Light cleanup only — keep it plain.
     const t = String(text || "").trim();
-    // Remove surrounding quotes if the model adds them.
     return t.replace(/^“|^"/, "").replace(/”$|"$/, "").trim();
   }
 
