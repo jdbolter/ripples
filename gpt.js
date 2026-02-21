@@ -1028,6 +1028,8 @@
   async function generateFromOpenAI({ characterId, channel, whisperText, kind }) {
     const sc = engine.getScene();
     const ch = sc.characters.find(c => c.id === characterId);
+    const sceneLabel = String(sc?.meta?.label || "");
+    const isPosthuman = /forest|post[- ]?human/i.test(sceneLabel);
 
     const sys = (sc.prompts && sc.prompts.system) ? sc.prompts.system :
       "You write short interior monologues.";
@@ -1076,19 +1078,27 @@
           ""
         ].join("\n");
 
+    const concernConstraint = isPosthuman
+      ? "- Include one immediate embodied concern (shelter, hunger, injury risk, weather, territory, energy, predation, mating pressure, seasonal survival)."
+      : "- Include one immediate personal concern (status, work, money, health, aging, regret, belonging, obligation, reputation, deadline, body discomfort).";
+
     const userPrompt = [
       "Generate an interior monologue.",
       "Length: 75–100 words.",
       "Present tense. First person.",
-      "Allusive, impressionistic, understated.",
+      "Grounded and immediate with a light allusive layer.",
+      "Prioritize concrete stakes over decorative abstraction.",
+      "At most ONE sentence may lean strongly lyrical/metaphoric.",
       "Do not rely on dust, light, shadow, air, or silence as primary imagery.",
       "Introduce at least one new concrete sensory anchor.",
+      concernConstraint,
       "Output must be JSON only (no markdown, no extra text).",
       "Avoid repeating imagery or nouns from recent monologues.",
       "Hard constraints:",
       "- No direct second-person reply to a whisper.",
       "- No meta-talk (no mention of prompts, models, AI, system).",
       "- No dialogue formatting; this is interior thought.",
+      "- Include one sentence with plainspoken self-assessment or worry.",
       "",
       "Scene:",
       sceneFrame,

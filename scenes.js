@@ -47,7 +47,9 @@ Do not explicitly mention angels unless the scene prompt allows it. Keep it ambi
 Style:
 - English.
 - Present tense, first person singular.
-- Reflective, vague, allusive; concrete sensory detail + drifting association.
+- Grounded and immediate first; allusive second.
+- Keep language concrete and plainspoken, with occasional lyrical lift.
+- Include at least one immediate personal stake (status, work, health, debt, obligation, aging, belonging, regret).
 - Minimal plot, no sudden scene changes, no melodrama.
 - Subtle rhythmic line breaks are allowed; avoid heavy poetry formatting.
 - 120–200 words.
@@ -338,7 +340,9 @@ Avoid direct second-person address ("you said...") and avoid question/answer dia
 Style:
 - English.
 - Present tense, first person singular.
-- Allusive, impressionistic, ecological; concrete sensory detail + drifting association.
+- Grounded and immediate first; ecological allusiveness second.
+- Keep language concrete and plainspoken, with occasional lyrical lift.
+- Include at least one immediate embodied stake (energy, shelter, predation risk, weather pressure, injury, territory, seasonal timing).
 - Do not anthropomorphize in a cartoonish way: no human jobs, phones, money, or modern city life.
 - Keep cognition species-appropriate but not literal: translate perception (light, scent, vibration, pressure, hunger, seasons) into reflective language.
 - Minimal plot, no melodrama.
