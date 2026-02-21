@@ -107,7 +107,7 @@ No direct address to the whisperer.`,
 He moves carefully, conserving effort. His dignity is quiet, not performative.
 He is attentive to margins, to the evidence of other readers, to time passing through objects.`,
         voice: ["measured", "precise about sensation", "restrained tenderness"],
-        psyche0: { tension: 0.35, clarity: 0.55, openness: 0.30, drift: 0.40 },
+        psyche0: { arousal: 0.35, valence: 0.61, agency: 0.60, permeability: 0.30, coherence: 0.57 },
         motifSeeds: ["coat fabric", "margins", "names half-remembered", "pale light"]
       },
 
@@ -125,7 +125,7 @@ He is attentive to margins, to the evidence of other readers, to time passing th
 She is poised between ambition and fatigue, between choosing and postponing.
 She registers the room as a kind of mirror she tries not to look into.`,
         voice: ["quick internal pivots", "image-driven", "held breath"],
-        psyche0: { tension: 0.45, clarity: 0.65, openness: 0.55, drift: 0.50 },
+        psyche0: { arousal: 0.45, valence: 0.58, agency: 0.61, permeability: 0.55, coherence: 0.60 },
         motifSeeds: ["high windows", "pale light", "corridors", "future narrowing"]
       },
 
@@ -143,7 +143,7 @@ She registers the room as a kind of mirror she tries not to look into.`,
 He is hungry for mastery but embarrassed by his own hunger.
 He rehearses competence internally while feeling watched by the silence.`,
         voice: ["restless", "self-correcting", "spare humor that doesn’t land"],
-        psyche0: { tension: 0.55, clarity: 0.50, openness: 0.35, drift: 0.45 },
+        psyche0: { arousal: 0.55, valence: 0.49, agency: 0.48, permeability: 0.35, coherence: 0.52 },
         motifSeeds: ["notes", "measurement", "forgery among originals", "quiet rules"]
       },
 
@@ -161,7 +161,7 @@ He rehearses competence internally while feeling watched by the silence.`,
 Her attention is divided: she performs administrative calm while feeling a vague concern she won’t name.
 She protects the room’s silence but wonders what it costs.`,
         voice: ["observational", "architectural metaphors", "quiet unease"],
-        psyche0: { tension: 0.40, clarity: 0.70, openness: 0.25, drift: 0.35 },
+        psyche0: { arousal: 0.40, valence: 0.65, agency: 0.66, permeability: 0.25, coherence: 0.68 },
         motifSeeds: ["silence as architecture", "systems", "missing volume", "dust"]
       },
 
@@ -179,7 +179,7 @@ She protects the room’s silence but wonders what it costs.`,
 He carries a private shame or simply a private heaviness; it is hard to tell.
 The reading room feels like permission and danger at once.`,
         voice: ["plainspoken drift", "self-judging", "soft metaphysical recoil"],
-        psyche0: { tension: 0.50, clarity: 0.55, openness: 0.30, drift: 0.55 },
+        psyche0: { arousal: 0.50, valence: 0.51, agency: 0.53, permeability: 0.30, coherence: 0.52 },
         motifSeeds: ["thresholds", "coat and hat", "permission", "unfinished life"]
       }
 
@@ -391,7 +391,7 @@ No direct address to the whisperer.`,
 It keeps time in rings, drought scars, the weight of wind.
 It does not "think" quickly; it registers patterns, pressure, and the mutual bargaining of the forest mesh.`,
         voice: ["slow", "layered", "gravity of seasons"],
-        psyche0: { tension: 0.25, clarity: 0.60, openness: 0.35, drift: 0.35 },
+        psyche0: { arousal: 0.25, valence: 0.68, agency: 0.67, permeability: 0.35, coherence: 0.62 },
         motifSeeds: ["sap and resin", "canopy light", "the long season", "wet earth"]
       },
 
@@ -409,7 +409,7 @@ It does not "think" quickly; it registers patterns, pressure, and the mutual bar
 Its attention is close-range and immediate, yet ancient in form.
 It experiences the world as touch, moisture, and the careful unfolding of fronds.`,
         voice: ["close", "delicate", "micro-weather"],
-        psyche0: { tension: 0.35, clarity: 0.55, openness: 0.55, drift: 0.50 },
+        psyche0: { arousal: 0.35, valence: 0.59, agency: 0.60, permeability: 0.55, coherence: 0.53 },
         motifSeeds: ["wet earth", "fungal threads", "temperature gradients", "canopy light"]
       },
 
@@ -427,7 +427,7 @@ It experiences the world as touch, moisture, and the careful unfolding of fronds
 It is clever in hands and mouth: textures, latches, hidden edible things.
 Curiosity is not a personality trait but a survival instrument. Memory is a map of scent and risk.`,
         voice: ["quick", "tactile", "wry but not human"],
-        psyche0: { tension: 0.45, clarity: 0.55, openness: 0.40, drift: 0.55 },
+        psyche0: { arousal: 0.45, valence: 0.53, agency: 0.55, permeability: 0.40, coherence: 0.52 },
         motifSeeds: ["edges of territory", "wet earth", "wind as message", "what persists"]
       },
 
@@ -445,7 +445,7 @@ Curiosity is not a personality trait but a survival instrument. Memory is a map 
 Song is not decoration; it is boundary, announcement, calibration.
 It carries a small urgent life in the chest, always measuring distance and safety.`,
         voice: ["bright", "alert", "compressed intensity"],
-        psyche0: { tension: 0.50, clarity: 0.70, openness: 0.30, drift: 0.45 },
+        psyche0: { arousal: 0.50, valence: 0.58, agency: 0.61, permeability: 0.30, coherence: 0.65 },
         motifSeeds: ["wing-beat", "edges of territory", "canopy light", "wind as message"]
       },
 
@@ -464,7 +464,7 @@ Perception is motion: angles, velocities, air pressure, shimmer.
 It lives in brief decisions and precise corrections, as if thought is steering.
 Its memory is light stitched to trajectory.`,
         voice: ["fast", "glinting", "kinetic"],
-        psyche0: { tension: 0.40, clarity: 0.65, openness: 0.40, drift: 0.60 },
+        psyche0: { arousal: 0.40, valence: 0.58, agency: 0.63, permeability: 0.40, coherence: 0.56 },
         motifSeeds: ["wing-beat", "temperature gradients", "canopy light", "what persists"]
       }
 

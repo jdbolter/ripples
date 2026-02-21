@@ -27,23 +27,26 @@ API Mode (OpenAI Responses API)
 
 	2.	Core State Model
 
-Each character has a persistent psyche vector with four normalized values between 0 and 1:
+Each character has a persistent psyche vector with five normalized values between 0 and 1:
 
-tension
-clarity
-openness
-drift
+arousal
+valence
+agency
+permeability
+coherence
 
-These values represent internal affective conditions and influence how monologues are generated.
+These values represent complementary dimensions of internal state and influence monologue style.
 
 The psyche is:
 	•	Persistent within a scene
 	•	Reset when the scene changes
-	•	Modified by whispers
+	•	Modified by whispers/listens
 	•	Diffused via adjacency
 	•	Clamped to prevent runaway escalation
 
-This creates a bounded dynamical system.
+Backward compatibility:
+	•	Legacy 4D seeds (`tension`, `clarity`, `openness`, `drift`) are still accepted.
+	•	`gpt.js` migrates legacy shape into the 5D model at load time.
 
 ⸻
 
@@ -51,18 +54,23 @@ This creates a bounded dynamical system.
 
 When a whisper occurs and API mode is active, the model returns structured JSON containing:
 	•	A monologue string
-	•	A delta object with numeric adjustments to tension, clarity, openness, and drift
+	•	A delta object with numeric adjustments to arousal, valence, agency, permeability, coherence
 
-Each delta value is constrained to a small range (approximately −0.15 to +0.15).
+Per-axis delta bounds are intentionally uneven:
+	•	arousal: ±0.15
+	•	valence: ±0.12
+	•	agency: ±0.10
+	•	permeability: ±0.15
+	•	coherence: ±0.10
 
 Processing sequence:
 	1.	Delta values are coerced to numbers.
-	2.	Values are clamped to a maximum magnitude (±0.20).
+	2.	Values are clamped to axis-specific magnitudes.
 	3.	Delta is applied to the source character’s psyche.
-	4.	Delta is attenuated and applied to adjacent characters.
+	4.	Delta is attenuated and applied to adjacent characters (axis-specific attenuation).
 	5.	All resulting psyche values are clamped to the 0–1 range.
 
-This ensures stability and prevents chaotic divergence.
+This ensures stability while preserving immediate local shifts.
 
 ⸻
 
@@ -73,13 +81,16 @@ Ripples propagate according to adjacency relationships defined in scenes.js.
 The diffusion model is:
 
 Source character receives full delta.
-Adjacent characters receive attenuated delta.
+Adjacent characters receive attenuated delta, with stronger spread in arousal/permeability and weaker spread in agency/coherence.
 
-A small stabilization drift is applied globally after each event:
-	•	drift slightly increases
-	•	clarity slightly decreases
+High-immediacy profile:
+	•	Source shifts are intentionally stronger and quickly visible in style.
+	•	Global stabilization is light (small arousal decrease + small coherence recovery).
+	•	This keeps whisper impact legible before slow settling.
 
-This produces slow atmospheric change over time.
+Runtime switch:
+	•	`gpt.js` exposes a single `DYNAMICS_MODE` config (`"high"` or `"subtle"`).
+	•	The mode controls diffusion strength, stabilization, local fallback deltas, and prompt steering.
 
 No global broadcast diffusion is currently implemented beyond adjacency.
 
@@ -101,6 +112,7 @@ The model is instructed to:
 	•	Avoid direct second-person reply
 	•	Avoid meta-commentary
 	•	Express psychic state indirectly through style
+	•	Make whisper bends noticeable in high-immediacy mode
 	•	Return structured JSON only
 
 The schema enforces the presence of both monologue and delta fields.
@@ -119,7 +131,7 @@ strict = true
 
 The schema requires:
 	•	monologue (string)
-	•	delta (object containing tension, clarity, openness, drift as numbers)
+	•	delta (object containing arousal, valence, agency, permeability, coherence as numbers)
 
 If the API call fails or structured output is invalid, the system falls back to local mode.
 
@@ -132,7 +144,7 @@ If no API key is provided:
 	•	Delta values are estimated using lightweight keyword heuristics.
 	•	The diffusion and rendering systems remain identical.
 
-This guarantees that the simulation remains functional offline.
+Local heuristics also target the same 5D state shape, so behavior is consistent across modes.
 
 ⸻
 
@@ -158,7 +170,7 @@ The visual interface encodes system structure:
 	•	SVG lines represent adjacency.
 	•	Ripple animations represent diffusion.
 	•	Focus overlay provides immersive character view.
-	•	Trace panel logs events and psyche values.
+	•	Trace panel logs events and psyche snapshots.
 
 The UI is intentionally restrained and atmospheric.
 
@@ -168,11 +180,11 @@ The UI is intentionally restrained and atmospheric.
 
 The system is mathematically bounded:
 	•	Psyche values remain in 0–1 range.
-	•	Deltas are constrained.
+	•	Deltas are constrained by axis-specific limits.
 	•	No runaway escalation occurs.
-	•	Cumulative drift is gradual and legible.
+	•	Light stabilization prevents drift collapse.
 
-This makes Ripples a stable small-scale dynamical aesthetic system.
+This makes Ripples a stable small-scale dynamical aesthetic system with stronger short-term response.
 
 ⸻
 
@@ -195,6 +207,7 @@ Language functions as disturbance rather than exchange.
 	12.	Extension Possibilities
 
 Future expansions may include:
+	•	Mode toggles (high-immediacy vs subtle)
 	•	Multi-whisper memory compression
 	•	Scene-level global mood vectors
 	•	Threshold-triggered stylistic phase shifts
@@ -218,4 +231,4 @@ Ripples can be understood as:
 It treats interior life as atmosphere rather than conversation.
 
 The user perturbs the system.
-The system absorbs and drifts.
+The system absorbs, bends, and settles.

@@ -8,7 +8,7 @@ When one character thinks—or when a user “whispers” to them—their intern
 That shift diffuses outward to adjacent entities as a measurable psychic ripple.
 
 The result is not dialogue but atmosphere:  
-a cumulative field of interior drift.
+a cumulative field of interior modulation.
 
 ---
 
@@ -22,10 +22,11 @@ Ripples is built around three principles:
 
 Each character has a bounded internal state:
 
-- `tension`
-- `clarity`
-- `openness`
-- `drift`
+- `arousal`
+- `valence`
+- `agency`
+- `permeability`
+- `coherence`
 
 All values are normalized between 0 and 1.
 
@@ -34,6 +35,9 @@ When a whisper occurs, it produces a semantic delta that modifies that state.
 That delta diffuses to adjacent characters in attenuated form.
 
 The scene becomes a small dynamical system.
+
+Backward compatibility note:
+- Legacy scene seeds using `tension`, `clarity`, `openness`, `drift` are auto-migrated at runtime.
 
 ---
 
@@ -51,6 +55,14 @@ If a valid OpenAI API key is entered:
   - a semantic `delta` to the psyche vector
 
 The delta is bounded and diffused across the scene.
+
+### Dynamics Mode
+`gpt.js` exposes a single switch:
+
+- `DYNAMICS_MODE = "high"`: stronger whisper impact, lighter stabilization
+- `DYNAMICS_MODE = "subtle"`: gentler whisper impact, stronger stabilization
+
+This mode affects diffusion strength, stabilization, local fallback deltas, and prompt steering.
 
 ---
 
@@ -112,7 +124,7 @@ Ripples is not a game and not a chatbot.
 It is a small dynamical system in which language acts as a perturbation field.
 
 The model does not answer the user.
-It absorbs the whisper and drifts.
+It absorbs the whisper and settles.
 
 Interior life is treated as atmosphere rather than conversation.
 

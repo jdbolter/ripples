@@ -20,7 +20,7 @@
   "use strict";
 
   // Build marker (helps confirm browser is loading this exact file)
-  const __RIPPLES_BUILD__ = "2026-02-17-fix-text.format.name";
+  const __RIPPLES_BUILD__ = "2026-02-21-psyche5-high-immediacy";
   console.log("[RIPPLES] gpt.js loaded", __RIPPLES_BUILD__);
 
   if (!window.SCENES || !window.SCENE_ORDER) {
@@ -30,6 +30,42 @@
   // Single implicit channel for now
   const DEFAULT_CHANNEL = "THOUGHTS";
   const EVENT_KIND = { LISTEN: "LISTEN", WHISPER: "WHISPER" };
+
+  // Single switch for system dynamics:
+  // - "high": stronger whisper impact, lighter stabilization
+  // - "subtle": gentler whisper impact, stronger settling
+  const DYNAMICS_MODE = "high"; // change to "subtle" to soften behavior
+  const DYNAMICS_PROFILES = {
+    high: {
+      neighborScale: {
+        arousal: 0.62,
+        valence: 0.45,
+        agency: 0.25,
+        permeability: 0.58,
+        coherence: 0.22
+      },
+      stabilization: { arousal: -0.0005, coherence: 0.0006 },
+      whisperBase: { arousal: 0.12, permeability: 0.10, coherence: -0.03 },
+      listenBase: { arousal: -0.01, valence: 0.01, agency: 0.005, permeability: 0.015, coherence: 0.01 },
+      promptLine: "- High-immediacy mode: after a whisper, make the tonal bend unmistakable within 1-2 sentences.",
+      deltaGuidance: "- In WHISPER events, prefer visible-but-bounded shifts over near-zero deltas."
+    },
+    subtle: {
+      neighborScale: {
+        arousal: 0.45,
+        valence: 0.35,
+        agency: 0.20,
+        permeability: 0.42,
+        coherence: 0.20
+      },
+      stabilization: { arousal: -0.0025, coherence: 0.0030 },
+      whisperBase: { arousal: 0.07, permeability: 0.06, coherence: -0.02 },
+      listenBase: { arousal: -0.015, valence: 0.012, agency: 0.008, permeability: 0.012, coherence: 0.013 },
+      promptLine: "- Subtle mode: let whispers bend tone gradually rather than sharply.",
+      deltaGuidance: "- In WHISPER events, keep shifts perceptible but restrained."
+    }
+  };
+  const DYNAMICS = DYNAMICS_PROFILES[DYNAMICS_MODE] || DYNAMICS_PROFILES.high;
 
   // OpenAI (client-side key entry)
   let userApiKey = null;
@@ -75,27 +111,28 @@
     const lastWhisper = {}; // lastWhisper[characterId] = string
     const whisperHistory = []; // {tick, characterId, text, time}
 
-    // Psychic drift state (persistent per character, per scene)
+    // Psychic state (persistent per character, per scene)
     // Values are normalized to [0, 1]
-    const psyche = {}; // psyche[characterId] = { tension, clarity, openness, drift }
+    const psyche = {}; // psyche[characterId] = { arousal, valence, agency, permeability, coherence }
 
     function initPsycheForScene() {
       const sc = getScene();
       for (const ch of (sc.characters || [])) {
-        const p0 = ch.psyche0 || {};
-        psyche[ch.id] = {
-          tension: clamp01(numOr(p0.tension, 0.35)),
-          clarity: clamp01(numOr(p0.clarity, 0.55)),
-          openness: clamp01(numOr(p0.openness, 0.40)),
-          drift: clamp01(numOr(p0.drift, 0.45))
-        };
+        const p0 = upgradeLegacyPsyche(ch.psyche0 || {});
+        psyche[ch.id] = normalizePsyche(p0);
       }
     }
 
     function getPsyche(id) {
       const p = psyche[id];
-      if (!p) return { tension: 0.35, clarity: 0.55, openness: 0.40, drift: 0.45 };
-      return { tension: p.tension, clarity: p.clarity, openness: p.openness, drift: p.drift };
+      if (!p) return defaultPsyche();
+      return {
+        arousal: p.arousal,
+        valence: p.valence,
+        agency: p.agency,
+        permeability: p.permeability,
+        coherence: p.coherence
+      };
     }
 
     function applyRipple({ sourceId, kind, whisperText, deltaOverride = null }) {
@@ -117,27 +154,28 @@
       // Diffuse to adjacency list only (measurable but contained)
       const nbs = (src.adjacentTo || []).slice();
       for (const nbId of nbs) {
-        applyDeltaTo(nbId, delta, 0.45);
+        applyDeltaTo(nbId, delta, DYNAMICS.neighborScale);
       }
 
-      // Small stabilization: drift rises slightly, clarity falls slightly (subtle)
+      // Global settling depends on active dynamics mode.
       for (const ch of (sc.characters || [])) {
         if (!psyche[ch.id]) continue;
-        psyche[ch.id].drift = clamp01(psyche[ch.id].drift + 0.003);
-        psyche[ch.id].clarity = clamp01(psyche[ch.id].clarity - 0.001);
+        psyche[ch.id].arousal = clamp01(psyche[ch.id].arousal + DYNAMICS.stabilization.arousal);
+        psyche[ch.id].coherence = clamp01(psyche[ch.id].coherence + DYNAMICS.stabilization.coherence);
       }
     }
 
     function computeDelta(kind, whisperText) {
-      let tension = 0;
-      let clarity = 0;
-      let openness = 0;
-      let drift = 0;
+      let arousal = 0;
+      let valence = 0;
+      let agency = 0;
+      let permeability = 0;
+      let coherence = 0;
 
       if (kind === EVENT_KIND.WHISPER) {
-        openness += 0.10;
-        drift += 0.08;
-        clarity -= 0.02;
+        arousal += DYNAMICS.whisperBase.arousal;
+        permeability += DYNAMICS.whisperBase.permeability;
+        coherence += DYNAMICS.whisperBase.coherence;
 
         // Lightweight heuristic (LOCAL MODE / fallback only)
         const w = String(whisperText || "").toLowerCase();
@@ -151,44 +189,153 @@
           "happy","joy","joyful","smile","glad","delight","hope","bright"
         ];
 
-        if (neg.some(k => w.includes(k))) tension += 0.10;
-        if (pos.some(k => w.includes(k))) { tension -= 0.04; clarity += 0.02; openness += 0.03; }
+        if (neg.some(k => w.includes(k))) {
+          arousal += 0.10;
+          valence -= 0.12;
+          agency -= 0.07;
+          coherence -= 0.05;
+        }
+        if (pos.some(k => w.includes(k))) {
+          arousal -= 0.05;
+          valence += 0.10;
+          agency += 0.06;
+          permeability += 0.03;
+          coherence += 0.04;
+        }
 
-        if (w && w.length < 18) tension += 0.04;
+        const urgent = ["now", "hurry", "must", "never", "don't", "dont", "stop", "run"];
+        if (urgent.some(k => w.includes(k))) {
+          arousal += 0.06;
+          agency -= 0.04;
+        }
+
+        const exclamations = (w.match(/!/g) || []).length;
+        if (exclamations > 0) {
+          arousal += Math.min(0.06, exclamations * 0.02);
+          coherence -= Math.min(0.04, exclamations * 0.015);
+        }
+
+        if (w && w.length < 18) {
+          arousal += 0.05;
+          coherence -= 0.02;
+        }
       } else {
-        // LISTEN is a lighter drift
-        openness += 0.03;
-        drift += 0.02;
-        clarity += 0.01;
-        tension -= 0.01;
+        // LISTEN recenters state based on active mode.
+        arousal += DYNAMICS.listenBase.arousal;
+        valence += DYNAMICS.listenBase.valence;
+        agency += DYNAMICS.listenBase.agency;
+        permeability += DYNAMICS.listenBase.permeability;
+        coherence += DYNAMICS.listenBase.coherence;
       }
 
-      return { tension, clarity, openness, drift };
+      return { arousal, valence, agency, permeability, coherence };
     }
 
     // IMPORTANT: Coerce numeric strings from the model ("0.06") into real numbers.
     function sanitizeDelta(d) {
+      const dd = mapLegacyDeltaShape(d);
       return {
-        tension: clampDelta(numCoerce(d?.tension, 0)),
-        clarity: clampDelta(numCoerce(d?.clarity, 0)),
-        openness: clampDelta(numCoerce(d?.openness, 0)),
-        drift: clampDelta(numCoerce(d?.drift, 0))
+        arousal: clampDelta("arousal", numCoerce(dd?.arousal, 0)),
+        valence: clampDelta("valence", numCoerce(dd?.valence, 0)),
+        agency: clampDelta("agency", numCoerce(dd?.agency, 0)),
+        permeability: clampDelta("permeability", numCoerce(dd?.permeability, 0)),
+        coherence: clampDelta("coherence", numCoerce(dd?.coherence, 0))
       };
     }
-    function clampDelta(x) { return Math.max(-0.20, Math.min(0.20, x)); }
+    function clampDelta(axis, x) {
+      const limits = {
+        arousal: 0.15,
+        valence: 0.12,
+        agency: 0.10,
+        permeability: 0.15,
+        coherence: 0.10
+      };
+      const lim = limits[axis] || 0.12;
+      return Math.max(-lim, Math.min(lim, x));
+    }
 
     function applyDeltaTo(id, delta, scale) {
       if (!psyche[id]) return;
 
-      psyche[id].tension = clamp01(psyche[id].tension + delta.tension * scale);
-      psyche[id].clarity = clamp01(psyche[id].clarity + delta.clarity * scale);
-      psyche[id].openness = clamp01(psyche[id].openness + delta.openness * scale);
-      psyche[id].drift = clamp01(psyche[id].drift + delta.drift * scale);
+      psyche[id].arousal = clamp01(psyche[id].arousal + delta.arousal * axisScale(scale, "arousal"));
+      psyche[id].valence = clamp01(psyche[id].valence + delta.valence * axisScale(scale, "valence"));
+      psyche[id].agency = clamp01(psyche[id].agency + delta.agency * axisScale(scale, "agency"));
+      psyche[id].permeability = clamp01(psyche[id].permeability + delta.permeability * axisScale(scale, "permeability"));
+      psyche[id].coherence = clamp01(psyche[id].coherence + delta.coherence * axisScale(scale, "coherence"));
 
-      // Couplings for realism:
-      // Higher tension slightly reduces openness; higher drift slightly reduces clarity.
-      psyche[id].openness = clamp01(psyche[id].openness - 0.02 * psyche[id].tension);
-      psyche[id].clarity = clamp01(psyche[id].clarity - 0.03 * psyche[id].drift);
+      // Cross-coupling keeps dynamics plausible while preserving immediacy.
+      psyche[id].coherence = clamp01(psyche[id].coherence - 0.015 * psyche[id].arousal + 0.010 * psyche[id].agency);
+      psyche[id].agency = clamp01(psyche[id].agency - 0.010 * psyche[id].arousal + 0.006 * psyche[id].coherence);
+      psyche[id].valence = clamp01(psyche[id].valence + 0.008 * (psyche[id].coherence - 0.5));
+    }
+
+    function axisScale(scale, axis) {
+      if (typeof scale === "number") return scale;
+      if (scale && typeof scale === "object") return numOr(scale[axis], 1);
+      return 1;
+    }
+
+    function defaultPsyche() {
+      return {
+        arousal: 0.35,
+        valence: 0.55,
+        agency: 0.55,
+        permeability: 0.40,
+        coherence: 0.55
+      };
+    }
+
+    function normalizePsyche(p) {
+      return {
+        arousal: clamp01(numOr(p.arousal, 0.35)),
+        valence: clamp01(numOr(p.valence, 0.55)),
+        agency: clamp01(numOr(p.agency, 0.55)),
+        permeability: clamp01(numOr(p.permeability, 0.40)),
+        coherence: clamp01(numOr(p.coherence, 0.55))
+      };
+    }
+
+    function upgradeLegacyPsyche(p0) {
+      const hasNewShape =
+        p0 && typeof p0 === "object" &&
+        ["arousal", "valence", "agency", "permeability", "coherence"].every((k) => k in p0);
+      if (hasNewShape) return p0;
+
+      const tension = clamp01(numOr(p0?.tension, 0.35));
+      const clarity = clamp01(numOr(p0?.clarity, 0.55));
+      const openness = clamp01(numOr(p0?.openness, 0.40));
+      const drift = clamp01(numOr(p0?.drift, 0.45));
+
+      return {
+        arousal: tension,
+        permeability: openness,
+        coherence: clamp01(0.65 * clarity + 0.35 * (1 - drift)),
+        agency: clamp01(0.55 * clarity + 0.45 * (1 - tension)),
+        valence: clamp01(0.5 + 0.35 * (clarity - 0.5) - 0.45 * (tension - 0.5) - 0.2 * (drift - 0.5))
+      };
+    }
+
+    function mapLegacyDeltaShape(d) {
+      const hasNew = d && typeof d === "object" &&
+        ["arousal", "valence", "agency", "permeability", "coherence"].some((k) => k in d);
+      if (hasNew) return d || {};
+
+      const hasLegacy = d && typeof d === "object" &&
+        ["tension", "clarity", "openness", "drift"].some((k) => k in d);
+      if (!hasLegacy) return d || {};
+
+      const tension = numCoerce(d.tension, 0);
+      const clarity = numCoerce(d.clarity, 0);
+      const openness = numCoerce(d.openness, 0);
+      const drift = numCoerce(d.drift, 0);
+
+      return {
+        arousal: tension,
+        permeability: openness,
+        coherence: 0.65 * clarity - 0.35 * drift,
+        agency: 0.55 * clarity - 0.45 * tension,
+        valence: 0.35 * clarity - 0.45 * tension - 0.2 * drift
+      };
     }
 
     function clamp01(x) { return Math.max(0, Math.min(1, x)); }
@@ -703,7 +850,7 @@
       const tag = entry.kind === EVENT_KIND.WHISPER ? "WHISPER" : "LISTEN";
       const ps = entry.psyche || engine.getPsyche(entry.characterId);
       const psycheDebug = ps
-        ? ` t=${ps.tension.toFixed(2)} c=${ps.clarity.toFixed(2)} o=${ps.openness.toFixed(2)} d=${ps.drift.toFixed(2)}`
+        ? ` ar=${ps.arousal.toFixed(2)} va=${ps.valence.toFixed(2)} ag=${ps.agency.toFixed(2)} pe=${ps.permeability.toFixed(2)} co=${ps.coherence.toFixed(2)}`
         : "";
 
       item.innerHTML = `
@@ -894,18 +1041,21 @@
     const ps = engine.getPsyche(characterId);
     const psycheBlock = [
       "Current psychic state (0–1):",
-      `- tension: ${ps.tension.toFixed(2)}`,
-      `- clarity: ${ps.clarity.toFixed(2)}`,
-      `- openness: ${ps.openness.toFixed(2)}`,
-      `- drift: ${ps.drift.toFixed(2)}`
+      `- arousal: ${ps.arousal.toFixed(2)}`,
+      `- valence: ${ps.valence.toFixed(2)}`,
+      `- agency: ${ps.agency.toFixed(2)}`,
+      `- permeability: ${ps.permeability.toFixed(2)}`,
+      `- coherence: ${ps.coherence.toFixed(2)}`
     ].join("\n");
 
     const stateStyleMap = [
       "State-to-style mapping (follow):",
-      "- Higher tension => tighter, sharper imagery; slightly shorter sentences.",
-      "- Higher drift => more associative, wandering structure; softer transitions.",
-      "- Higher clarity => more concrete sensory detail and specificity.",
-      "- Higher openness => more permeability to atmosphere and others; gentler boundaries.",
+      "- Higher arousal => more immediate pressure, urgency, and sharper cuts between images.",
+      "- Lower valence => darker interpretations and threat-biased framing of neutral details.",
+      "- Higher agency => firmer verbs, self-directed intention, less passivity.",
+      "- Higher permeability => stronger influence from surrounding atmosphere and others.",
+      "- Lower coherence => fragmented transitions, associative leaps, and unresolved turns.",
+      DYNAMICS.promptLine,
       "Do not mention these numbers explicitly."
     ].join("\n");
 
@@ -957,11 +1107,12 @@
       "",
       "Return JSON with:",
       "- monologue: string (75–100 words)",
-      "- delta: object with numeric fields tension, clarity, openness, drift (each in [-0.15, 0.15])",
+      "- delta: object with numeric fields arousal, valence, agency, permeability, coherence",
       "Delta semantics:",
       "- Interpret the whisper holistically (meaning, tone, implication), not keywords.",
       "- The delta represents how the whisper alters the character’s internal state.",
-      "- Keep deltas modest; do not jump to extremes.",
+      "- Range guidance: arousal/permeability in [-0.15,0.15], valence in [-0.12,0.12], agency/coherence in [-0.10,0.10].",
+      DYNAMICS.deltaGuidance,
       "- If whisper is empty/none, delta should be near 0."
     ].join("\n");
 
@@ -988,12 +1139,13 @@
               delta: {
                 type: "object",
                 additionalProperties: false,
-                required: ["tension", "clarity", "openness", "drift"],
+                required: ["arousal", "valence", "agency", "permeability", "coherence"],
                 properties: {
-                  tension: { type: "number" },
-                  clarity: { type: "number" },
-                  openness: { type: "number" },
-                  drift: { type: "number" }
+                  arousal: { type: "number" },
+                  valence: { type: "number" },
+                  agency: { type: "number" },
+                  permeability: { type: "number" },
+                  coherence: { type: "number" }
                 }
               }
             }
@@ -1065,7 +1217,7 @@
 
     return {
       monologue: "(No JSON returned.)",
-      delta: { tension: 0, clarity: 0, openness: 0, drift: 0 }
+      delta: { arousal: 0, valence: 0, agency: 0, permeability: 0, coherence: 0 }
     };
   }
 
