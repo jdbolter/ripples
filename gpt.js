@@ -1084,7 +1084,7 @@
 
     const userPrompt = [
       "Generate an interior monologue.",
-      "Length: 75–100 words.",
+      "Length: 50-75 words.",
       "Present tense. First person.",
       "Grounded and immediate with a light allusive layer.",
       "Prioritize concrete stakes over decorative abstraction.",
@@ -1116,7 +1116,7 @@
       `Whisper (do not quote): ${whisperClean || "(none)"}`,
       "",
       "Return JSON with:",
-      "- monologue: string (75–100 words)",
+      "- monologue: string (50-75 words)",
       "- delta: object with numeric fields arousal, valence, agency, permeability, coherence",
       "Delta semantics:",
       "- Interpret the whisper holistically (meaning, tone, implication), not keywords.",

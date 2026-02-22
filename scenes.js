@@ -346,7 +346,7 @@ Style:
 - Do not anthropomorphize in a cartoonish way: no human jobs, phones, money, or modern city life.
 - Keep cognition species-appropriate but not literal: translate perception (light, scent, vibration, pressure, hunger, seasons) into reflective language.
 - Minimal plot, no melodrama.
-- 75–100 words.
+- 50-75 words.
 
 Output: plain text only.`,
 
