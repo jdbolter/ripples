@@ -32,10 +32,25 @@
   const EVENT_KIND = { LISTEN: "LISTEN", WHISPER: "WHISPER" };
 
   // Single switch for system dynamics:
+  // - "intense": strongest whisper impact + wider propagation
   // - "high": stronger whisper impact, lighter stabilization
   // - "subtle": gentler whisper impact, stronger settling
-  const DYNAMICS_MODE = "high"; // change to "subtle" to soften behavior
+  const DYNAMICS_MODE = "intense"; // change to "high" or "subtle" to soften behavior
   const DYNAMICS_PROFILES = {
+    intense: {
+      neighborScale: {
+        arousal: 0.80,
+        valence: 0.58,
+        agency: 0.32,
+        permeability: 0.76,
+        coherence: 0.28
+      },
+      stabilization: { arousal: -0.0002, coherence: 0.0003 },
+      whisperBase: { arousal: 0.16, permeability: 0.14, coherence: -0.05 },
+      listenBase: { arousal: -0.008, valence: 0.010, agency: 0.004, permeability: 0.012, coherence: 0.008 },
+      promptLine: "- Intense mode: after a whisper, make the tonal bend immediate and dominant in the monologue.",
+      deltaGuidance: "- In WHISPER events, favor clear, upper-range-but-bounded shifts over mild deltas."
+    },
     high: {
       neighborScale: {
         arousal: 0.62,
@@ -1146,7 +1161,7 @@
     const userPrompt = [
       "Generate an interior monologue.",
       "Length: 50-75 words.",
-      "Present tense. First person.",
+      "First person. Follow scene-level tense guidance.",
       "Grounded and immediate with a light allusive layer.",
       "Prioritize concrete stakes over decorative abstraction.",
       "At most ONE sentence may lean strongly lyrical/metaphoric.",
@@ -1159,6 +1174,7 @@
       "- No direct second-person reply to a whisper.",
       "- No meta-talk (no mention of prompts, models, AI, system).",
       "- No dialogue formatting; this is interior thought.",
+      "- Include one brief memory reference (something that happened before now).",
       "- Include one sentence with plainspoken self-assessment or worry.",
       "",
       "Scene:",

@@ -108,7 +108,7 @@ Each OpenAI request includes:
 	•	Hard constraints requiring JSON output
 
 The model is instructed to:
-	•	Produce a 75–100 word interior monologue
+	•	Produce a 50–75 word interior monologue
 	•	Avoid direct second-person reply
 	•	Avoid meta-commentary
 	•	Express psychic state indirectly through style

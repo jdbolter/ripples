@@ -51,7 +51,7 @@ Psychic deltas are estimated heuristically.
 If a valid OpenAI API key is entered:
 
 - A single model call generates:
-  - a 75–100 word interior monologue
+  - a 50–75 word interior monologue
   - a semantic `delta` to the psyche vector
 
 The delta is bounded and diffused across the scene.
