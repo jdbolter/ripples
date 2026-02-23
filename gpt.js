@@ -93,8 +93,10 @@
   // API Key Modal
   const elApiModal = byId("apiModal");
   const elApiKeyInput = byId("apiKeyInput");
+  const elApiKeyStatus = byId("apiKeyStatus");
   const btnApiSubmit = byId("apiSubmit");
   const btnApiSkip = byId("apiSkip");
+  let isApiKeyChecking = false;
 
   // -----------------------------
   // ENGINE (scene state + rotation + psyche)
@@ -514,17 +516,35 @@
     });
 
     // API key modal
-    btnApiSubmit.addEventListener("click", () => {
+    btnApiSubmit.addEventListener("click", async () => {
+      if (isApiKeyChecking) return;
       const val = String(elApiKeyInput.value || "").trim();
-      userApiKey = val || null;
-      elApiModal.classList.add("hidden");
-      elApiKeyInput.value = "";
+      if (!val) {
+        setApiKeyStatus("Enter an API key or choose Skip.", true);
+        return;
+      }
+
+      setApiKeyChecking(true);
+      setApiKeyStatus("Validating key...", false);
+
+      try {
+        const ok = await validateApiKey(val);
+        if (!ok) return;
+
+        userApiKey = val;
+        elApiModal.classList.add("hidden");
+        elApiKeyInput.value = "";
+        setApiKeyStatus("", false);
+      } finally {
+        setApiKeyChecking(false);
+      }
     });
 
     btnApiSkip.addEventListener("click", () => {
       userApiKey = null;
       elApiModal.classList.add("hidden");
       elApiKeyInput.value = "";
+      setApiKeyStatus("", false);
     });
 
     elApiKeyInput.addEventListener("keydown", (e) => {
@@ -1017,6 +1037,47 @@
 
   function escapeRegExp(str) {
     return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function setApiKeyChecking(loading) {
+    isApiKeyChecking = !!loading;
+    btnApiSubmit.disabled = isApiKeyChecking;
+    btnApiSkip.disabled = isApiKeyChecking;
+    elApiKeyInput.disabled = isApiKeyChecking;
+  }
+
+  function setApiKeyStatus(message, isError) {
+    elApiKeyStatus.textContent = String(message || "");
+    elApiKeyStatus.classList.toggle("error", !!isError);
+  }
+
+  async function validateApiKey(key) {
+    try {
+      const resp = await fetch("https://api.openai.com/v1/models", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${key}`
+        }
+      });
+
+      if (resp.ok) return true;
+
+      if (resp.status === 401) {
+        setApiKeyStatus("Invalid API key. Please check it and try again.", true);
+        return false;
+      }
+
+      if (resp.status === 403) {
+        setApiKeyStatus("Key recognized but lacks permission for this project.", true);
+        return false;
+      }
+
+      setApiKeyStatus(`API check failed (${resp.status}). Try again or use Skip.`, true);
+      return false;
+    } catch (_) {
+      setApiKeyStatus("Could not validate key (network error). Try again.", true);
+      return false;
+    }
   }
 
   // -----------------------------
