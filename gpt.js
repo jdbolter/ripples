@@ -722,6 +722,7 @@
     const priorMonologueCount = engine.getMonologueCount(characterId);
     let text = "";
     let usedLocalPool = false;
+    let generatedFromApi = false;
 
     setWorldtext("…", { mode: "baseline" });
 
@@ -737,6 +738,7 @@
       if (userApiKey) {
         const out = await generateFromOpenAI({ characterId, channel, whisperText, kind });
         text = out.text;
+        generatedFromApi = true;
 
         if (useModelDelta && out.delta) {
           engine.applyRipple({
@@ -756,6 +758,12 @@
       usedLocalPool = true;
     } finally {
       isGenerating = false;
+    }
+
+    if (kind === EVENT_KIND.WHISPER && String(whisperText || "").trim()) {
+      text = enforceWhisperBend(text, whisperText, engine.getPsyche(characterId), {
+        strict: generatedFromApi
+      });
     }
 
     if (isTrainDelayScene(engine.getScene())) {
@@ -1194,6 +1202,7 @@
     ].join("\n");
 
     const whisperClean = String(whisperText || "").trim();
+    const whisperTone = classifyWhisperTone(whisperClean);
     const recentThoughts = engine.getRecentMonologues(characterId, 3);
     const priorMonologueCount = engine.getMonologueCount(characterId);
     const disclosurePhase =
@@ -1277,16 +1286,49 @@
       ? [
           "WHISPER IMPACT (MANDATORY):",
           "- Do NOT quote the whisper and do NOT address the whisperer.",
-          "- Let the whisper noticeably bend the monologue’s mood and imagery.",
+          "- Let the whisper clearly bend mood and imagery.",
+          "- The bend must be visible in the opening clause and still present at the end.",
+          "- Include one concrete bodily response influenced by the whisper.",
           "- Incorporate ONE concrete image implied by the whisper (object/place/bodily sensation/sound).",
-          "- Make the final sentence carry an aftertaste of the whisper (unease, tenderness, recognition, dread, etc.).",
-          "- Keep it subtle but unmistakable.",
+          "- If the whisper is repetitive, echo a sense of repetition rhythm without quoting it.",
+          "- Keep it human and plausible, but not faint.",
           ""
         ].join("\n")
       : [
           "(No whisper present.)",
           ""
         ].join("\n");
+
+    const whisperSpecificBlock = whisperClean
+      ? whisperTone.tone === "calm"
+        ? [
+            "Whisper-specific rule:",
+            "- Because this whisper is calming, include a concrete de-escalation attempt (breath, jaw, shoulders, pulse, or pacing).",
+            "- If calming fails, show the failure in concrete body language."
+          ].join("\n")
+        : whisperTone.tone === "urgent"
+          ? [
+              "Whisper-specific rule:",
+              "- Because this whisper is urgent, show immediate compression of timing and decisions.",
+              "- Include one body signal of urgency (pulse, breath rate, muscle tension, or narrowed attention)."
+            ].join("\n")
+          : whisperTone.tone === "threat"
+            ? [
+                "Whisper-specific rule:",
+                "- Because this whisper is threatening, show vigilance/risk-scanning in concrete terms.",
+                "- Include one protective or avoidant micro-action."
+              ].join("\n")
+            : whisperTone.tone === "tender"
+              ? [
+                  "Whisper-specific rule:",
+                  "- Because this whisper is tender, show softening without sentimentality.",
+                  "- Include one concrete memory or body shift tied to that softening."
+                ].join("\n")
+              : [
+                  "Whisper-specific rule:",
+                  "- Show a concrete cognitive or bodily aftereffect of the whisper."
+                ].join("\n")
+      : "No whisper-specific rule.";
 
     const concernConstraint = isPosthuman
       ? "- Include one immediate embodied concern (shelter, hunger, injury risk, weather, territory, energy, predation, mating pressure, seasonal survival)."
@@ -1330,6 +1372,8 @@
       delayPressureBlock,
       "",
       continuityBlock,
+      "",
+      whisperSpecificBlock,
       "",
       earlyRandomnessBlock,
       "",
@@ -1703,20 +1747,128 @@
     return false;
   }
 
+  function classifyWhisperTone(whisperText) {
+    const t = normalizeWhitespace(whisperText).toLowerCase();
+    if (!t) return { tone: "neutral", repeated: false };
+
+    const calm = /(relax|calm|breathe|breath|soft|gentle|steady|slow|ease|quiet)/.test(t);
+    const threat = /(danger|fear|panic|dead|die|dark|unsafe|hurt|blood|loss|alone)/.test(t);
+    const urgent = /(now|hurry|must|never|stop|run|quick|urgent)/.test(t);
+    const tender = /(forgive|love|warm|home|kind|hold|safe|tender)/.test(t);
+
+    const tokens = t.split(/\s+/).filter(Boolean);
+    const counts = new Map();
+    let maxFreq = 0;
+    for (const tok of tokens) {
+      const k = tok.replace(/[^a-z0-9']/g, "");
+      if (!k) continue;
+      const n = (counts.get(k) || 0) + 1;
+      counts.set(k, n);
+      if (n > maxFreq) maxFreq = n;
+    }
+    const repeated = maxFreq >= 3;
+
+    if (calm) return { tone: "calm", repeated };
+    if (urgent) return { tone: "urgent", repeated };
+    if (threat) return { tone: "threat", repeated };
+    if (tender) return { tone: "tender", repeated };
+    return { tone: "neutral", repeated };
+  }
+
+  function hasWhisperBendCue(text) {
+    const t = normalizeWhitespace(text).toLowerCase();
+    if (!t) return false;
+    return /\b(breath|pulse|jaw|shoulders|chest|nerves|skin|heartbeat|pressure|cadence|rhythm|echo)\b/.test(t);
+  }
+
+  function hasToneSpecificWhisperBend(text, whisperText) {
+    const t = normalizeWhitespace(text).toLowerCase();
+    if (!t) return false;
+
+    const { tone, repeated } = classifyWhisperTone(whisperText);
+    const hasBody = /\b(breath|pulse|jaw|shoulders|chest|nerves|skin|heartbeat|muscle|tension|hands)\b/.test(t);
+    const hasRhythm = /\b(cadence|rhythm|echo|repetition|repeated|again)\b/.test(t);
+
+    if (tone === "calm") {
+      const hasCalmLex = /\b(calm|steady|slower|slow|ease|unclench|soften|soothe|settle)\b/.test(t);
+      return hasCalmLex && (hasBody || hasRhythm);
+    }
+    if (tone === "urgent") {
+      const hasUrgentLex = /\b(urgent|hurry|rush|faster|compress|tighten|narrow|timing)\b/.test(t);
+      return hasUrgentLex && hasBody;
+    }
+    if (tone === "threat") {
+      const hasThreatLex = /\b(risk|danger|threat|exit|scan|vigilance|unsafe|protect)\b/.test(t);
+      return hasThreatLex && (hasBody || /\b(door|aisle|window|route)\b/.test(t));
+    }
+    if (tone === "tender") {
+      const hasTenderLex = /\b(soft|tender|warm|gentle|forgive|kind|loosen)\b/.test(t);
+      return hasTenderLex && (hasBody || /\b(memory|remember)\b/.test(t));
+    }
+
+    if (repeated) return hasRhythm;
+    return hasWhisperBendCue(t);
+  }
+
+  function buildWhisperCue(whisperText, psyche = null) {
+    const { tone, repeated } = classifyWhisperTone(whisperText);
+    const highArousal = Number(psyche?.arousal || 0) > 0.62;
+
+    if (tone === "calm") {
+      if (repeated) return highArousal
+        ? "Repetition taps the ribs; breath counts, then stutters"
+        : "A repeated calming cadence lands; breath slows by increments";
+      return highArousal
+        ? "Breath is counted on purpose; shoulders try to drop"
+        : "A calmer register settles in; jaw unclenches a little";
+    }
+
+    if (tone === "urgent") {
+      return "Timing compresses; pulse and planning speed up together";
+    }
+
+    if (tone === "threat") {
+      return "Nerves spike; exits and consequences sharpen at once";
+    }
+
+    if (tone === "tender") {
+      return "A softer pressure arrives; old grief loosens slightly";
+    }
+
+    return repeated
+      ? "The repeated phrase keeps knocking against attention"
+      : "The phrase lingers as background pressure under thought";
+  }
+
+  function enforceWhisperBend(text, whisperText, psyche = null, opts = {}) {
+    const base = normalizeWhitespace(text);
+    const whisper = normalizeWhitespace(whisperText);
+    const strict = !!opts.strict;
+    if (!base || !whisper) return base;
+    if (strict) {
+      if (hasToneSpecificWhisperBend(base, whisper)) return base;
+    } else if (hasWhisperBendCue(base)) {
+      return base;
+    }
+
+    const cue = buildWhisperCue(whisper, psyche);
+    return normalizeWhitespace(`${cue}. ${base}`);
+  }
+
   function ensureTrainDelayPressure(text) {
     const base = normalizeWhitespace(text);
     if (!base) return base;
     if (hasTrainDelayPressure(base)) return base;
 
     const additions = [
-      "Announcement repeats: 30 minutes late. Connection window tightening",
-      "Now 30 minutes late; timing for calls and arrivals starts to slip",
-      "Thirty minutes late, announced twice. Plans compress into apology math",
-      "Delay holds at 30 minutes. Next transfer and next message both at risk"
+      "Announcement: 30 minutes late; connection window narrowing",
+      "Thirty minutes late now; planned timing starts to slip",
+      "Delay holds at 30 minutes; appointments move into risk",
+      "Now 30 minutes late; calls and pickup timing tighten"
     ];
 
     const extra = additions[randInt(0, additions.length - 1)];
-    return normalizeWhitespace(`${base} ${extra}`);
+    return normalizeWhitespace(`${extra}. ${base}`);
   }
 
   function clampWordRange(text, { minWords, maxWords, fallback }) {

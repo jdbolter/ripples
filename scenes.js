@@ -171,7 +171,7 @@ He wants to be seen as reliable, yet lately even small promises feel harder to k
 His wife died last year after a long marriage, and grief now arrives in practical disguises: buying one ticket instead of two, carrying one coffee, folding one scarf.
 His pension is adequate but modest; he counts expenses automatically and dislikes being a burden.
 He misses company most in ordinary hours, when no one would call it loneliness out loud.
-He thinks about small routines awaiting him: a kettle that scales too quickly, a balcony plant he may have overwatered, a letter from the insurance office he has not answered, Thursday chess at the community center if he can make himself go.
+He thinks about small routines awaiting him: a broken lock that needs fixing at home, a balcony plant he may have overwatered, a letter from the insurance office he has not answered, Thursday chess at the community center if he can make himself go.
 His life is full of manageable tasks that become heavy when no one witnesses them.`,
         voice: ["measured", "observant of routine", "tender without display"],
         psyche0: { arousal: 0.34, valence: 0.46, agency: 0.52, permeability: 0.33, coherence: 0.66 },
