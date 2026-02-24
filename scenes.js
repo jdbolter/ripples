@@ -9,7 +9,7 @@
 */
 
 window.SCENE_ORDER = [
-  { id: "ice_to_berlin_second_class", label: "ICE to Berlin — Second Class" },
+  { id: "ice_to_berlin_second_class", label: "Train to Berlin" },
   { id: "library_reading_room", label: "Reading Room — Afternoon" }
   // Add future scenes here, e.g.:
   // { id: "new_scene_id", label: "New Scene Label" }
@@ -20,7 +20,7 @@ window.SCENES = {
   ice_to_berlin_second_class: {
 
     meta: {
-      label: "ICE to Berlin — Second Class",
+      label: "Train to Berlin",
       title: "Transit Compartments",
       cols: 6,
       rows: 4,
@@ -99,12 +99,12 @@ Let it shift tone, attention, and interpretation of details inside the carriage.
     characters: [
       {
         id: "mother_returning",
-        label: "Mother Returning to Berlin",
+        label: "Woman by the window",
         icon: "🧳",
-        image: "images/young_woman.png",
-        position: { x: 1, y: 0 },
+        image: "images/train-mother.png",
+        position: { x: 4, y: 3 },
         sensitivity: "high",
-        adjacentTo: ["student_alone"],
+        adjacentTo: ["retired_widower"],
         dossier:
 `A woman in her thirties traveling back to Berlin after days away. Her daughter is ill, and the illness remains unnamed in the way families sometimes keep hard words at a distance until a doctor says them out loud.
 She has a scheduled meeting with specialists tomorrow and carries a folder she keeps checking without opening.
@@ -119,10 +119,10 @@ Her mind jumps between medical vocabulary and domestic minutiae, as if both belo
         id: "student_alone",
         label: "Student with Laptop",
         icon: "💻",
-        image: "images/student.png",
+        image: "images/train-student.png",
         position: { x: 4, y: 1 },
         sensitivity: "high",
-        adjacentTo: ["mother_returning", "worried_boyfriend"],
+        adjacentTo: ["nurse_on_shift", "worried_boyfriend"],
         dossier:
 `A university student, Asian in appearance, seated alone in a two-seat row with her laptop balanced on her knees.
 She argued with her boyfriend before departure and moved away from him even though he is still in this carriage.
@@ -136,9 +136,9 @@ She thinks about rent, overdue reading, and the polite voice she uses on video c
       },
       {
         id: "worried_boyfriend",
-        label: "Boyfriend by Window",
+        label: "Man by the window",
         icon: "🪟",
-        image: "images/man_in_hat.png",
+        image: "images/train-boyfriend.png",
         position: { x: 1, y: 2 },
         sensitivity: "medium",
         adjacentTo: ["student_alone", "retired_widower"],
@@ -156,12 +156,12 @@ He wants to be seen as reliable, yet lately even small promises feel harder to k
       },
       {
         id: "retired_widower",
-        label: "Retired Widower",
+        label: "Older man",
         icon: "🧥",
-        image: "images/old_man_coat_bw.png",
+        image: "images/train-oldman.png", 
         position: { x: 1, y: 3 },
         sensitivity: "medium",
-        adjacentTo: ["worried_boyfriend", "nurse_on_shift"],
+        adjacentTo: ["worried_boyfriend", "mother_returning"],
         dossier:
 `A retired man with worn features and patient posture, returning to his apartment in Berlin after visiting his daughter in Stuttgart.
 His wife died last year after a long marriage, and grief now arrives in practical disguises: buying one ticket instead of two, carrying one coffee, folding one scarf.
@@ -175,12 +175,12 @@ His life is full of manageable tasks that become heavy when no one witnesses the
       },
       {
         id: "nurse_on_shift",
-        label: "Nurse Near Retirement",
+        label: "Woman on the aisle",
         icon: "🩺",
-        image: "images/librarian.png",
-        position: { x: 4, y: 3 },
+        image: "images/train-nurse.png",
+        position: { x: 1, y: 0 },
         sensitivity: "medium",
-        adjacentTo: ["retired_widower"],
+        adjacentTo: ["student_alone"],
         dossier:
 `A woman in her fifties, a career nurse traveling home after covering difficult shifts.
 She has siblings, but none live in Berlin, and most family contact is practical rather than intimate.
