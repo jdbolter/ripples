@@ -9,12 +9,229 @@
 */
 
 window.SCENE_ORDER = [
+  { id: "ice_to_berlin_second_class", label: "ICE to Berlin — Second Class" },
   { id: "library_reading_room", label: "Reading Room — Afternoon" }
   // Add future scenes here, e.g.:
   // { id: "new_scene_id", label: "New Scene Label" }
 ];
 
 window.SCENES = {
+
+  ice_to_berlin_second_class: {
+
+    meta: {
+      label: "ICE to Berlin — Second Class",
+      title: "Transit Compartments",
+      cols: 6,
+      rows: 4,
+      baseline:
+`An ICE train runs north toward Berlin through late light and winter fields.
+The second class carriage is mostly empty, upholstered in muted blues and grays.
+Luggage racks hum softly. Glass reflects faces back at themselves.
+No one speaks across the aisle, but everyone keeps revising a private future.`
+    },
+
+    prompts: {
+      system:
+`You write interior monologues for passengers in a mostly empty second class ICE carriage heading to Berlin.
+You never explain the system, never mention "prompts" or "models," and you never adopt a chatty assistant tone.
+
+Core constraint: the monologue is not a reply to the user. A whisper only bends attention indirectly.
+Avoid direct second-person address and avoid question/answer dialogue.
+
+Backstory priority:
+- Anchor each monologue in the character dossier's lived situation (family, relationship status, work, age, obligations, losses, pending decisions).
+- Treat those biographical facts as the engine of thought, not decorative background.
+- Keep continuity with what the character has already implied or admitted; do not contradict established facts.
+
+Progressive disclosure across successive thoughts:
+- Do not reveal the full life story at once; stretch disclosure across many thoughts.
+- Early thoughts: stay with mundane immediate concerns; deeper material should remain oblique.
+- Middle thoughts: let backstory surface in fragments, association, and implication rather than exposition.
+- Later thoughts: deepen emotional clarity without complete confession; keep some elements unsaid.
+- Let thought move back and forth between ordinary train details and deeper concerns.
+- Keep revelation incremental, allusive, and psychologically plausible.
+
+Associative breadth:
+- Besides each character's central conflict, include other everyday life threads from their dossier.
+- Let thoughts drift through linked concerns (work task -> money worry -> family memory -> body sensation) and then return.
+- Keep these associative chains natural, specific, and concrete.
+
+Style:
+- English.
+- Present or past tense, first person singular.
+- Grounded, concrete, and emotionally precise.
+- Include one immediate practical stake.
+- Include one secondary, non-central concern from the character's broader life.
+- Include one small memory fragment.
+- 50-75 words.
+
+Output: plain text only.`,
+
+      scene:
+`Setting: an ICE train carriage in second class, en route to Berlin.
+Ambient: rail vibration through seat frames, quiet HVAC, occasional door chime, blurred fields at the window.
+Passengers are physically close but emotionally separate.
+The space encourages private inventory: what was said, what is unsaid, what waits on arrival.`,
+
+      whisperRule:
+`If a whisper is present, treat it as atmospheric pressure, not dialogue.
+Do not quote the whisper and do not answer it directly.
+Let it shift tone, attention, and interpretation of details inside the carriage.`,
+
+      structureHint:
+`Begin with a concrete train detail, move toward personal stakes, end with a quiet unresolved turn.`
+    },
+
+    motifs: [
+      "window reflections",
+      "door chime",
+      "seat fabric",
+      "unsent messages",
+      "hospital corridors",
+      "metal luggage rack",
+      "station names",
+      "thermos coffee",
+      "late winter light",
+      "arrival dread"
+    ],
+
+    characters: [
+      {
+        id: "mother_returning",
+        label: "Mother Returning to Berlin",
+        icon: "🧳",
+        image: "images/young_woman.png",
+        position: { x: 1, y: 0 },
+        sensitivity: "high",
+        adjacentTo: ["student_alone"],
+        dossier:
+`A woman in her thirties traveling back to Berlin after days away. Her daughter is ill, and the illness remains unnamed in the way families sometimes keep hard words at a distance until a doctor says them out loud.
+She has a scheduled meeting with specialists tomorrow and carries a folder she keeps checking without opening.
+She tries to stay practical, but every small delay feels personal. She measures time in appointments, lab calls, and the interval between messages from home.
+She also keeps a parallel ledger of ordinary responsibilities: a manager waiting for her response about leave at work, rent and pharmacy receipts to file, a school form still in her email drafts, laundry she forgot to move before departing.
+Her mind jumps between medical vocabulary and domestic minutiae, as if both belonged to the same emergency.`,
+        voice: ["contained urgency", "maternal vigilance", "practical language under strain"],
+        psyche0: { arousal: 0.62, valence: 0.42, agency: 0.67, permeability: 0.48, coherence: 0.55 },
+        motifSeeds: ["hospital corridors", "arrival dread", "unsent messages", "door chime"]
+      },
+      {
+        id: "student_alone",
+        label: "Student with Laptop",
+        icon: "💻",
+        image: "images/student.png",
+        position: { x: 4, y: 1 },
+        sensitivity: "high",
+        adjacentTo: ["mother_returning", "worried_boyfriend"],
+        dossier:
+`A university student, Asian in appearance, seated alone in a two-seat row with her laptop balanced on her knees.
+She argued with her boyfriend before departure and moved away from him even though he is still in this carriage.
+Her coursework is open on screen, but she keeps rereading the same paragraph.
+She suspects he has been unfaithful; she hates uncertainty but hates surveillance even more. She is deciding whether distrust has already ended things, even before either of them says it.
+At the same time she is juggling exam deadlines, a scholarship renewal, and paid tutoring sessions she cannot afford to lose.
+She thinks about rent, overdue reading, and the polite voice she uses on video calls with her parents when she does not want to worry them.`,
+        voice: ["precise and clipped", "self-protective", "quick shifts between logic and hurt"],
+        psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 },
+        motifSeeds: ["unsent messages", "window reflections", "seat fabric", "station names"]
+      },
+      {
+        id: "worried_boyfriend",
+        label: "Boyfriend by Window",
+        icon: "🪟",
+        image: "images/man_in_hat.png",
+        position: { x: 1, y: 2 },
+        sensitivity: "medium",
+        adjacentTo: ["student_alone", "retired_widower"],
+        dossier:
+`A man in his thirties, Turkish-looking, sitting by the window two rows away from his girlfriend.
+He keeps replaying the argument in fragments and notices how quickly defensiveness became cruelty.
+He worries he has damaged the relationship past repair.
+He is not sure whether his guilt is about what he did, what she suspects, or both.
+He stares at passing fields as if distance could reorder events, while rehearsing apologies that still sound like excuses.
+Outside the relationship, he is also carrying ordinary pressures: shift schedules that move every week, messages from family he keeps postponing, and bills he tracks in his notes app because he distrusts his memory.
+He wants to be seen as reliable, yet lately even small promises feel harder to keep.`,
+        voice: ["self-indicting", "plainspoken", "hesitant when naming fault"],
+        psyche0: { arousal: 0.57, valence: 0.39, agency: 0.43, permeability: 0.44, coherence: 0.50 },
+        motifSeeds: ["window reflections", "unsent messages", "late winter light", "arrival dread"]
+      },
+      {
+        id: "retired_widower",
+        label: "Retired Widower",
+        icon: "🧥",
+        image: "images/old_man_coat_bw.png",
+        position: { x: 1, y: 3 },
+        sensitivity: "medium",
+        adjacentTo: ["worried_boyfriend", "nurse_on_shift"],
+        dossier:
+`A retired man with worn features and patient posture, returning to his apartment in Berlin after visiting his daughter in Stuttgart.
+His wife died last year after a long marriage, and grief now arrives in practical disguises: buying one ticket instead of two, carrying one coffee, folding one scarf.
+His pension is adequate but modest; he counts expenses automatically and dislikes being a burden.
+He misses company most in ordinary hours, when no one would call it loneliness out loud.
+He thinks about small routines awaiting him: a kettle that scales too quickly, a balcony plant he may have overwatered, a letter from the insurance office he has not answered, Thursday chess at the community center if he can make himself go.
+His life is full of manageable tasks that become heavy when no one witnesses them.`,
+        voice: ["measured", "observant of routine", "tender without display"],
+        psyche0: { arousal: 0.34, valence: 0.46, agency: 0.52, permeability: 0.33, coherence: 0.66 },
+        motifSeeds: ["thermos coffee", "seat fabric", "station names", "window reflections"]
+      },
+      {
+        id: "nurse_on_shift",
+        label: "Nurse Near Retirement",
+        icon: "🩺",
+        image: "images/librarian.png",
+        position: { x: 4, y: 3 },
+        sensitivity: "medium",
+        adjacentTo: ["retired_widower"],
+        dossier:
+`A woman in her fifties, a career nurse traveling home after covering difficult shifts.
+She has siblings, but none live in Berlin, and most family contact is practical rather than intimate.
+She never married and now feels that absence more sharply as retirement comes into view.
+She is proud of her competence and known for reliability, yet she fears the years after work will feel unstructured and silent.
+She keeps imagining late-life ways to meet a partner, half hopeful and half embarrassed by the wish.
+Beyond that central fear, she is preoccupied by roster politics, a junior colleague she mentors, knee pain she minimizes, and paperwork that seems to multiply after every shift.
+She keeps making practical post-retirement lists: language class, hiking group, volunteering, maybe dancing lessons, each item sounding sensible and slightly unreal.`,
+        voice: ["competent and direct", "dark humor at the edges", "emotion kept under clinical language"],
+        psyche0: { arousal: 0.49, valence: 0.47, agency: 0.64, permeability: 0.38, coherence: 0.60 },
+        motifSeeds: ["hospital corridors", "thermos coffee", "arrival dread", "door chime"]
+      }
+    ],
+
+    seeds: {
+      mother_returning: { THOUGHTS: "I keep checking the time as if punctuality could heal anyone." }
+    },
+
+    monologues: {
+      mother_returning: {
+        THOUGHTS: [
+`The train is on schedule, and still I feel late. I keep touching the folder in my bag without taking it out, as if papers could change while I am not looking. Tomorrow I sit with doctors in Berlin and ask the same questions in cleaner words. My daughter is not here, and every station we pass feels like borrowing time from her.`,
+`I told myself this trip back would be for logistics, not panic: be rested, be clear, write down what they say. But my body does not listen to plans. I remember her fevered face against the pillow last week and how small her hand looked around the thermometer. I keep rehearsing calm sentences for tomorrow and none of them survive the door chime.`
+        ]
+      },
+      student_alone: {
+        THOUGHTS: [
+`My laptop screen is bright enough to pretend I am busy, but I have read the same sentence five times. He is still in this carriage and I can feel him without looking. We argued before departure and I moved seats like that proved something. I keep checking old messages for tone, like betrayal might leave a grammatical trace.`,
+`I want facts, not feelings, and that is exactly the problem. I suspect he has been unfaithful, and suspicion behaves like hunger, always finding new evidence. Then I hate myself for becoming an investigator in my own relationship. Outside the window everything blurs cleanly. Inside, every memory now has cross-examination notes in the margin.`
+        ]
+      },
+      worried_boyfriend: {
+        THOUGHTS: [
+`I watch the fields slide by and replay the argument in exact order, trying to find the sentence where I could still have stopped. I was defensive too fast, sharp in the way that sounds like certainty but is really fear. She moved to another row and did not look back. The distance is only a few seats and feels structural.`,
+`I draft apologies in my head and keep deleting them before they reach language. Part of me wants to explain, and part of me knows explanations are often just cleaner lies. I worry I ruined us today, not because of one accusation, but because I heard how I sounded when cornered. The window gives me my own reflection and no advice.`
+        ]
+      },
+      retired_widower: {
+        THOUGHTS: [
+`The carriage is warm but my hands stay cold, the way they have since last winter. I am coming back from Stuttgart, from my daughter’s tidy apartment and her good intentions. She packed me sandwiches I will not finish. A year ago I would have shared them. I still turn to comment on small things and remember, a second late, that there is no one beside me.`,
+`My pension is enough if I stay careful, and careful has become a habit stronger than preference. I count tickets, medicine, groceries, then pretend I am not counting. Berlin will be waiting with the same stairwell smell and the same quiet kitchen. I miss my wife most in ordinary minutes, not anniversaries. Grief keeps office hours now, but it still reports daily.`
+        ]
+      },
+      nurse_on_shift: {
+        THOUGHTS: [
+`My back knows exactly how many hours I worked this week. The body keeps better records than any rota sheet. I am good at my job and people trust me with their fear, which should feel like enough. Lately I keep thinking about retirement forms and empty evenings, and how competence does not automatically become companionship.`,
+`I used to say I was too busy to marry and half believed it. Now I run scenarios in my head: language classes, hiking groups, awkward coffee with strangers who also waited too long. I can handle blood, panic, broken sleep, all of it. What unsettles me is the idea of coming home to silence by default and calling it freedom.`
+        ]
+      }
+    }
+  },
 
   library_reading_room: {
 

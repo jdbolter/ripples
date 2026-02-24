@@ -412,6 +412,32 @@
       return whisperHistory.slice(-limit);
     }
 
+    function getRecentMonologues(characterId, limit = 3) {
+      const n = Math.max(0, Math.min(10, Number(limit) || 0));
+      if (!n) return [];
+
+      // `audit` is newest-first because entries are unshifted.
+      // Return oldest->newest to preserve narrative progression.
+      return audit
+        .filter((entry) => entry.characterId === characterId && typeof entry.text === "string" && entry.text.trim())
+        .slice(0, n)
+        .reverse()
+        .map((entry) => ({
+          tick: entry.tick,
+          kind: entry.kind,
+          text: entry.text,
+          whisperText: entry.whisperText || ""
+        }));
+    }
+
+    function getMonologueCount(characterId) {
+      return audit.filter((entry) =>
+        entry.characterId === characterId &&
+        typeof entry.text === "string" &&
+        entry.text.trim()
+      ).length;
+    }
+
     function nextMonologue(characterId, channel) {
       const sc = getScene();
 
@@ -481,6 +507,8 @@
       recordWhisper,
       getLastWhisper,
       getWhisperHistory,
+      getRecentMonologues,
+      getMonologueCount,
       getPsyche,
       applyRipple
     };
@@ -870,34 +898,29 @@
   function renderReplay(snapshot) {
     elAuditLog.innerHTML = "";
 
-    if (!snapshot.audit.length) {
+    const whispers = snapshot.audit.filter((entry) => entry.kind === EVENT_KIND.WHISPER);
+
+    if (!whispers.length) {
       const d = document.createElement("div");
       d.className = "help";
-      d.textContent = "No traces yet.";
+      d.textContent = "No whispers yet.";
       elAuditLog.appendChild(d);
       return;
     }
 
-    for (const entry of snapshot.audit) {
+    for (const entry of whispers) {
       const item = document.createElement("div");
       item.className = "audit-item";
 
-      const tag = entry.kind === EVENT_KIND.WHISPER ? "WHISPER" : "LISTEN";
-      const ps = entry.psyche || engine.getPsyche(entry.characterId);
-      const psycheDebug = ps
-        ? ` ar=${ps.arousal.toFixed(2)} va=${ps.valence.toFixed(2)} ag=${ps.agency.toFixed(2)} pe=${ps.permeability.toFixed(2)} co=${ps.coherence.toFixed(2)}`
-        : "";
+      const character = entry.characterLabel || entry.characterId;
+      const whisperText = String(entry.whisperText || "").trim() || "(empty whisper)";
 
       item.innerHTML = `
-        <div class="row" style="justify-content:space-between;">
-          <span><span class="k">${escapeHtml(tag)}</span> ${escapeHtml(entry.characterId)}${psycheDebug}</span>
-          <span class="help" style="margin:0;">${escapeHtml(entry.time)}</span>
-        </div>
+        <div class="row">To ${escapeHtml(character)}: "${escapeHtml(whisperText)}"</div>
       `;
 
       item.addEventListener("click", () => {
         onSelectCharacter(entry.characterId);
-        setWorldtext(entry.text, { mode: "ripple" });
       });
 
       elAuditLog.appendChild(item);
@@ -1054,6 +1077,13 @@
     return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
+  function trimForPrompt(str, maxLen) {
+    const oneLine = String(str || "").replace(/\s+/g, " ").trim();
+    const max = Math.max(32, Number(maxLen) || 240);
+    if (oneLine.length <= max) return oneLine;
+    return `${oneLine.slice(0, max - 3)}...`;
+  }
+
   function setApiKeyChecking(loading) {
     isApiKeyChecking = !!loading;
     btnApiSubmit.disabled = isApiKeyChecking;
@@ -1138,6 +1168,66 @@
     ].join("\n");
 
     const whisperClean = String(whisperText || "").trim();
+    const recentThoughts = engine.getRecentMonologues(characterId, 3);
+    const priorMonologueCount = engine.getMonologueCount(characterId);
+    const disclosurePhase =
+      priorMonologueCount <= 3 ? "early" :
+      priorMonologueCount <= 7 ? "middle" :
+      "late";
+    const disclosureGuidance = disclosurePhase === "early"
+      ? [
+          "- Keep focus on mundane immediate actions, practical tasks, and sensory detail.",
+          "- Keep core conflict mostly indirect; at most one brief allusive hint.",
+          "- Do not name the character's deepest fear or full backstory directly yet."
+        ]
+      : disclosurePhase === "middle"
+        ? [
+            "- Keep oscillating between present-moment detail, practical life threads, and deeper concern.",
+            "- Allow at most one modestly clearer backstory signal, still indirect and understated.",
+            "- Avoid full explanations, timelines, or confessional summaries."
+          ]
+        : [
+            "- Deepen emotional clarity, but remain allusive rather than fully explanatory.",
+            "- Leave some core material implied; avoid exhaustive disclosure.",
+            "- Let mundane detail and side-concerns interrupt heavier thoughts so the voice stays lived-in."
+          ];
+    const continuityBlock = recentThoughts.length
+      ? [
+          "Continuity context (same character, oldest to newest):",
+          ...recentThoughts.map((entry, i) =>
+            `${i + 1}. ${entry.kind}: ${trimForPrompt(entry.text, 240)}`
+          ),
+          `Disclosure phase: ${disclosurePhase.toUpperCase()} (prior thoughts: ${priorMonologueCount}).`,
+          "Disclosure pacing rules:",
+          ...disclosureGuidance,
+          "Associative movement rules:",
+          "- Move at least once from mundane immediate detail to deeper concern and back to lived practical detail.",
+          "- Keep transitions subtle and psychologically natural, not abrupt."
+        ].join("\n")
+      : [
+          "Continuity context: none yet for this character.",
+          "Disclosure phase: EARLY (first thought).",
+          "Disclosure pacing rules:",
+          "- Stay close to immediate practical concerns, sensory detail, and everyday obligations.",
+          "- Hint at deeper history indirectly; avoid explicit backstory exposition.",
+          "Associative movement rules:",
+          "- Let one ordinary detail open a deeper association, then return to present practical thought."
+        ].join("\n");
+
+    const antiExpositionBlock = [
+      "Anti-exposition constraints:",
+      "- Do not front-load biography.",
+      "- Do not summarize the character's life or dossier.",
+      "- Prefer implication, fragments, and oblique references over explicit explanation."
+    ].join("\n");
+
+    const lifeThreadBlock = [
+      "Life-thread breadth constraints:",
+      "- Besides the central worry, include at least one secondary life thread from ordinary life.",
+      "- Secondary threads may include work tasks, money, admin, health routines, family logistics, social duties, study pressure, or unfinished errands.",
+      "- Build a short associative chain (2-4 linked turns of thought) rather than a single fixed topic.",
+      "- Do not stay only on train surroundings."
+    ].join("\n");
 
     const whisperImpact = whisperClean
       ? [
@@ -1182,6 +1272,12 @@
       "",
       "Character:",
       dossier,
+      "",
+      continuityBlock,
+      "",
+      antiExpositionBlock,
+      "",
+      lifeThreadBlock,
       "",
       psycheBlock,
       "",
