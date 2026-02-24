@@ -38,6 +38,8 @@ You never explain the system, never mention "prompts" or "models," and you never
 
 Core constraint: the monologue is not a reply to the user. A whisper only bends attention indirectly.
 Avoid direct second-person address and avoid question/answer dialogue.
+Shared immediate pressure for this carriage: an announcement says arrival will be 30 minutes late.
+In every thought, include one concrete consequence of that delay for the character.
 
 Backstory priority:
 - Anchor each monologue in the character dossier's lived situation (family, relationship status, work, age, obligations, losses, pending decisions).
@@ -46,7 +48,7 @@ Backstory priority:
 
 Progressive disclosure across successive thoughts:
 - Do not reveal the full life story at once; stretch disclosure across many thoughts.
-- Early thoughts: stay with mundane immediate concerns; deeper material should remain oblique.
+- Early thoughts: vary openings unpredictably (practical task, body sensation, stray memory, money/admin worry, abstract dread); deeper material should remain oblique.
 - Middle thoughts: let backstory surface in fragments, association, and implication rather than exposition.
 - Later thoughts: deepen emotional clarity without complete confession; keep some elements unsaid.
 - Let thought move back and forth between ordinary train details and deeper concerns.
@@ -59,18 +61,20 @@ Associative breadth:
 
 Style:
 - English.
-- Present or past tense, first person singular.
+- Present, past, or near-future tense.
+- Keep explicit first-person references sparse (target <=20% of total words using I/me/my/mine/myself).
 - Grounded, concrete, and emotionally precise.
-- Include one immediate practical stake.
-- Include one secondary, non-central concern from the character's broader life.
-- Include one small memory fragment.
-- 50-75 words.
+- Include at least one immediate practical stake or obligation.
+- Sentence fragments are allowed.
+- Early thoughts can roam across unrelated concerns and can move vague->precise or precise->vague.
+- 20-40 words.
 
 Output: plain text only.`,
 
       scene:
 `Setting: an ICE train carriage in second class, en route to Berlin.
 Ambient: rail vibration through seat frames, quiet HVAC, occasional door chime, blurred fields at the window.
+A carriage announcement confirms the train will arrive 30 minutes late.
 Passengers are physically close but emotionally separate.
 The space encourages private inventory: what was said, what is unsaid, what waits on arrival.`,
 
@@ -264,14 +268,16 @@ Do not explicitly mention angels unless the scene prompt allows it. Keep it ambi
 
 Style:
 - English.
-- Present or past tense, first person singular.
+- Present, past, or near-future tense.
+- Keep explicit first-person references sparse (target <=20% of total words using I/me/my/mine/myself).
 - Grounded and immediate first; allusive second.
 - Keep language concrete and plainspoken, with occasional lyrical lift.
-- Include one brief concrete reference to a remembered moment, prior choice, or earlier version of self.
-- Include at least one immediate personal stake (status, work, health, debt, obligation, aging, belonging, regret).
+- Include at least one immediate personal stake (status, work, health, debt, obligation, aging, belonging, regret), directly or by implication.
 - Minimal plot, no sudden scene changes, no melodrama.
+- Sentence fragments are allowed.
+- Early thoughts can be intentionally unpredictable in topic and angle.
 - Subtle rhythmic line breaks are allowed; avoid heavy poetry formatting.
-- 50–75 words.
+- 20-40 words.
 
 Output: plain text only.`,
 
@@ -552,7 +558,9 @@ Set tone, place, and atmosphere.`
     prompts: {
       system:
 `You write interior monologues for this scene.
-No meta talk. No direct reply to whispers.`,
+No meta talk. No direct reply to whispers.
+Keep explicit first-person references sparse (target <=20%).
+Use 20-40 words; sentence fragments are allowed.`,
       scene:
 `Setting details and ambient cues for this world.`,
       whisperRule:

@@ -30,6 +30,9 @@
   // Single implicit channel for now
   const DEFAULT_CHANNEL = "THOUGHTS";
   const EVENT_KIND = { LISTEN: "LISTEN", WHISPER: "WHISPER" };
+  const THOUGHT_WORD_MIN = 20;
+  const THOUGHT_WORD_MAX = 40;
+  const FIRST_PERSON_MAX_RATIO = 0.20;
 
   // Single switch for system dynamics:
   // - "intense": strongest whisper impact + wider propagation
@@ -450,8 +453,14 @@
 
       if (!cursor[characterId]) cursor[characterId] = {};
       const last = Number.isInteger(cursor[characterId][channel]) ? cursor[characterId][channel] : -1;
-
-      const next = (last + 1) % pool.length;
+      const thoughtCount = getMonologueCount(characterId);
+      let next;
+      if (thoughtCount <= 1 && pool.length > 1) {
+        next = Math.floor(Math.random() * pool.length);
+        if (next === last) next = (next + 1) % pool.length;
+      } else {
+        next = (last + 1) % pool.length;
+      }
       cursor[characterId][channel] = next;
       return pool[next];
     }
@@ -710,7 +719,9 @@
     if (isGenerating) return;
     isGenerating = true;
 
+    const priorMonologueCount = engine.getMonologueCount(characterId);
     let text = "";
+    let usedLocalPool = false;
 
     setWorldtext("…", { mode: "baseline" });
 
@@ -737,13 +748,26 @@
         }
       } else {
         text = engine.nextMonologue(characterId, channel);
+        usedLocalPool = true;
       }
     } catch (err) {
       console.error("OpenAI generation failed; falling back to local.", err);
       text = engine.nextMonologue(characterId, channel);
+      usedLocalPool = true;
     } finally {
       isGenerating = false;
     }
+
+    if (isTrainDelayScene(engine.getScene())) {
+      text = ensureTrainDelayPressure(text);
+    }
+
+    text = constrainThoughtText(text, {
+      minWords: THOUGHT_WORD_MIN,
+      maxWords: THOUGHT_WORD_MAX,
+      maxFirstPersonRatio: FIRST_PERSON_MAX_RATIO,
+      preferRandomWindow: usedLocalPool && priorMonologueCount <= 1
+    });
 
     engine.newTrace({
       kind,
@@ -1135,7 +1159,9 @@
     const sc = engine.getScene();
     const ch = sc.characters.find(c => c.id === characterId);
     const sceneLabel = String(sc?.meta?.label || "");
+    const sceneTitle = String(sc?.meta?.title || "");
     const isPosthuman = /forest|post[- ]?human/i.test(sceneLabel);
+    const isTrainDelay = isTrainDelayScene(sc) || /train|ice|berlin/i.test(`${sceneLabel} ${sceneTitle}`);
 
     const sys = (sc.prompts && sc.prompts.system) ? sc.prompts.system :
       "You write short interior monologues.";
@@ -1176,8 +1202,9 @@
       "late";
     const disclosureGuidance = disclosurePhase === "early"
       ? [
-          "- Keep focus on mundane immediate actions, practical tasks, and sensory detail.",
-          "- Keep core conflict mostly indirect; at most one brief allusive hint.",
+          "- Vary openings unpredictably (object detail, body sensation, admin/money task, stray memory, abstract dread).",
+          "- Keep core conflict mostly indirect; at most one brief allusive signal.",
+          "- One abrupt topic shift is allowed if it still feels psychologically plausible.",
           "- Do not name the character's deepest fear or full backstory directly yet."
         ]
       : disclosurePhase === "middle"
@@ -1208,11 +1235,28 @@
           "Continuity context: none yet for this character.",
           "Disclosure phase: EARLY (first thought).",
           "Disclosure pacing rules:",
-          "- Stay close to immediate practical concerns, sensory detail, and everyday obligations.",
+          "- Start with a surprising angle; do not default to biography summary.",
+          "- Range across everyday concerns with at least one quick associative jump.",
           "- Hint at deeper history indirectly; avoid explicit backstory exposition.",
           "Associative movement rules:",
-          "- Let one ordinary detail open a deeper association, then return to present practical thought."
+          "- Let one detail open a sideways association; returning to practical detail is optional."
         ].join("\n");
+
+    const openingModes = [
+      "begin with a concrete object, then jump to an unrelated obligation",
+      "begin vague and atmospheric, then snap to one practical detail",
+      "begin practical and precise, then blur into an unnamed unease",
+      "begin mid-thought as a fragment, no setup sentence"
+    ];
+    const openingMode = openingModes[Math.floor(Math.random() * openingModes.length)];
+    const earlyRandomnessBlock = priorMonologueCount <= 1
+      ? [
+          "Early-thought variability (priority):",
+          `- Opening mode for this thought: ${openingMode}.`,
+          "- Sentence fragments are welcome.",
+          "- Coherence can be loose as long as tone and stakes remain human."
+        ].join("\n")
+      : "Variability: keep images and topics fresh; avoid repeating your last opening move.";
 
     const antiExpositionBlock = [
       "Anti-exposition constraints:",
@@ -1248,15 +1292,26 @@
       ? "- Include one immediate embodied concern (shelter, hunger, injury risk, weather, territory, energy, predation, mating pressure, seasonal survival)."
       : "- Include one immediate personal concern (status, work, money, health, aging, regret, belonging, obligation, reputation, deadline, body discomfort).";
 
+    const delayPressureBlock = isTrainDelay
+      ? [
+          "Train-delay pressure (required for this scene):",
+          "- A carriage announcement says arrival is 30 minutes late.",
+          "- Explicitly mention lateness/delay and at least one concrete consequence (connection risk, missed timing, call rescheduling, pickup friction, appointment pressure, admin fallout).",
+          "- Keep it immediate, not abstract."
+        ].join("\n")
+      : "No scene-wide delay requirement.";
+
     const userPrompt = [
       "Generate an interior monologue.",
-      "Length: 50-75 words.",
-      "First person. Follow scene-level tense guidance.",
+      `Length: ${THOUGHT_WORD_MIN}-${THOUGHT_WORD_MAX} words.`,
+      "Tense may be present, past, or near-future depending on pressure and anticipation.",
       "Grounded and immediate with a light allusive layer.",
+      "Explicit first-person references should stay sparse (target <=20% of words using I/me/my/mine/myself).",
       "Prioritize concrete stakes over decorative abstraction.",
-      "At most ONE sentence may lean strongly lyrical/metaphoric.",
+      "Sentence fragments are allowed.",
+      "At most ONE clause may lean strongly lyrical/metaphoric.",
       "Do not rely on dust, light, shadow, air, or silence as primary imagery.",
-      "Introduce at least one new concrete sensory anchor.",
+      "Introduce at least one concrete anchor (object, admin task, bodily sensation, sound, or memory shard).",
       concernConstraint,
       "Output must be JSON only (no markdown, no extra text).",
       "Avoid repeating imagery or nouns from recent monologues.",
@@ -1264,8 +1319,7 @@
       "- No direct second-person reply to a whisper.",
       "- No meta-talk (no mention of prompts, models, AI, system).",
       "- No dialogue formatting; this is interior thought.",
-      "- Include one brief memory reference (something that happened before now).",
-      "- Include one sentence with plainspoken self-assessment or worry.",
+      "- Keep backstory allusive, not explanatory.",
       "",
       "Scene:",
       sceneFrame,
@@ -1273,7 +1327,11 @@
       "Character:",
       dossier,
       "",
+      delayPressureBlock,
+      "",
       continuityBlock,
+      "",
+      earlyRandomnessBlock,
       "",
       antiExpositionBlock,
       "",
@@ -1289,7 +1347,7 @@
       `Whisper (do not quote): ${whisperClean || "(none)"}`,
       "",
       "Return JSON with:",
-      "- monologue: string (50-75 words)",
+      `- monologue: string (${THOUGHT_WORD_MIN}-${THOUGHT_WORD_MAX} words)`,
       "- delta: object with numeric fields arousal, valence, agency, permeability, coherence",
       "Delta semantics:",
       "- Interpret the whisper holistically (meaning, tone, implication), not keywords.",
@@ -1336,7 +1394,7 @@
         }
       },
 
-      max_output_tokens: 240
+      max_output_tokens: 200
     };
 
     // Debug: inspect in DevTools
@@ -1405,8 +1463,282 @@
   }
 
   function postprocessMonologue(text) {
-    const t = String(text || "").trim();
-    return t.replace(/^“|^"/, "").replace(/”$|"$/, "").trim();
+    return stripOuterQuotes(text);
+  }
+
+  function constrainThoughtText(text, opts = {}) {
+    const minWords = Number.isFinite(opts.minWords) ? opts.minWords : THOUGHT_WORD_MIN;
+    const maxWords = Number.isFinite(opts.maxWords) ? opts.maxWords : THOUGHT_WORD_MAX;
+    const maxFirstPersonRatio = Number.isFinite(opts.maxFirstPersonRatio)
+      ? opts.maxFirstPersonRatio
+      : FIRST_PERSON_MAX_RATIO;
+    const preferRandomWindow = !!opts.preferRandomWindow;
+
+    const raw = normalizeWhitespace(stripOuterQuotes(text));
+    if (!raw) return raw;
+
+    let out = raw;
+    if (preferRandomWindow) {
+      out = pickRandomClauseWindow(out, minWords, maxWords);
+    }
+
+    out = reduceFirstPersonReferences(out, maxFirstPersonRatio, minWords);
+    out = clampWordRange(out, { minWords, maxWords, fallback: raw });
+    out = finalizeThoughtEnding(out, { minWords, maxWords, fallback: raw });
+    return cleanSpacing(out);
+  }
+
+  function stripOuterQuotes(text) {
+    return String(text || "").trim().replace(/^“|^"/, "").replace(/”$|"$/, "").trim();
+  }
+
+  function normalizeWhitespace(text) {
+    return String(text || "").replace(/\s+/g, " ").trim();
+  }
+
+  function cleanSpacing(text) {
+    return normalizeWhitespace(text)
+      .replace(/\s+([,.;:!?])/g, "$1")
+      .replace(/\(\s+/g, "(")
+      .replace(/\s+\)/g, ")")
+      .trim();
+  }
+
+  function splitWords(text) {
+    return normalizeWhitespace(text).split(" ").filter(Boolean);
+  }
+
+  function wordCount(words) {
+    const tokens = Array.isArray(words) ? words : splitWords(words);
+    return tokens.filter((w) => /[A-Za-z0-9]/.test(w)).length;
+  }
+
+  function canonicalToken(token) {
+    return String(token || "")
+      .toLowerCase()
+      .replace(/[’]/g, "'")
+      .replace(/^[^a-z0-9']+|[^a-z0-9']+$/g, "");
+  }
+
+  function isFirstPersonToken(token) {
+    const t = canonicalToken(token);
+    return (
+      t === "i" || t === "me" || t === "my" || t === "mine" || t === "myself" ||
+      t === "i'm" || t === "ive" || t === "i've" || t === "id" || t === "i'd" ||
+      t === "ill" || t === "i'll" || t === "im"
+    );
+  }
+
+  function firstPersonRatio(words) {
+    const tokens = Array.isArray(words) ? words : splitWords(words);
+    const total = wordCount(tokens);
+    if (!total) return 0;
+    const fp = tokens.filter(isFirstPersonToken).length;
+    return fp / total;
+  }
+
+  function reduceFirstPersonReferences(text, maxRatio, minWords) {
+    let out = normalizeWhitespace(text)
+      .replace(/\bI am\b/gi, "feeling")
+      .replace(/\bI'm\b/gi, "feeling")
+      .replace(/\bI keep\b/gi, "keep")
+      .replace(/\bI was\b/gi, "was")
+      .replace(/\bI have\b/gi, "have")
+      .replace(/\bI've\b/gi, "have")
+      .replace(/\bmy\b/gi, "the")
+      .replace(/\bmine\b/gi, "that")
+      .replace(/\bmyself\b/gi, "this body");
+
+    let words = splitWords(out);
+    for (let i = 0; i < words.length && firstPersonRatio(words) > maxRatio; i++) {
+      if (!isFirstPersonToken(words[i])) continue;
+      if (wordCount(words) <= minWords) break;
+      words.splice(i, 1);
+      i -= 1;
+    }
+
+    return normalizeWhitespace(words.join(" "));
+  }
+
+  function splitClauses(text) {
+    const t = normalizeWhitespace(text);
+    if (!t) return [];
+
+    // Keep clause-ending punctuation attached to preserve fragment shape.
+    const parts = t
+      .split(/(?<=[.!?;:])\s+/)
+      .map((s) => normalizeWhitespace(s))
+      .filter(Boolean);
+
+    return parts.length ? parts : [t];
+  }
+
+  function truncateToWordCount(text, maxWords) {
+    const words = splitWords(text);
+    if (wordCount(words) <= maxWords) return normalizeWhitespace(text);
+    const out = [];
+    let seen = 0;
+    for (const w of words) {
+      const isWord = /[A-Za-z0-9]/.test(w);
+      if (isWord && seen >= maxWords) break;
+      out.push(w);
+      if (isWord) seen++;
+    }
+    return normalizeWhitespace(out.join(" "));
+  }
+
+  function pickRandomClauseWindow(text, minWords, maxWords) {
+    const clauses = splitClauses(text);
+    if (!clauses.length) return normalizeWhitespace(text);
+    if (clauses.length === 1) return truncateToWordCount(clauses[0], maxWords);
+
+    const target = randInt(minWords, maxWords);
+    let best = clauses[Math.floor(Math.random() * clauses.length)];
+    let bestScore = Number.POSITIVE_INFINITY;
+
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const start = randInt(0, clauses.length - 1);
+      let cand = clauses[start];
+      let i = start + 1;
+
+      while (i < clauses.length && wordCount(cand) < target) {
+        cand = `${cand} ${clauses[i]}`;
+        i += 1;
+      }
+
+      cand = truncateToWordCount(cand, maxWords);
+      const wc = wordCount(cand);
+      const score =
+        wc >= minWords && wc <= maxWords
+          ? Math.abs(target - wc)
+          : Math.min(Math.abs(wc - minWords), Math.abs(wc - maxWords)) + 100;
+
+      if (score < bestScore) {
+        bestScore = score;
+        best = cand;
+      }
+    }
+
+    return normalizeWhitespace(best);
+  }
+
+  function pickRandomWordWindow(text, minWords, maxWords) {
+    const words = splitWords(text);
+    const total = wordCount(words);
+    if (total <= maxWords) return normalizeWhitespace(text);
+
+    const span = randInt(minWords, maxWords);
+    const maxStart = Math.max(0, words.length - span);
+    const start = randInt(0, maxStart);
+    return normalizeWhitespace(words.slice(start, start + span).join(" "));
+  }
+
+  function isDanglingEndToken(token) {
+    const t = canonicalToken(token);
+    if (!t) return false;
+
+    const dangling = new Set([
+      "a", "an", "the",
+      "to", "of", "in", "on", "at", "for", "from", "with", "by",
+      "as", "if", "than", "that", "which", "who", "whom", "whose",
+      "and", "or", "but", "nor", "so", "yet",
+      "about", "above", "across", "after", "against", "along", "around",
+      "before", "behind", "below", "beneath", "beside", "between", "beyond",
+      "during", "into", "near", "onto", "over", "through", "toward", "towards",
+      "under", "until", "upon", "within", "without", "since", "per", "via"
+    ]);
+
+    return dangling.has(t);
+  }
+
+  function trimDanglingEnding(text, minWords = 0) {
+    const words = splitWords(text);
+    while (words.length && isDanglingEndToken(words[words.length - 1])) {
+      if (wordCount(words) <= minWords) break;
+      words.pop();
+    }
+    return normalizeWhitespace(words.join(" "));
+  }
+
+  function ensureTerminalPunctuation(text) {
+    const t = normalizeWhitespace(text).replace(/…/g, "...");
+    if (!t) return t;
+    if (/\.\.\.$/.test(t) || /[.!?]$/.test(t)) return t;
+    const clipped = t.replace(/[;:,]+$/, "");
+    return `${clipped}...`;
+  }
+
+  function finalizeThoughtEnding(text, { minWords, maxWords, fallback }) {
+    let out = trimDanglingEnding(text, minWords);
+
+    if (wordCount(out) < minWords) {
+      out = clampWordRange(out, { minWords, maxWords, fallback });
+      out = trimDanglingEnding(out, minWords);
+    }
+
+    out = truncateToWordCount(out, maxWords);
+    out = trimDanglingEnding(out, minWords);
+    out = ensureTerminalPunctuation(out);
+    return out;
+  }
+
+  function isTrainDelayScene(sc) {
+    const id = String(sc?.id || "");
+    const label = String(sc?.meta?.label || "");
+    const title = String(sc?.meta?.title || "");
+    return /ice_to_berlin_second_class/i.test(id) || /train|ice|berlin/i.test(`${label} ${title}`);
+  }
+
+  function hasTrainDelayPressure(text) {
+    const t = normalizeWhitespace(text).toLowerCase();
+    if (!t) return false;
+
+    const late = /\b(late|delay|delayed|behind schedule)\b/.test(t);
+    const thirty = /\b(30|thirty|half an hour)\b/.test(t);
+    const minute = /\b(minute|minutes)\b/.test(t);
+    const announcement = /\b(announcement|announced|speaker|conductor)\b/.test(t);
+
+    if (late && (thirty || minute)) return true;
+    if (announcement && late) return true;
+    return false;
+  }
+
+  function ensureTrainDelayPressure(text) {
+    const base = normalizeWhitespace(text);
+    if (!base) return base;
+    if (hasTrainDelayPressure(base)) return base;
+
+    const additions = [
+      "Announcement repeats: 30 minutes late. Connection window tightening",
+      "Now 30 minutes late; timing for calls and arrivals starts to slip",
+      "Thirty minutes late, announced twice. Plans compress into apology math",
+      "Delay holds at 30 minutes. Next transfer and next message both at risk"
+    ];
+
+    const extra = additions[randInt(0, additions.length - 1)];
+    return normalizeWhitespace(`${base} ${extra}`);
+  }
+
+  function clampWordRange(text, { minWords, maxWords, fallback }) {
+    let out = truncateToWordCount(text, maxWords);
+    if (wordCount(out) >= minWords) return out;
+
+    const source = splitWords(normalizeWhitespace(fallback || ""));
+    if (!source.length) return out;
+
+    const needed = Math.max(0, minWords - wordCount(out));
+    if (!needed) return out;
+
+    const base = splitWords(out);
+    const start = randInt(0, Math.max(0, source.length - needed));
+    const add = source.slice(start, start + needed);
+    return truncateToWordCount(normalizeWhitespace(base.concat(add).join(" ")), maxWords);
+  }
+
+  function randInt(min, max) {
+    const lo = Math.ceil(Math.min(min, max));
+    const hi = Math.floor(Math.max(min, max));
+    return Math.floor(Math.random() * (hi - lo + 1)) + lo;
   }
 
   async function safeReadText(resp) {
