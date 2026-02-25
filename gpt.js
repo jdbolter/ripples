@@ -88,6 +88,7 @@
   // OpenAI (client-side key entry)
   let userApiKey = null;
   let isGenerating = false;
+  const apiNarrativeState = {};
 
   // -----------------------------
   // DOM
@@ -375,6 +376,7 @@
     function loadScene(newSceneId) {
       if (!window.SCENES[newSceneId]) throw new Error(`Unknown scene: ${newSceneId}`);
       sceneId = newSceneId;
+      resetApiNarrativeState(newSceneId);
       tick = 0;
       selectedId = null;
       audit = [];
@@ -387,6 +389,7 @@
     }
 
     function getScene() { return window.SCENES[sceneId]; }
+    function getSceneId() { return sceneId; }
     function listScenes() { return window.SCENE_ORDER.slice(); }
 
     function selectCharacter(id) {
@@ -507,6 +510,7 @@
     return {
       listScenes,
       loadScene,
+      getSceneId,
       getScene,
       snapshot,
       selectCharacter,
@@ -766,7 +770,7 @@
       });
     }
 
-    if (isTrainDelayScene(engine.getScene())) {
+    if (usedLocalPool && isTrainDelayScene(engine.getScene())) {
       text = ensureTrainDelayPressure(text);
     }
 
@@ -1116,6 +1120,391 @@
     return `${oneLine.slice(0, max - 3)}...`;
   }
 
+  function resetApiNarrativeState(sceneId) {
+    const id = String(sceneId || "").trim();
+    if (!id) return;
+    apiNarrativeState[id] = {};
+  }
+
+  function getApiCharacterState(sceneId, characterId) {
+    const sid = String(sceneId || "").trim();
+    const cid = String(characterId || "").trim();
+    if (!sid || !cid) {
+      return {
+        turnIndex: 0,
+        recentTopics: [],
+        recentOpenings: [],
+        recentNgrams: [],
+        motifStages: {},
+        motifLastUsed: {},
+        threadLastUsed: {}
+      };
+    }
+
+    if (!apiNarrativeState[sid]) apiNarrativeState[sid] = {};
+    if (!apiNarrativeState[sid][cid]) {
+      apiNarrativeState[sid][cid] = {
+        turnIndex: 0,
+        recentTopics: [],
+        recentOpenings: [],
+        recentNgrams: [],
+        motifStages: {},
+        motifLastUsed: {},
+        threadLastUsed: {}
+      };
+    }
+    return apiNarrativeState[sid][cid];
+  }
+
+  function buildPacketPromptContext({ sceneId, scene, character, whisperText, priorMonologueCount, disclosurePhase }) {
+    const packet = normalizeCharacterPacket(character, scene);
+    const state = getApiCharacterState(sceneId, character?.id);
+    const isTrainScene = isTrainDelayScene(scene);
+
+    const activeThread = pickLifeThread({
+      threads: packet.lifeThreads,
+      state,
+      cooldown: packet.antiRepeat.topicCooldownTurns
+    });
+    const secondaryThread = pickLifeThread({
+      threads: packet.lifeThreads.filter((t) => t !== activeThread),
+      state,
+      cooldown: Math.max(1, packet.antiRepeat.topicCooldownTurns - 1)
+    });
+    const motifSelection = pickMotifForTurn({
+      packet,
+      state,
+      whisperText,
+      trainDelay: isTrainDelayScene(scene)
+    });
+
+    const phase = disclosurePhase || (
+      priorMonologueCount <= 3 ? "early" :
+      priorMonologueCount <= 7 ? "middle" : "late"
+    );
+    const phaseDirectives = packet.disclosurePlan[phase] || [];
+    const rawMustInclude = packet.promptContract.mustInclude || [];
+    const delayContractRx = /\b(delay|late|lateness|timing)\b/i;
+    const enforceDelayContractThisTurn =
+      !isTrainScene || priorMonologueCount <= 1 || state.turnIndex % 3 === 0;
+    const mustIncludeTurn = rawMustInclude.filter((item) =>
+      enforceDelayContractThisTurn ? true : !delayContractRx.test(String(item))
+    );
+
+    const openingAvoid = state.recentOpenings
+      .slice(-packet.antiRepeat.openingCooldownTurns)
+      .map((s) => trimForPrompt(s, 72));
+    const topicAvoid = state.recentTopics
+      .slice(-packet.antiRepeat.topicCooldownTurns)
+      .map((s) => trimForPrompt(s, 64));
+    const phraseAvoid = state.recentNgrams
+      .slice(-packet.antiRepeat.bannedRecentNgrams)
+      .map((s) => trimForPrompt(s, 56));
+
+    const promptBlock = [
+      `- Turn index in this scene for this character: ${state.turnIndex + 1}.`,
+      `- Character premise anchor: ${packet.core.premise}.`,
+      `- Preserve central conflict: ${packet.core.centralConflict}.`,
+      `- Preserve contradiction: ${packet.core.contradiction}.`,
+      `- Active life thread (required, concrete): ${activeThread}.`,
+      `- Secondary life thread (required, brief): ${secondaryThread}.`,
+      `- Motif pick for this turn: ${motifSelection.seed} (stage ${motifSelection.stage}).`,
+      `- Motif stage guidance: ${motifSelection.stageDirective}.`,
+      `- Motif trigger route: ${motifSelection.triggerRoute}.`,
+      `- Voice texture: ${packet.voiceRules.texture.join(", ")}.`,
+      `- Syntax bias: ${packet.voiceRules.syntaxBias.join(", ")}.`,
+      `- Taboo stylistic moves: ${packet.voiceRules.tabooMoves.join("; ")}.`,
+      phaseDirectives.length
+        ? `- Disclosure directives (${phase.toUpperCase()}): ${phaseDirectives.join(" | ")}.`
+        : `- Disclosure directives (${phase.toUpperCase()}): keep incremental and allusive.`,
+      mustIncludeTurn.length
+        ? `- Must include this turn: ${mustIncludeTurn.join("; ")}.`
+        : "- Must include this turn: one practical stake, one body cue, one concrete anchor.",
+      packet.promptContract.mustAvoid.length
+        ? `- Must avoid this turn: ${packet.promptContract.mustAvoid.join("; ")}.`
+        : "- Must avoid this turn: direct whisper reply; life-summary exposition.",
+      openingAvoid.length
+        ? `- Opening cooldown: do not reuse these recent openings: ${openingAvoid.join(" || ")}.`
+        : "- Opening cooldown: use a fresh opening shape.",
+      topicAvoid.length
+        ? `- Topic cooldown: avoid centering these recently used topics: ${topicAvoid.join(", ")}.`
+        : "- Topic cooldown: rotate to a different concern domain than the previous turn.",
+      phraseAvoid.length
+        ? `- Phrase suppression: avoid close variants of these recent fragments: ${phraseAvoid.join(" || ")}.`
+        : "- Phrase suppression: keep noun/imagery set fresh."
+    ].join("\n");
+
+    return {
+      promptBlock,
+      selection: {
+        packet,
+        activeThread,
+        secondaryThread,
+        motif: motifSelection.seed,
+        motifStage: motifSelection.stage,
+        motifDecayTurns: packet.motifSystem.decayAfterTurns
+      }
+    };
+  }
+
+  function normalizeCharacterPacket(character, scene) {
+    const packet = (character && typeof character.packet === "object" && character.packet) ? character.packet : {};
+    const core = (packet.core && typeof packet.core === "object") ? packet.core : {};
+    const voiceRules = (packet.voice_rules && typeof packet.voice_rules === "object") ? packet.voice_rules : {};
+    const motifSystem = (packet.motif_system && typeof packet.motif_system === "object") ? packet.motif_system : {};
+    const disclosurePlan = (packet.disclosure_plan && typeof packet.disclosure_plan === "object") ? packet.disclosure_plan : {};
+    const antiRepeat = (packet.anti_repeat && typeof packet.anti_repeat === "object") ? packet.anti_repeat : {};
+    const promptContract = (packet.prompt_contract && typeof packet.prompt_contract === "object") ? packet.prompt_contract : {};
+
+    const fallbackPremise = trimForPrompt(character?.dossier || "A person under pressure in a shared public interior.", 120);
+    const lifeThreads = uniqList(packet.life_threads || []).length
+      ? uniqList(packet.life_threads || [])
+      : [
+          "immediate practical obligations",
+          "relationship or social pressure",
+          "money/admin constraints",
+          "body-state management",
+          "future identity uncertainty"
+        ];
+
+    const mergedMotifSeeds = uniqList([
+      ...(motifSystem.seeds || []),
+      ...(character?.motifSeeds || []),
+      ...(scene?.motifs || [])
+    ]).slice(0, 40);
+
+    return {
+      core: {
+        premise: String(core.premise || fallbackPremise),
+        centralConflict: String(core.central_conflict || "conflicting obligations under uncertainty"),
+        contradiction: String(core.contradiction || "wants stability but keeps drifting toward risk")
+      },
+      lifeThreads,
+      recurringStakes: uniqList(packet.recurring_stakes || []),
+      voiceRules: {
+        texture: uniqList(voiceRules.texture || character?.voice || ["plainspoken"]).slice(0, 6),
+        syntaxBias: uniqList(voiceRules.syntax_bias || ["concrete clauses", "occasional fragment"]).slice(0, 5),
+        tabooMoves: uniqList(voiceRules.taboo_moves || ["direct whisper reply", "biography summary"]).slice(0, 5)
+      },
+      motifSystem: {
+        seeds: mergedMotifSeeds.length ? mergedMotifSeeds : ["object detail", "body cue", "ambient sound"],
+        triggerMap: (motifSystem.trigger_map && typeof motifSystem.trigger_map === "object")
+          ? motifSystem.trigger_map
+          : {},
+        evolution: {
+          stage_1: String(motifSystem?.evolution?.stage_1 || "literal mention in present scene detail"),
+          stage_2: String(motifSystem?.evolution?.stage_2 || "associative link to practical or emotional stake"),
+          stage_3: String(motifSystem?.evolution?.stage_3 || "reframed motif as decision pressure")
+        },
+        decayAfterTurns: Math.max(1, Number(motifSystem.decay_after_turns) || 3)
+      },
+      disclosurePlan: {
+        early: uniqList(disclosurePlan.early || []),
+        middle: uniqList(disclosurePlan.middle || []),
+        late: uniqList(disclosurePlan.late || [])
+      },
+      antiRepeat: {
+        bannedRecentNgrams: Math.max(1, Number(antiRepeat.banned_recent_ngrams) || 3),
+        topicCooldownTurns: Math.max(1, Number(antiRepeat.topic_cooldown_turns) || 2),
+        openingCooldownTurns: Math.max(1, Number(antiRepeat.opening_cooldown_turns) || 3),
+        motifRepeatLimitPer4Turns: Math.max(1, Number(antiRepeat.motif_repeat_limit_per_4_turns) || 2)
+      },
+      promptContract: {
+        mustInclude: uniqList(promptContract.must_include || []),
+        mustAvoid: uniqList(promptContract.must_avoid || [])
+      }
+    };
+  }
+
+  function pickLifeThread({ threads, state, cooldown }) {
+    const pool = uniqList(threads || []).filter(Boolean);
+    if (!pool.length) return "immediate practical obligation";
+
+    const scored = pool.map((thread) => {
+      const key = String(thread);
+      const last = Number.isFinite(state.threadLastUsed[key]) ? state.threadLastUsed[key] : -999;
+      const age = state.turnIndex - last;
+      const penalty = age <= cooldown ? 2 : 0;
+      const jitter = Math.random() * 0.25;
+      return { thread: key, score: age - penalty + jitter };
+    });
+    scored.sort((a, b) => b.score - a.score);
+    return scored[0].thread;
+  }
+
+  function pickMotifForTurn({ packet, state, whisperText, trainDelay }) {
+    const seeds = uniqList(packet?.motifSystem?.seeds || []).filter(Boolean);
+    if (!seeds.length) {
+      return {
+        seed: "concrete object detail",
+        stage: 1,
+        stageDirective: "literal mention in the immediate scene",
+        triggerRoute: "fallback"
+      };
+    }
+
+    const tone = classifyWhisperTone(whisperText).tone;
+    const triggerKeys = [];
+    if (trainDelay) triggerKeys.push("delay");
+    if (tone && tone !== "neutral") triggerKeys.push(`whisper_${tone}`);
+
+    const triggerMap = packet?.motifSystem?.triggerMap || {};
+    const triggeredSeeds = new Set();
+    for (const key of triggerKeys) {
+      for (const seed of uniqList(triggerMap[key] || [])) {
+        triggeredSeeds.add(String(seed));
+      }
+    }
+
+    let best = null;
+    for (const seed of seeds) {
+      const key = String(seed);
+      const last = Number.isFinite(state.motifLastUsed[key]) ? state.motifLastUsed[key] : -999;
+      const age = state.turnIndex - last;
+      const triggerBoost = triggeredSeeds.has(key) ? 2.5 : 0;
+      const recencyPenalty = age <= 1 ? 1.2 : 0;
+      const score = age * 0.25 + triggerBoost - recencyPenalty + (Math.random() * 0.3);
+      if (!best || score > best.score) {
+        best = { seed: key, score };
+      }
+    }
+
+    const stage = Math.max(1, Math.min(3, Number(state.motifStages[best.seed]) || 1));
+    const stageDirective = packet?.motifSystem?.evolution?.[`stage_${stage}`] || "literal mention in present scene detail";
+    return {
+      seed: best.seed,
+      stage,
+      stageDirective,
+      triggerRoute: triggerKeys.length ? triggerKeys.join("+") : "none"
+    };
+  }
+
+  function updateApiNarrativeState({ sceneId, characterId, text, packetContext }) {
+    const clean = normalizeWhitespace(String(text || ""));
+    if (!sceneId || !characterId || !clean) return;
+
+    const state = getApiCharacterState(sceneId, characterId);
+    state.turnIndex += 1;
+
+    const selection = (packetContext && packetContext.selection) ? packetContext.selection : null;
+    if (selection) {
+      if (selection.activeThread) {
+        rememberRecent(state.recentTopics, selection.activeThread, 10);
+        state.threadLastUsed[selection.activeThread] = state.turnIndex;
+      }
+      if (selection.secondaryThread) {
+        rememberRecent(state.recentTopics, selection.secondaryThread, 10);
+        state.threadLastUsed[selection.secondaryThread] = state.turnIndex;
+      }
+    }
+
+    const opening = extractOpeningStem(clean);
+    if (opening) rememberRecent(state.recentOpenings, opening, 10);
+
+    for (const topic of extractTopicKeywords(clean, 5)) {
+      rememberRecent(state.recentTopics, topic, 10);
+    }
+    for (const phrase of extractNgramPhrases(clean, 3, 12)) {
+      rememberRecent(state.recentNgrams, phrase, 24);
+    }
+
+    if (selection && selection.motif) {
+      const motif = String(selection.motif);
+      const prior = Math.max(1, Math.min(3, Number(state.motifStages[motif]) || 1));
+      const mentioned = motifMentioned(clean, motif);
+      state.motifStages[motif] = mentioned ? Math.min(3, prior + 1) : prior;
+      state.motifLastUsed[motif] = state.turnIndex;
+      rememberRecent(state.recentTopics, motif, 10);
+    }
+
+    const decayAfter = Math.max(1, Number(selection?.motifDecayTurns) || 3);
+    for (const seed of Object.keys(state.motifLastUsed)) {
+      const last = Number(state.motifLastUsed[seed]);
+      if (!Number.isFinite(last)) continue;
+      if ((state.turnIndex - last) > decayAfter) {
+        const current = Math.max(1, Math.min(3, Number(state.motifStages[seed]) || 1));
+        state.motifStages[seed] = Math.max(1, current - 1);
+      }
+    }
+  }
+
+  function rememberRecent(arr, value, limit) {
+    const clean = normalizeWhitespace(String(value || ""));
+    if (!clean) return;
+    const idx = arr.findIndex((x) => x === clean);
+    if (idx >= 0) arr.splice(idx, 1);
+    arr.push(clean);
+    while (arr.length > Math.max(1, Number(limit) || 1)) arr.shift();
+  }
+
+  function extractOpeningStem(text) {
+    const first = splitClauses(text)[0] || "";
+    const words = splitWords(first).slice(0, 8);
+    return normalizeWhitespace(words.join(" ")).toLowerCase();
+  }
+
+  function extractTopicKeywords(text, limit = 4) {
+    const stop = new Set([
+      "about", "after", "again", "along", "around", "because", "before", "between", "could", "every", "their",
+      "there", "these", "those", "through", "under", "where", "which", "while", "with", "would", "still",
+      "this", "that", "from", "into", "over", "than", "only", "just", "very", "really", "have", "been", "were",
+      "what", "when", "then", "them", "they", "feel", "feels", "felt", "like", "into", "onto", "your"
+    ]);
+    const counts = new Map();
+    for (const tok of splitWords(text)) {
+      const c = canonicalToken(tok);
+      if (!c || c.length < 4 || stop.has(c)) continue;
+      counts.set(c, (counts.get(c) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => (b[1] - a[1]) || (a[0] < b[0] ? -1 : 1))
+      .slice(0, Math.max(1, Number(limit) || 1))
+      .map(([k]) => k);
+  }
+
+  function extractNgramPhrases(text, n = 3, limit = 8) {
+    const size = Math.max(2, Number(n) || 3);
+    const tokens = splitWords(text)
+      .map((tok) => canonicalToken(tok))
+      .filter((tok) => tok && tok.length >= 3);
+    const seen = new Set();
+    const out = [];
+    for (let i = 0; i <= tokens.length - size; i++) {
+      const phrase = tokens.slice(i, i + size).join(" ");
+      if (!phrase || seen.has(phrase)) continue;
+      seen.add(phrase);
+      out.push(phrase);
+      if (out.length >= Math.max(1, Number(limit) || 1)) break;
+    }
+    return out;
+  }
+
+  function motifMentioned(text, motifSeed) {
+    const t = normalizeWhitespace(text).toLowerCase();
+    const motif = normalizeWhitespace(motifSeed).toLowerCase();
+    if (!t || !motif) return false;
+    if (t.includes(motif)) return true;
+
+    const parts = motif.split(/\s+/).map(canonicalToken).filter(Boolean);
+    if (!parts.length) return false;
+    const hits = parts.reduce((n, p) => n + (new RegExp(`\\b${escapeRegExp(p)}\\b`, "i").test(t) ? 1 : 0), 0);
+    return hits >= Math.min(2, parts.length);
+  }
+
+  function uniqList(values) {
+    const out = [];
+    const seen = new Set();
+    for (const v of (Array.isArray(values) ? values : [])) {
+      const s = normalizeWhitespace(String(v || ""));
+      if (!s) continue;
+      const key = s.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(s);
+    }
+    return out;
+  }
+
   function setApiKeyChecking(loading) {
     isApiKeyChecking = !!loading;
     btnApiSubmit.disabled = isApiKeyChecking;
@@ -1165,6 +1554,7 @@
   // -----------------------------
   async function generateFromOpenAI({ characterId, channel, whisperText, kind }) {
     const sc = engine.getScene();
+    const sceneId = engine.getSceneId();
     const ch = sc.characters.find(c => c.id === characterId);
     const sceneLabel = String(sc?.meta?.label || "");
     const sceneTitle = String(sc?.meta?.title || "");
@@ -1179,6 +1569,9 @@
       "If a whisper is present, it bends mood indirectly; do not answer it directly.";
 
     const dossier = (ch && ch.dossier) ? ch.dossier : "";
+    const voice = uniqList(ch?.voice || []);
+    const characterMotifSeeds = uniqList(ch?.motifSeeds || []);
+    const sceneMotifPalette = uniqList(sc?.motifs || []);
 
     const ps = engine.getPsyche(characterId);
     const psycheBlock = [
@@ -1282,6 +1675,15 @@
       "- Do not stay only on train surroundings."
     ].join("\n");
 
+    const packetContext = buildPacketPromptContext({
+      sceneId,
+      scene: sc,
+      character: ch,
+      whisperText: whisperClean,
+      priorMonologueCount,
+      disclosurePhase
+    });
+
     const whisperImpact = whisperClean
       ? [
           "WHISPER IMPACT (MANDATORY):",
@@ -1334,12 +1736,18 @@
       ? "- Include one immediate embodied concern (shelter, hunger, injury risk, weather, territory, energy, predation, mating pressure, seasonal survival)."
       : "- Include one immediate personal concern (status, work, money, health, aging, regret, belonging, obligation, reputation, deadline, body discomfort).";
 
+    const recentDelayMentions = recentThoughts
+      .filter((entry) => hasTrainDelayPressure(entry?.text || ""))
+      .length;
+    const forceExplicitDelay = priorMonologueCount <= 1 || recentDelayMentions === 0;
     const delayPressureBlock = isTrainDelay
       ? [
-          "Train-delay pressure (required for this scene):",
+          "Train timing pressure:",
           "- A carriage announcement says arrival is 30 minutes late.",
-          "- Explicitly mention lateness/delay and at least one concrete consequence (connection risk, missed timing, call rescheduling, pickup friction, appointment pressure, admin fallout).",
-          "- Keep it immediate, not abstract."
+          forceExplicitDelay
+            ? "- In this turn, include one concrete timing consequence (connection risk, missed timing, call rescheduling, pickup friction, appointment pressure, or admin fallout)."
+            : "- Keep timing pressure present, but avoid repeating exact '30 minutes late' wording from recent turns; implication is acceptable.",
+          "- Vary wording and consequence type across turns; do not reuse the same delay phrase repeatedly."
         ].join("\n")
       : "No scene-wide delay requirement.";
 
@@ -1368,6 +1776,12 @@
       "",
       "Character:",
       dossier,
+      voice.length ? `Voice tags: ${voice.join(", ")}.` : "Voice tags: (none).",
+      characterMotifSeeds.length ? `Character motif seeds: ${characterMotifSeeds.join(", ")}.` : "Character motif seeds: (none).",
+      sceneMotifPalette.length ? `Scene motif palette: ${sceneMotifPalette.slice(0, 14).join(", ")}.` : "Scene motif palette: (none).",
+      "",
+      "Packet steering (apply exactly as constraints):",
+      packetContext.promptBlock,
       "",
       delayPressureBlock,
       "",
@@ -1465,6 +1879,13 @@
 
     const monologue = postprocessMonologue(payload?.monologue);
     const delta = payload?.delta || null;
+
+    updateApiNarrativeState({
+      sceneId,
+      characterId,
+      text: monologue,
+      packetContext
+    });
 
     return { text: monologue, delta };
   }

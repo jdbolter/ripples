@@ -39,7 +39,8 @@ You never explain the system, never mention "prompts" or "models," and you never
 Core constraint: the monologue is not a reply to the user. A whisper only bends attention indirectly.
 Avoid direct second-person address and avoid question/answer dialogue.
 Shared immediate pressure for this carriage: an announcement says arrival will be 30 minutes late.
-In every thought, include one concrete consequence of that delay for the character.
+Keep delay pressure in circulation across successive thoughts, but avoid repeating the exact same delay phrasing each turn.
+Some thoughts may imply timing pressure indirectly through practical fallout rather than naming "30 minutes late" verbatim.
 
 Backstory priority:
 - Anchor each monologue in the character dossier's lived situation (family, relationship status, work, age, obligations, losses, pending decisions).
@@ -117,7 +118,63 @@ She also keeps a parallel ledger of ordinary responsibilities: a manager waiting
 Her mind jumps between medical vocabulary and domestic minutiae, as if both belonged to the same emergency.`,
         voice: ["contained urgency", "maternal vigilance", "practical language under strain"],
         psyche0: { arousal: 0.62, valence: 0.42, agency: 0.67, permeability: 0.48, coherence: 0.55 },
-        motifSeeds: ["hospital corridors", "arrival dread", "unsent messages", "door chime"]
+        motifSeeds: ["hospital corridors", "arrival dread", "unsent messages", "door chime"],
+        packet: {
+          version: 1,
+          core: {
+            premise: "A mother returning to Berlin, using logistics to survive medical uncertainty.",
+            central_conflict: "She needs control to function, but the situation cannot be controlled.",
+            contradiction: "Operationally calm in public, internally close to panic."
+          },
+          life_threads: [
+            "specialist meeting prep and question sequencing",
+            "leave approval and manager follow-up",
+            "rent, pharmacy receipts, and school form backlog",
+            "message cadence with family and update timing",
+            "sleep debt, jaw tension, and physical strain"
+          ],
+          recurring_stakes: [
+            "a delay compresses tomorrow's medical timeline",
+            "silence from her phone reads as risk",
+            "if focus slips, practical tasks start to fail"
+          ],
+          voice_rules: {
+            texture: ["contained urgency", "maternal vigilance", "practical language under strain"],
+            syntax_bias: ["concrete clauses first", "short fragment after pressure spike"],
+            taboo_moves: ["no complete emotional confession", "no abstract sermon"]
+          },
+          motif_system: {
+            seeds: ["hospital corridors", "door chime", "unsent messages", "station names", "folder edge"],
+            trigger_map: {
+              delay: ["station names", "clock digits", "platform timing"],
+              whisper_calm: ["seat fabric", "breath count", "thermos lid click"],
+              whisper_urgent: ["phone vibration check", "gate timing", "message draft"],
+              whisper_threat: ["door chime", "exit scan", "appointment risk"],
+              whisper_tender: ["daughter hand memory", "pillow heat", "blanket edge"]
+            },
+            evolution: {
+              stage_1: "literal object or sound in the carriage",
+              stage_2: "associative bridge to duty or fear",
+              stage_3: "motif reframed as decision pressure"
+            },
+            decay_after_turns: 3
+          },
+          disclosure_plan: {
+            early: ["start from task detail", "keep fear implied", "show concrete delay consequence"],
+            middle: ["surface control-vs-panic contradiction", "add work or money side-thread", "allow one care-memory shard"],
+            late: ["name fear more clearly without full confession", "tie fear to one immediate next action", "end unresolved"]
+          },
+          anti_repeat: {
+            banned_recent_ngrams: 3,
+            topic_cooldown_turns: 2,
+            opening_cooldown_turns: 3,
+            motif_repeat_limit_per_4_turns: 2
+          },
+          prompt_contract: {
+            must_include: ["one practical obligation", "one bodily signal", "one explicit delay consequence"],
+            must_avoid: ["direct whisper reply", "biography summary paragraph", "reusing last opening noun"]
+          }
+        }
       },
       {
         id: "student_alone",
@@ -136,7 +193,63 @@ At the same time she is juggling exam deadlines, a scholarship renewal, and paid
 She thinks about rent, overdue reading, and the polite voice she uses on video calls with her parents when she does not want to worry them.`,
         voice: ["precise and clipped", "self-protective", "quick shifts between logic and hurt"],
         psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 },
-        motifSeeds: ["unsent messages", "window reflections", "seat fabric", "station names"]
+        motifSeeds: ["unsent messages", "window reflections", "seat fabric", "station names"],
+        packet: {
+          version: 1,
+          core: {
+            premise: "A student in transit, suspended between academic pressure and relationship mistrust.",
+            central_conflict: "She wants certainty but rejects the surveillance required to feel certain.",
+            contradiction: "Precision-seeking thinker whose emotions keep breaking linear logic."
+          },
+          life_threads: [
+            "exam deadlines and scholarship renewal requirements",
+            "paid tutoring sessions and rent coverage",
+            "argument aftermath with boyfriend in the same carriage",
+            "family calls where she withholds distress",
+            "sleep deficit and concentration drift"
+          ],
+          recurring_stakes: [
+            "relationship trust may collapse before arrival",
+            "deadline slippage could cost money and status",
+            "if she starts monitoring everything, self-respect drops"
+          ],
+          voice_rules: {
+            texture: ["precise and clipped", "self-protective", "logic punctured by hurt"],
+            syntax_bias: ["clean statements", "abrupt corrective second clause"],
+            taboo_moves: ["no melodramatic accusation monologue", "no tidy romantic verdict"]
+          },
+          motif_system: {
+            seeds: ["window reflections", "unsent messages", "seat fabric", "station names", "cursor blink"],
+            trigger_map: {
+              delay: ["station names", "connection timing", "calendar blocks"],
+              whisper_calm: ["breath count", "keyboard rhythm", "cool glass"],
+              whisper_urgent: ["cursor blink", "deadline clock", "notification ping"],
+              whisper_threat: ["window reflections", "message scroll", "aisle surveillance"],
+              whisper_tender: ["old chat warmth", "shared joke memory", "phone lockscreen photo"]
+            },
+            evolution: {
+              stage_1: "literal tech or carriage detail",
+              stage_2: "detail as evidence-question loop",
+              stage_3: "detail reframed as identity choice"
+            },
+            decay_after_turns: 3
+          },
+          disclosure_plan: {
+            early: ["open with practical or sensory detail", "keep betrayal suspicion indirect", "show one study/work consequence"],
+            middle: ["oscillate between relationship and logistics", "show ethical discomfort with monitoring", "add family pressure trace"],
+            late: ["clearer self-recognition", "state what distrust is costing", "avoid final decision closure"]
+          },
+          anti_repeat: {
+            banned_recent_ngrams: 3,
+            topic_cooldown_turns: 2,
+            opening_cooldown_turns: 3,
+            motif_repeat_limit_per_4_turns: 2
+          },
+          prompt_contract: {
+            must_include: ["one obligation with timing", "one body signal", "one non-romantic life thread"],
+            must_avoid: ["direct whisper reply", "courtroom-style exposition", "same opening pattern as previous turn"]
+          }
+        }
       },
       {
         id: "worried_boyfriend",
@@ -156,7 +269,63 @@ Outside the relationship, he is also carrying ordinary pressures: shift schedule
 He wants to be seen as reliable, yet lately even small promises feel harder to keep.`,
         voice: ["self-indicting", "plainspoken", "hesitant when naming fault"],
         psyche0: { arousal: 0.57, valence: 0.39, agency: 0.43, permeability: 0.44, coherence: 0.50 },
-        motifSeeds: ["window reflections", "unsent messages", "late winter light", "arrival dread"]
+        motifSeeds: ["window reflections", "unsent messages", "late winter light", "arrival dread"],
+        packet: {
+          version: 1,
+          core: {
+            premise: "A man replaying a relationship rupture while trying to salvage ordinary reliability.",
+            central_conflict: "He wants forgiveness but keeps defaulting to self-protective explanation.",
+            contradiction: "Self-indicting inner voice paired with evasive habits."
+          },
+          life_threads: [
+            "shift schedule instability and fatigue",
+            "bills tracked manually to prevent misses",
+            "family messages postponed beyond comfort",
+            "apology rehearsal versus avoidance",
+            "public composure versus interior shame spikes"
+          ],
+          recurring_stakes: [
+            "delay extends uncertainty before confrontation",
+            "one wrong text could harden the break",
+            "if he explains instead of owning fault, trust drops further"
+          ],
+          voice_rules: {
+            texture: ["plainspoken", "self-indicting", "hesitant when naming fault"],
+            syntax_bias: ["short declarative lines", "qualified admission in second beat"],
+            taboo_moves: ["no grand redemption speech", "no villain monologue about partner"]
+          },
+          motif_system: {
+            seeds: ["window reflections", "unsent messages", "late winter light", "arrival dread", "notes app list"],
+            trigger_map: {
+              delay: ["arrival dread", "connection risk", "clock drift"],
+              whisper_calm: ["slower breath", "palm unclench", "seat edge pressure"],
+              whisper_urgent: ["pulse spike", "drafted apology", "phone unlock loop"],
+              whisper_threat: ["exit scan", "jaw lock", "defensive script"],
+              whisper_tender: ["shared memory shard", "softened tone rehearsal", "quiet apology sentence"]
+            },
+            evolution: {
+              stage_1: "literal carriage/body marker",
+              stage_2: "marker tied to accountability pressure",
+              stage_3: "marker becomes test of reliability"
+            },
+            decay_after_turns: 3
+          },
+          disclosure_plan: {
+            early: ["start with object or route detail", "keep accusation context partial", "show concrete practical cost"],
+            middle: ["surface excuse-versus-accountability split", "add non-romantic duty thread", "allow one sharper guilt signal"],
+            late: ["state stakes for identity and trust", "admit pattern without full confession", "end on unresolved action choice"]
+          },
+          anti_repeat: {
+            banned_recent_ngrams: 3,
+            topic_cooldown_turns: 2,
+            opening_cooldown_turns: 3,
+            motif_repeat_limit_per_4_turns: 2
+          },
+          prompt_contract: {
+            must_include: ["one practical non-relationship concern", "one body cue", "one explicit consequence of delay"],
+            must_avoid: ["direct whisper reply", "full timeline recap", "repeated apology phrasing"]
+          }
+        }
       },
       {
         id: "retired_widower",
@@ -175,7 +344,63 @@ He thinks about small routines awaiting him: a broken lock that needs fixing at 
 His life is full of manageable tasks that become heavy when no one witnesses them.`,
         voice: ["measured", "observant of routine", "tender without display"],
         psyche0: { arousal: 0.34, valence: 0.46, agency: 0.52, permeability: 0.33, coherence: 0.66 },
-        motifSeeds: ["thermos coffee", "seat fabric", "station names", "window reflections"]
+        motifSeeds: ["thermos coffee", "seat fabric", "station names", "window reflections"],
+        packet: {
+          version: 1,
+          core: {
+            premise: "A widower returning to a solitary routine held together by practical rituals.",
+            central_conflict: "He wants dignity and self-sufficiency while grief keeps leaking into ordinary tasks.",
+            contradiction: "Measured composure with sudden private tenderness."
+          },
+          life_threads: [
+            "pension budgeting and expense counting",
+            "home repairs and unattended letters",
+            "community-center chess attendance hesitation",
+            "daughter check-ins and burden anxiety",
+            "daily domestic rituals now done alone"
+          ],
+          recurring_stakes: [
+            "arrival delay shifts small routines that keep him steady",
+            "missed tasks compound into avoidable stress",
+            "social withdrawal becomes easier each week"
+          ],
+          voice_rules: {
+            texture: ["measured", "observant of routine", "tender without display"],
+            syntax_bias: ["calm descriptive first sentence", "quiet turn toward memory"],
+            taboo_moves: ["no sentimental climax", "no abstract death philosophy"]
+          },
+          motif_system: {
+            seeds: ["thermos coffee", "seat fabric", "station names", "window reflections", "single scarf fold"],
+            trigger_map: {
+              delay: ["station names", "bus timing", "evening routine drift"],
+              whisper_calm: ["thermos warmth", "steady breath", "hands settling"],
+              whisper_urgent: ["ticket check", "stairs at home", "key search"],
+              whisper_threat: ["lock concern", "insurance letter", "balance worry"],
+              whisper_tender: ["shared habit memory", "kitchen silence", "chessboard image"]
+            },
+            evolution: {
+              stage_1: "literal routine object",
+              stage_2: "object linked to grief-by-practice",
+              stage_3: "object reframed as belonging test"
+            },
+            decay_after_turns: 3
+          },
+          disclosure_plan: {
+            early: ["open with routine or bodily detail", "keep grief indirect", "show one practical consequence"],
+            middle: ["link routine burden to loneliness", "add finance/admin thread", "allow one memory shard"],
+            late: ["clearer emotional naming without full confession", "tie feeling to concrete next task", "end with unresolved steadiness"]
+          },
+          anti_repeat: {
+            banned_recent_ngrams: 3,
+            topic_cooldown_turns: 2,
+            opening_cooldown_turns: 3,
+            motif_repeat_limit_per_4_turns: 2
+          },
+          prompt_contract: {
+            must_include: ["one routine task", "one body sensation", "one concrete delay fallout"],
+            must_avoid: ["direct whisper reply", "nostalgia-only monologue", "same motif in consecutive turns"]
+          }
+        }
       },
       {
         id: "nurse_on_shift",
@@ -195,7 +420,61 @@ Beyond that central fear, she is preoccupied by roster politics, a junior collea
 She keeps making practical post-retirement lists: language class, hiking group, volunteering, maybe dancing lessons, each item sounding sensible and slightly unreal.`,
         voice: ["competent and direct", "dark humor at the edges", "emotion kept under clinical language"],
         psyche0: { arousal: 0.49, valence: 0.47, agency: 0.64, permeability: 0.38, coherence: 0.60 },
-        motifSeeds: ["hospital corridors", "thermos coffee", "arrival dread", "door chime"]
+        motifSeeds: ["hospital corridors", "thermos coffee", "arrival dread", "door chime"],
+        packet: {
+          version: 1,
+          core: {
+            premise: "A veteran nurse heading home, confronting competence without companionship.",
+            central_conflict: "She trusts practical planning but fears post-work life will feel empty.",
+            contradiction: "Clinically direct voice with private romantic vulnerability."
+          },
+          life_threads: [
+            "shift roster politics and staffing strain",
+            "junior colleague mentoring obligations",
+            "retirement paperwork and timeline planning",
+            "late-life social experiments she half-believes in"
+          ],
+          recurring_stakes: [
+            "if health signals are ignored, function drops",
+            "if she wants to connect, she risks awkwardness and rejection",
+            "if she keeps postponing connection, isolation hardens"
+          ],
+          voice_rules: {
+            texture: ["competent and direct", "dark humor at the edges", "emotion tucked under clinical language"],
+            syntax_bias: ["efficient first sentence", "dry corrective aside"],
+            taboo_moves: ["no sentimental self-rescue arc", "no contempt for patients or colleagues"]
+          },
+          motif_system: {
+            seeds: ["hospital corridors", "thermos coffee", "arrival dread", "door chime", "retirement checklist"],
+            trigger_map: {
+              whisper_calm: ["thermos warmth", "shoulder release", "even breath count"],
+              whisper_urgent: ["triage tempo memory", "pulse rise", "next-shift math"],
+              whisper_threat: ["corridor vigilance", "exit routes", "clinical risk scan"],
+              whisper_tender: ["awkward coffee scenario", "shared laugh memory", "hand warmth"]
+            },
+            evolution: {
+              stage_1: "literal work or transit cue",
+              stage_2: "cue tied to aging/connection pressure",
+              stage_3: "cue reframed as life-structure decision"
+            },
+            decay_after_turns: 3
+          },
+          disclosure_plan: {
+            early: ["start with body or task metric", "hint loneliness obliquely", "show one immediate obligation"],
+            middle: ["mix work realism with future anxiety", "add health/admin thread", "allow one socially vulnerable image"],
+            late: ["name the cost of emotional deferral", "retain pragmatic voice", "end unresolved but actionable"]
+          },
+          anti_repeat: {
+            banned_recent_ngrams: 3,
+            topic_cooldown_turns: 2,
+            opening_cooldown_turns: 3,
+            motif_repeat_limit_per_4_turns: 2
+          },
+          prompt_contract: {
+            must_include: ["one concrete practical stake", "one body-state marker", "one consequence of lateness"],
+            must_avoid: ["direct whisper reply", "single-topic retirement loop", "same opening construction repeatedly"]
+          }
+        }
       }
     ],
 
@@ -335,7 +614,62 @@ He moves carefully, conserving effort. His dignity is quiet, not performative.
 He is attentive to margins, to the evidence of other readers, to time passing through objects.`,
         voice: ["measured", "precise about sensation", "restrained tenderness"],
         psyche0: { arousal: 0.35, valence: 0.61, agency: 0.60, permeability: 0.30, coherence: 0.57 },
-        motifSeeds: ["coat fabric", "margins", "names half-remembered", "pale light"]
+        motifSeeds: ["coat fabric", "margins", "names half-remembered", "pale light"],
+        packet: {
+          version: 1,
+          core: {
+            premise: "An older reader maintaining dignity through attention and ritual.",
+            central_conflict: "He wants quiet continuity while aging keeps interrupting precision.",
+            contradiction: "Fragile body, durable intellectual appetite."
+          },
+          life_threads: [
+            "reading endurance and visual strain management",
+            "memory gaps around names and references",
+            "small budget habits around daily routines",
+            "social contact reduced to occasional encounters",
+            "desire to remain mentally exact without display"
+          ],
+          recurring_stakes: [
+            "if concentration drops, identity feels less stable",
+            "if routines fail, the day loses structure",
+            "if he withdraws further, attention narrows into isolation"
+          ],
+          voice_rules: {
+            texture: ["measured", "precise about sensation", "restrained tenderness"],
+            syntax_bias: ["careful sentence followed by softer inference", "limited metaphor density"],
+            taboo_moves: ["no grand wisdom proclamation", "no sentimental lecture about youth"]
+          },
+          motif_system: {
+            seeds: ["coat fabric", "margins", "names half-remembered", "pale light", "paper scratch"],
+            trigger_map: {
+              whisper_calm: ["page texture", "breath settling", "warm sleeve weight"],
+              whisper_urgent: ["line loss", "finger tremor", "time check"],
+              whisper_threat: ["memory lapse spike", "body vigilance", "door awareness"],
+              whisper_tender: ["shared-reading memory", "faded annotation", "quiet gratitude"]
+            },
+            evolution: {
+              stage_1: "literal sensory detail at the table",
+              stage_2: "detail as bridge to memory/work of attention",
+              stage_3: "detail reframed as dignity and continuity"
+            },
+            decay_after_turns: 3
+          },
+          disclosure_plan: {
+            early: ["begin with tactile/visual detail", "keep vulnerability implied", "anchor in immediate task"],
+            middle: ["add practical aging cost", "contrast patience with fatigue", "allow one social memory trace"],
+            late: ["name fragility more directly", "retain composure", "close unresolved but steady"]
+          },
+          anti_repeat: {
+            banned_recent_ngrams: 3,
+            topic_cooldown_turns: 2,
+            opening_cooldown_turns: 3,
+            motif_repeat_limit_per_4_turns: 2
+          },
+          prompt_contract: {
+            must_include: ["one concrete object cue", "one bodily shift", "one non-dramatic stake"],
+            must_avoid: ["direct whisper reply", "ornamental lyric overflow", "repeating same first image"]
+          }
+        }
       },
 
       {
@@ -353,7 +687,62 @@ She is poised between ambition and fatigue, between choosing and postponing.
 She registers the room as a kind of mirror she tries not to look into.`,
         voice: ["quick internal pivots", "image-driven", "held breath"],
         psyche0: { arousal: 0.45, valence: 0.58, agency: 0.61, permeability: 0.55, coherence: 0.60 },
-        motifSeeds: ["high windows", "pale light", "corridors", "future narrowing"]
+        motifSeeds: ["high windows", "pale light", "corridors", "future narrowing"],
+        packet: {
+          version: 1,
+          core: {
+            premise: "A young reader balancing ambition, fatigue, and self-surveillance.",
+            central_conflict: "She wants decisive forward motion but keeps splitting into observer and actor.",
+            contradiction: "Disciplined ambition with chronic hesitation."
+          },
+          life_threads: [
+            "study focus versus drifting self-monitoring",
+            "status anxiety around competence and belonging",
+            "future-planning pressure and narrowing options",
+            "social comparison with peers in quiet spaces",
+            "body-level tension and breath irregularity"
+          ],
+          recurring_stakes: [
+            "if focus fragments, progress feels performative not real",
+            "if self-observation dominates, action stalls",
+            "if she chooses safety only, future narrows by drift"
+          ],
+          voice_rules: {
+            texture: ["quick internal pivots", "image-driven", "held breath"],
+            syntax_bias: ["tight first sentence then associative slip", "occasional fragment"],
+            taboo_moves: ["no pure victim framing", "no final life verdict"]
+          },
+          motif_system: {
+            seeds: ["high windows", "pale light", "corridors", "future narrowing", "underline mark"],
+            trigger_map: {
+              whisper_calm: ["window light steadying", "shoulder release", "page margin alignment"],
+              whisper_urgent: ["deadline corridor", "pulse quickening", "pen tapping"],
+              whisper_threat: ["glass reflection", "posture correction", "exit awareness"],
+              whisper_tender: ["brief self-kindness", "earlier confidence memory", "warm page hold"]
+            },
+            evolution: {
+              stage_1: "literal room geometry or page cue",
+              stage_2: "cue linked to identity pressure",
+              stage_3: "cue reframed as choice architecture"
+            },
+            decay_after_turns: 3
+          },
+          disclosure_plan: {
+            early: ["open from sensory angle", "keep insecurity indirect", "anchor in one immediate task"],
+            middle: ["surface observer-vs-actor split", "add social/status thread", "allow one sharper fear note"],
+            late: ["name cost of postponement", "retain ambiguity", "end with incomplete but concrete direction"]
+          },
+          anti_repeat: {
+            banned_recent_ngrams: 3,
+            topic_cooldown_turns: 2,
+            opening_cooldown_turns: 3,
+            motif_repeat_limit_per_4_turns: 2
+          },
+          prompt_contract: {
+            must_include: ["one practical study stake", "one body-state cue", "one secondary concern"],
+            must_avoid: ["direct whisper reply", "generic motivational language", "same opening structure repeatedly"]
+          }
+        }
       },
 
       {
@@ -371,7 +760,62 @@ He is hungry for mastery but embarrassed by his own hunger.
 He rehearses competence internally while feeling watched by the silence.`,
         voice: ["restless", "self-correcting", "spare humor that doesn’t land"],
         psyche0: { arousal: 0.55, valence: 0.49, agency: 0.48, permeability: 0.35, coherence: 0.52 },
-        motifSeeds: ["notes", "measurement", "forgery among originals", "quiet rules"]
+        motifSeeds: ["notes", "measurement", "forgery among originals", "quiet rules"],
+        packet: {
+          version: 1,
+          core: {
+            premise: "A student hungry for mastery but uneasy about belonging.",
+            central_conflict: "He seeks competence while feeling like an impostor in formal spaces.",
+            contradiction: "Ambitious drive and self-undermining interpretation of neutral signals."
+          },
+          life_threads: [
+            "finding the right sources and editions",
+            "self-judgment around class/speech markers",
+            "study planning versus avoidance loops",
+            "family expectation pressure in the background",
+            "social posture management in public quiet"
+          ],
+          recurring_stakes: [
+            "if embarrassment spikes, effort collapses",
+            "if he avoids asking for help, errors multiply",
+            "if progress is measured only by certainty, no step feels valid"
+          ],
+          voice_rules: {
+            texture: ["restless", "self-correcting", "spare humor that doesn't land"],
+            syntax_bias: ["self-assertion then quick revision", "plain words with occasional sharp image"],
+            taboo_moves: ["no anti-intellectual rant", "no triumphant certainty ending"]
+          },
+          motif_system: {
+            seeds: ["notes", "measurement", "forgery among originals", "quiet rules", "wrong edition"],
+            trigger_map: {
+              whisper_calm: ["pen steadying", "page order", "breath pacing"],
+              whisper_urgent: ["time pressure", "shelf scanning speed", "hand heat"],
+              whisper_threat: ["judgment projection", "posture freeze", "aisle vigilance"],
+              whisper_tender: ["mentor memory", "small win recall", "self-forgiveness phrase"]
+            },
+            evolution: {
+              stage_1: "literal study obstacle or object",
+              stage_2: "object tied to belonging anxiety",
+              stage_3: "object reframed as persistence signal"
+            },
+            decay_after_turns: 3
+          },
+          disclosure_plan: {
+            early: ["open with task friction", "keep impostor fear indirect", "show one immediate consequence"],
+            middle: ["blend competence hunger with social anxiety", "add practical planning thread", "allow one sharper shame beat"],
+            late: ["name tradeoff between pride and learning", "retain uncertainty", "end with actionable but unresolved step"]
+          },
+          anti_repeat: {
+            banned_recent_ngrams: 3,
+            topic_cooldown_turns: 2,
+            opening_cooldown_turns: 3,
+            motif_repeat_limit_per_4_turns: 2
+          },
+          prompt_contract: {
+            must_include: ["one concrete study object", "one body marker", "one secondary life pressure"],
+            must_avoid: ["direct whisper reply", "single-note impostor loop", "same nouns in consecutive openings"]
+          }
+        }
       },
 
       {
@@ -389,7 +833,62 @@ Her attention is divided: she performs administrative calm while feeling a vague
 She protects the room’s silence but wonders what it costs.`,
         voice: ["observational", "architectural metaphors", "quiet unease"],
         psyche0: { arousal: 0.40, valence: 0.65, agency: 0.66, permeability: 0.25, coherence: 0.68 },
-        motifSeeds: ["silence as architecture", "systems", "missing volume", "dust"]
+        motifSeeds: ["silence as architecture", "systems", "missing volume", "dust"],
+        packet: {
+          version: 1,
+          core: {
+            premise: "A librarian holding institutional order while quietly questioning its personal cost.",
+            central_conflict: "She maintains calm structure yet feels unaddressed unease beneath routine.",
+            contradiction: "Administrative precision with private emotional ambiguity."
+          },
+          life_threads: [
+            "desk workflow and catalog maintenance",
+            "micro-enforcement of room norms",
+            "long-term career identity and fatigue",
+            "concern for readers beyond procedure",
+            "private wish to read without responsibility"
+          ],
+          recurring_stakes: [
+            "if vigilance lapses, room order frays",
+            "if concern stays unnamed, it hardens into distance",
+            "if she never exits the role, self narrows to function"
+          ],
+          voice_rules: {
+            texture: ["observational", "architectural metaphors", "quiet unease"],
+            syntax_bias: ["structured sentence rhythm", "occasional reflective fragment"],
+            taboo_moves: ["no contempt for patrons", "no melodramatic collapse fantasy"]
+          },
+          motif_system: {
+            seeds: ["silence as architecture", "systems", "missing volume", "dust", "desk edge wear"],
+            trigger_map: {
+              whisper_calm: ["stack alignment", "ambient rhythm", "steady breath"],
+              whisper_urgent: ["policy breach anticipation", "door glance", "pulse uptick"],
+              whisper_threat: ["fragile silence", "containment reflex", "risk scan"],
+              whisper_tender: ["reader tenderness", "care memory", "soft procedural mercy"]
+            },
+            evolution: {
+              stage_1: "literal institutional detail",
+              stage_2: "detail linked to emotional labor",
+              stage_3: "detail reframed as identity boundary"
+            },
+            decay_after_turns: 3
+          },
+          disclosure_plan: {
+            early: ["open with environmental order cue", "keep concern unnamed", "anchor in immediate duty"],
+            middle: ["link systems talk to private cost", "add care-for-others thread", "allow one candid unease signal"],
+            late: ["name the role-self tension", "preserve restraint", "end unresolved with procedural continuation"]
+          },
+          anti_repeat: {
+            banned_recent_ngrams: 3,
+            topic_cooldown_turns: 2,
+            opening_cooldown_turns: 3,
+            motif_repeat_limit_per_4_turns: 2
+          },
+          prompt_contract: {
+            must_include: ["one desk/system detail", "one body or attention shift", "one non-procedural concern"],
+            must_avoid: ["direct whisper reply", "abstract-only architecture language", "same opening motif repeatedly"]
+          }
+        }
       },
 
       {
@@ -407,7 +906,62 @@ He carries a private shame or simply a private heaviness; it is hard to tell.
 The reading room feels like permission and danger at once.`,
         voice: ["plainspoken drift", "self-judging", "soft metaphysical recoil"],
         psyche0: { arousal: 0.50, valence: 0.51, agency: 0.53, permeability: 0.30, coherence: 0.52 },
-        motifSeeds: ["thresholds", "coat and hat", "permission", "unfinished life"]
+        motifSeeds: ["thresholds", "coat and hat", "permission", "unfinished life"],
+        packet: {
+          version: 1,
+          core: {
+            premise: "A man arriving mid-hesitation, using public quiet as temporary shelter.",
+            central_conflict: "He wants change but keeps mistaking postponement for control.",
+            contradiction: "Plainspoken self-awareness with persistent avoidance."
+          },
+          life_threads: [
+            "entry/exit indecision and stalled errands",
+            "shame carried as repeating pattern, not single event",
+            "attempts to regain direction through small rituals",
+            "social invisibility sought and feared at once",
+            "mental restlessness despite quiet environment"
+          ],
+          recurring_stakes: [
+            "if he keeps deferring decisions, shame pattern deepens",
+            "if anonymity becomes refuge, identity blurs",
+            "if restlessness is unexamined, routines destabilize"
+          ],
+          voice_rules: {
+            texture: ["plainspoken drift", "self-judging", "soft metaphysical recoil"],
+            syntax_bias: ["direct statement then reflective turn", "lightly fragmented cadence"],
+            taboo_moves: ["no heroic self-reinvention speech", "no pure nihilism"]
+          },
+          motif_system: {
+            seeds: ["thresholds", "coat and hat", "permission", "unfinished life", "briefcase handle"],
+            trigger_map: {
+              whisper_calm: ["hands settling", "hat brim touch", "breath slowing"],
+              whisper_urgent: ["doorline awareness", "clock pull", "route compression"],
+              whisper_threat: ["exit scan", "muscle brace", "avoidance reflex"],
+              whisper_tender: ["self-forgiveness edge", "memory softening", "gentler posture"]
+            },
+            evolution: {
+              stage_1: "literal threshold/body object",
+              stage_2: "object linked to shame/decision loop",
+              stage_3: "object reframed as small commitment test"
+            },
+            decay_after_turns: 3
+          },
+          disclosure_plan: {
+            early: ["open with arrival or object detail", "keep shame non-specific", "anchor in present practical motion"],
+            middle: ["connect postponement to pattern", "add ordinary errand pressure", "allow one clearer self-judgment"],
+            late: ["name cost of drift without full confession", "keep language grounded", "end with unresolved directional hint"]
+          },
+          anti_repeat: {
+            banned_recent_ngrams: 3,
+            topic_cooldown_turns: 2,
+            opening_cooldown_turns: 3,
+            motif_repeat_limit_per_4_turns: 2
+          },
+          prompt_contract: {
+            must_include: ["one concrete object cue", "one body-state marker", "one practical next-step pressure"],
+            must_avoid: ["direct whisper reply", "abstract metaphysics only", "reused opening noun back-to-back"]
+          }
+        }
       }
 
     ],
