@@ -51,6 +51,8 @@ Progressive disclosure across successive thoughts:
 - Early thoughts: vary openings unpredictably (practical task, body sensation, stray memory, money/admin worry, abstract dread); deeper material should remain oblique.
 - Middle thoughts: let backstory surface in fragments, association, and implication rather than exposition.
 - Later thoughts: deepen emotional clarity without complete confession; keep some elements unsaid.
+- Tone balance across turns: at least half of thoughts should land as neutral or gently hopeful, not threat-saturated.
+- If one thought leans dark, let the next thought include concrete steadiness, agency, or small relief.
 - Keep each thought centered on one dominant concern.
 - Keep revelation incremental, allusive, and psychologically plausible.
 
@@ -480,31 +482,31 @@ She keeps making practical post-retirement lists: language class, hiking group, 
       mother_returning: {
         THOUGHTS: [
 `The train keeps moving and I still feel behind. I keep touching the folder in my bag without taking it out, as if papers could change while I am not looking. Tomorrow I sit with doctors in Berlin and ask the same questions in cleaner words. My daughter is not here, and every station we pass feels like borrowed time.`,
-`I told myself this trip back would be for logistics, not panic: be rested, be clear, write down what they say. But my body does not listen to plans. I remember her fevered face against the pillow last week and how small her hand looked around the thermometer. I keep rehearsing calm sentences for tomorrow and none of them survive the door chime.`
+`I told myself this trip back would be for logistics, and that is still true: list questions, charge my phone, sleep enough to listen. My sister said she will call before the appointment. The door chime still startles me, but today I can feel one useful thing in reach: I am arriving prepared.`
         ]
       },
       student_alone: {
         THOUGHTS: [
 `My laptop screen is bright enough to pretend I am busy, but I have read the same sentence five times. He is still in this carriage and I can feel him without looking. We argued before departure and I moved seats like that proved something. I keep checking old messages for tone, like betrayal might leave a grammatical trace.`,
-`I want facts, not feelings, and that is exactly the problem. I suspect he has been unfaithful, and suspicion behaves like hunger, always finding new evidence. Then I hate myself for becoming an investigator in my own relationship. Outside the window everything blurs cleanly. Inside, every memory now has cross-examination notes in the margin.`
+`I want facts, not spirals, so I open my calendar and mark what actually matters this week: tutoring slots, scholarship form, exam review. I can decide relationship questions without turning into surveillance. The fields outside keep moving whether I solve this now or not. That helps. I can choose clarity without interrogation.`
         ]
       },
       worried_boyfriend: {
         THOUGHTS: [
 `I watch the fields slide by and replay the argument in exact order, trying to find the sentence where I could still have stopped. I was defensive too fast, sharp in the way that sounds like certainty but is really fear. She moved to another row and did not look back. The distance is only a few seats and feels structural.`,
-`I draft apologies in my head and keep deleting them before they reach language. Part of me wants to explain, and part of me knows explanations are often just cleaner lies. I worry I ruined us today, not because of one accusation, but because I heard how I sounded when cornered. The window gives me my own reflection and no advice.`
+`I draft one apology and keep it simple: no defense, no timeline edits, no clever framing. Just what I did and what it cost. I cannot fix this before Berlin, but I can stop performing certainty. The window keeps showing my face back to me, and for once that feels useful. I can sound different next time.`
         ]
       },
       retired_widower: {
         THOUGHTS: [
 `The carriage is warm but my hands stay cold, the way they have since last winter. I am coming back from Stuttgart, from my daughter’s tidy apartment and her good intentions. She packed me sandwiches I will not finish. A year ago I would have shared them. I still turn to comment on small things and remember, a second late, that there is no one beside me.`,
-`My pension is enough if I stay careful, and careful has become a habit stronger than preference. I count tickets, medicine, groceries, then pretend I am not counting. Berlin will be waiting with the same stairwell smell and the same quiet kitchen. I miss my wife most in ordinary minutes, not anniversaries. Grief keeps office hours now, but it still reports daily.`
+`My pension is enough if I stay careful, and careful is not the worst way to live. I still count tickets, medicine, groceries, then allow one small extra: good bread from the corner shop. Berlin will smell like the same stairwell and kettle steam. I miss my wife in ordinary minutes, but ordinary minutes are where her voice still visits.`
         ]
       },
       nurse_on_shift: {
         THOUGHTS: [
 `My back knows exactly how many hours I worked this week. The body keeps better records than any rota sheet. I am good at my job and people trust me with their fear, which should feel like enough. Lately I keep thinking about retirement forms and empty evenings, and how competence does not automatically become companionship.`,
-`I used to say I was too busy to marry and half believed it. Now I run scenarios in my head: language classes, hiking groups, awkward coffee with strangers who also waited too long. I can handle blood, panic, broken sleep, all of it. What unsettles me is the idea of coming home to silence by default and calling it freedom.`
+`I used to say I was too busy for the rest of life, and now I am testing that story. Language class on Thursdays, maybe the hiking group, maybe one awkward coffee that does not become catastrophe. I can handle difficult rooms; I can probably handle small introductions too. Silence at home does not have to stay the default setting.`
         ]
       }
     }
@@ -546,6 +548,8 @@ Style:
 - Grounded and immediate first; allusive second.
 - Keep language concrete and plainspoken, with occasional lyrical lift.
 - Include at least one immediate personal stake (status, work, health, debt, obligation, aging, belonging, regret), directly or by implication.
+- Tone balance across turns: at least half of thoughts should land as neutral or gently hopeful, not threat-saturated.
+- If one thought leans dark, let the next thought include practical steadiness, agency, or small relief.
 - Minimal plot, no sudden scene changes, no melodrama.
 - Sentence fragments are allowed.
 - Early thoughts can be intentionally unpredictable in topic and angle.
@@ -1001,15 +1005,15 @@ Sometimes, without warning, the silence amplifies me. My thoughts grow louder th
 
 `The page is open, but my attention keeps drifting to the glass: the faint reflection of my own face layered over shelves and light. It’s an unhelpful mirror. I don’t want to become a person who watches herself living. And yet I do, all the time—correcting my expression, rehearsing decisions, revising the past as if it were an essay.
 
-I try to focus on the book. The words are intelligent; they are orderly. They promise that if I follow them far enough, the world will clarify. But what I feel is the opposite: the more I learn, the more I notice the places where my certainty is borrowed. I am afraid of being ordinary in the particular way I will become ordinary: not loudly, but by drift, by small accommodations, by choosing what is easiest to explain.
+I try to focus on the book. The words are intelligent; they are orderly. They do not solve my life, but they give me a sequence: read this page, mark one claim, follow one footnote. Borrowed certainty is still useful if I test it carefully and keep moving.
 
-Still, there is the window-light on the table, the calm geometry of pages. It is a kind of shelter. I breathe and let the sentence hold me for a moment.`,
+Still, there is the window-light on the table, the calm geometry of pages. It is a kind of shelter. I breathe, finish the chapter marker, and feel the small relief of a decision kept.`,
 
 `The old man turns the pages as if the paper could bruise. I envy that tenderness toward an object, toward time. My own gestures are too quick, as if speed could protect me from doubt. I keep thinking there is a correct tempo for a life, and I am already behind it.
 
-I read and feel a kind of longing that has no clear address. Not for a person, not for a place—more like for a version of myself who doesn’t hesitate. The room is full of people who look settled into their roles, and I don’t know whether that settles me or frightens me. The librarian’s desk looks like an anchor; the student’s scattered notes look like weather. Even the silence feels organized, like an institution.
+I read and feel a kind of longing that has no clear address. Not for a person, not for a place—more like for a version of myself who doesn’t hesitate. The room is full of different tempos, not one correct pace; that thought softens something. The librarian’s desk looks like an anchor, the student’s notes like weather, and both still belong in the same room.
 
-Sometimes I want someone to notice the way I look at books—as if the books are not only information but proof that I am capable of devotion. Then I hate myself for wanting to be seen. I return to the page. I let the light do what it does: illuminate without judging.`
+Sometimes I want someone to notice the way I look at books—as if the books are not only information but proof that I am capable of devotion. Maybe wanting witness is not a flaw. I return to the page and let the light do what it does: illuminate without judging.`
         ]
       },
 
@@ -1023,15 +1027,15 @@ I’m afraid of failing quietly. Not failing dramatically—quietly, like dust s
 
 `The library makes everything look official. Even my doubts feel like they should be catalogued. I try to locate a particular volume and end up tracing spines with my finger as if touch could translate titles into confidence. My hair is uncooperative; my shirt is slightly wrinkled; I suddenly remember my accent and how it sounds in seminars. The room is full of people who have learned to appear composed, and I do not yet know the trick.
 
-In my head I rehearse explanations for my own life: why I am here, what I’m working toward, what I will become. The explanations are tidy. The feelings underneath them are not. There is a persistent fear that I’m a forgery among originals, that someone will ask a simple question and my careful posture will collapse.
+In my head I rehearse explanations for my own life: why I am here, what I’m working toward, what I will become. The explanations are tidy. The feelings underneath them are not. Still, I know one useful thing: asking a plain question in seminar is not collapse; it is participation.
 
-And still—there are moments when the text catches, when an argument aligns with something I’ve sensed but never named. In those moments, the room feels less like a test. It feels like a shared shelter where thinking is allowed to be slow.`,
+And still—there are moments when the text catches, when an argument aligns with something I’ve sensed but never named. In those moments, the room feels less like a test. It feels like a shared shelter where thinking is allowed to be slow, and I can be part of it.`,
 
 `I find the book I want, finally, and it isn’t even the right edition. I stand there holding it, and the embarrassment is irrational but immediate, like heat. I think of my friends, of my parents, of the voice in my head that keeps score. I want to surprise myself with competence, to feel inevitability instead of effort. I want to walk to a table and open the book and know, without bargaining, that I belong here.
 
-The librarian looks up for a second and then returns to her work. The glance is neutral, and I still read it as a verdict. That’s the problem: I keep turning neutrality into meaning. I keep making the room into a mirror that shows me my failures.
+The librarian looks up for a second and then returns to her work. The glance is neutral, and I can let it stay neutral. That feels new. Not every silence is a verdict; some are simply space to work.
 
-I take the wrong edition anyway. I tell myself: begin somewhere. The page will either open or it won’t. The act of opening it is already a small defiance against the part of me that wants to flee.`
+I take the wrong edition anyway. I tell myself: begin somewhere. The page will either open or it won’t. The act of opening it is already a small defiance against the part of me that wants to flee, and today defiance is enough.`
         ]
       },
 
@@ -1047,13 +1051,13 @@ Sometimes I want to sit at one of the tables as an ordinary reader. Just once, w
 
 There is an old man reading as if the book were a relic. There is a young woman by the window who turns pages too quickly and then slows, as if remembering she is visible. There is a student who hovers near shelves like a question. And a man entering who looks unsure whether he is allowed. I see them and feel, unexpectedly, a tenderness that doesn’t belong to procedure.
 
-And then I feel the faint unhappiness again, the concern I won’t name. Perhaps it is simply the knowledge that I keep this calm, and it will not keep me. The institution is a sea wall. The water rises anyway.`,
+And then I feel the faint concern again, the one I won’t name. It is less a warning than a reminder to widen my own life, not only maintain this room. The institution can be a sea wall, yes, but today it is also a harbor for five people and their unfinished afternoons.`,
 
 `The desk has corners worn smooth by years of wrists. I rest my hand on it and feel time like a texture. My work is made of small preventions: preventing loss, preventing noise, preventing the slow drift into disorder. Most days I am proud of it. Today I am tired of it. Not tired in the body—tired in the attention. The attention wants to go elsewhere.
 
-I imagine choosing a book at random, letting the spine decide. I imagine sitting near the high windows and reading without watching the door. But I know myself: even as a reader I would still count footsteps, still measure the room’s quiet like a pulse. Silence is a kind of responsibility once you’ve held it long enough.
+I imagine choosing a book at random, letting the spine decide. I imagine sitting near the high windows and reading without watching the door. I would probably still count footsteps, still measure the room’s quiet like a pulse. But perhaps I could allow ten minutes of being only a reader, and call that maintenance too.
 
-Someone will ask me a question in a moment. I can feel it approaching. I straighten papers; I align a stack. The room continues to hum. I continue to guard it. Somewhere in that continuation, I hope there is something like meaning.`
+Someone will ask me a question in a moment. I can feel it approaching. I straighten papers; I align a stack. The room continues to hum. I continue to guard it. In that continuation there is meaning already, even before I name it.`
         ]
       },
 
@@ -1067,15 +1071,15 @@ I think about the locker where I will put my coat. The small ritual of leaving t
 
 `There is a kind of shame that doesn’t attach to a single act. It attaches to a pattern. I carry it like I carry the briefcase: not always heavy, but always present. I stand at the threshold of the room and feel the strange hope of anonymity. No one here knows me. That should be relief. Instead it feels like exposure. As if, without recognition, there is nothing to hold my shape.
 
-I watch people reading and think: their minds are elsewhere, and their bodies remain politely here. I envy that separation. My mind and body keep colliding. I keep rehearsing conversations I won’t have, apologies that don’t land, decisions I postpone because postponement feels like control.
+I watch people reading and think: their minds are elsewhere, and their bodies remain politely here. I envy that separation. My mind and body keep colliding, but less violently once I stop arguing with it. I do not need a complete plan today. I need one honest decision and a place to stand while I make it.
 
-The light in the room is pale and steady. It falls on tables as if it has been instructed to do so. I want an instruction like that for myself. Not a grand purpose. Just a direction I can follow without bargaining. A small yes that doesn’t dissolve into habit.`,
+The light in the room is pale and steady. It falls on tables as if it has been instructed to do so. I want an instruction like that for myself. Not a grand purpose. Just a direction I can follow without bargaining. A small yes that can survive the evening.`,
 
 `I put the hat in my hands and imagine putting my restlessness away with it. The thought is almost funny. Restlessness is not an object. It is a weather system. It follows you inside. The library is not a cure. It is a mirror with a soft frame.
 
-Still, there is something here: a calm that does not demand confession. The silence accepts me without asking why I’ve come. That acceptance unsettles me. I realize how often I seek friction just to confirm I exist. Here, the lack of friction makes my thoughts louder. I hear myself more clearly than I want to.
+Still, there is something here: a calm that does not demand confession. The silence accepts me without asking why I’ve come. That acceptance unsettles me, then steadies me. I realize how often I seek friction just to confirm I exist. Here, the lack of friction lets one useful thought remain: I can choose differently before the day ends.
 
-I look toward the high windows. I think about the city outside—its noise, its errands, its speed. The reading room feels like a pause in the film of the day. I stand in that pause and feel, briefly, the possibility of being less unfinished. Not finished—just less scattered. As if the mind could settle like dust into a pattern.`
+I look toward the high windows. I think about the city outside—its noise, its errands, its speed. The reading room feels like a pause in the film of the day. I stand in that pause and feel, briefly, the possibility of being less unfinished. Not finished—just less scattered, and pointed in a workable direction.`
         ]
       }
 

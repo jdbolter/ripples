@@ -20,7 +20,7 @@
   "use strict";
 
   // Build marker (helps confirm browser is loading this exact file)
-  const __RIPPLES_BUILD__ = "2026-02-21-psyche5-high-immediacy";
+  const __RIPPLES_BUILD__ = "2026-02-26-tone-balance-variation";
   console.log("[RIPPLES] gpt.js loaded", __RIPPLES_BUILD__);
 
   if (!window.SCENES || !window.SCENE_ORDER) {
@@ -43,7 +43,7 @@
   // - "intense": strongest whisper impact + wider propagation
   // - "high": stronger whisper impact, lighter stabilization
   // - "subtle": gentler whisper impact, stronger settling
-  const DYNAMICS_MODE = "intense"; // change to "high" or "subtle" to soften behavior
+  const DYNAMICS_MODE = "high"; // change to "intense" or "subtle" to alter tonal pressure
   const DYNAMICS_PROFILES = {
     intense: {
       neighborScale: {
@@ -89,6 +89,74 @@
     }
   };
   const DYNAMICS = DYNAMICS_PROFILES[DYNAMICS_MODE] || DYNAMICS_PROFILES.high;
+  const TONE_BALANCER = {
+    windowSize: 6,
+    minNonDarkRatio: 0.50,
+    variationLenses: [
+      {
+        id: "practical",
+        instruction: "Use a practical/logistical lens (task, sequence, concrete next action).",
+        opener: "Checklist first:"
+      },
+      {
+        id: "sensory",
+        instruction: "Use a sensory lens (touch, posture, sound, object detail) before interpretation.",
+        opener: "At the edge of the table,"
+      },
+      {
+        id: "social",
+        instruction: "Use a social lens (another person in view, shared space, belonging signal).",
+        opener: "Across the room,"
+      },
+      {
+        id: "future",
+        instruction: "Use a near-future lens (the next hour/day and one feasible outcome).",
+        opener: "By evening,"
+      },
+      {
+        id: "body",
+        instruction: "Use a body-regulation lens (breath, jaw, shoulders, pace) tied to agency.",
+        opener: "Shoulders settle,"
+      }
+    ],
+    steadyLifts: [
+      "Still, one useful step is clear and manageable.",
+      "Not resolved, but the next action is concrete and possible.",
+      "The room offers one steady point to work from."
+    ],
+    hopefulLifts: [
+      "A small relief arrives: this part can be handled.",
+      "Something steadies, and the next step feels possible.",
+      "There is room for one decent outcome."
+    ]
+  };
+  const ATTENTION_BALANCER = {
+    windowSize: 4,
+    maxSelfFocusedInWindow: 2,
+    worldCueWords: [
+      "window", "glass", "table", "chair", "page", "book", "shelf", "desk",
+      "door", "aisle", "coat", "hands", "light", "floor", "steps", "air", "room"
+    ],
+    selfCueWords: [
+      "i", "me", "my", "myself", "worry", "fear", "panic", "regret", "shame",
+      "doubt", "afraid", "confused", "collapse", "fail", "failing", "ruined"
+    ],
+    sceneFallbackAnchors: [
+      "The room stays still for a second.",
+      "A chair shifts nearby.",
+      "Light sits on the table.",
+      "Pages move in small sounds."
+    ],
+    simpleWordReplacements: {
+      however: "but",
+      therefore: "so",
+      nevertheless: "still",
+      consequently: "so",
+      perhaps: "maybe",
+      utilize: "use",
+      regarding: "about"
+    }
+  };
 
   // OpenAI (client-side key entry)
   let userApiKey = null;
@@ -131,8 +199,9 @@
     let tick = 0;
     let selectedId = null;
 
-    // rotation memory per character/channel so Whisper/LISTEN can "move" through the pool
+    // pool memory per character/channel
     const cursor = {}; // cursor[characterId][channel] = lastIndexUsed
+    const cursorRecent = {}; // cursorRecent[characterId][channel] = [recentIndices...]
 
     // Whisper memory (for later prompts)
     const lastWhisper = {}; // lastWhisper[characterId] = string
@@ -387,6 +456,7 @@
       selectedId = null;
       audit = [];
       for (const k of Object.keys(cursor)) delete cursor[k];
+      for (const k of Object.keys(cursorRecent)) delete cursorRecent[k];
       for (const k of Object.keys(lastWhisper)) delete lastWhisper[k];
       whisperHistory.length = 0;
       for (const k of Object.keys(psyche)) delete psyche[k];
@@ -461,16 +531,19 @@
       }
 
       if (!cursor[characterId]) cursor[characterId] = {};
-      const last = Number.isInteger(cursor[characterId][channel]) ? cursor[characterId][channel] : -1;
-      const thoughtCount = getMonologueCount(characterId);
-      let next;
-      if (thoughtCount <= 1 && pool.length > 1) {
-        next = Math.floor(Math.random() * pool.length);
-        if (next === last) next = (next + 1) % pool.length;
-      } else {
-        next = (last + 1) % pool.length;
-      }
+      if (!cursorRecent[characterId]) cursorRecent[characterId] = {};
+      const recent = Array.isArray(cursorRecent[characterId][channel])
+        ? cursorRecent[characterId][channel]
+        : [];
+      const blockSize = Math.min(pool.length - 1, 2);
+      const blocked = new Set(recent.slice(-Math.max(0, blockSize)));
+      const candidates = pool
+        .map((_, i) => i)
+        .filter((i) => !blocked.has(i));
+      const choicePool = candidates.length ? candidates : pool.map((_, i) => i);
+      const next = choicePool[Math.floor(Math.random() * choicePool.length)];
       cursor[characterId][channel] = next;
+      cursorRecent[characterId][channel] = recent.concat(next).slice(-3);
       return pool[next];
     }
 
@@ -766,6 +839,19 @@
     isGenerating = true;
 
     const priorMonologueCount = engine.getMonologueCount(characterId);
+    const toneSteering = buildToneSteering({
+      characterId,
+      kind,
+      whisperText,
+      priorMonologueCount
+    });
+    const focusSteering = buildFocusSteering({
+      characterId,
+      kind,
+      whisperText,
+      priorMonologueCount,
+      scene: engine.getScene()
+    });
     let text = "";
     let usedLocalPool = false;
     let generatedFromApi = false;
@@ -782,7 +868,14 @@
 
     try {
       if (userApiKey) {
-        const out = await generateFromOpenAI({ characterId, channel, whisperText, kind });
+        const out = await generateFromOpenAI({
+          characterId,
+          channel,
+          whisperText,
+          kind,
+          toneSteering,
+          focusSteering
+        });
         text = out.text;
         generatedFromApi = true;
 
@@ -811,12 +904,22 @@
         strict: generatedFromApi
       });
     }
+    text = enforceToneSteering(text, toneSteering);
+    text = enforceFocusSteering(text, focusSteering);
 
     text = constrainThoughtText(text, {
       minWords: THOUGHT_WORD_MIN,
       maxWords: THOUGHT_WORD_MAX,
       maxFirstPersonRatio: FIRST_PERSON_MAX_RATIO,
-      preferRandomWindow: usedLocalPool && priorMonologueCount <= 1
+      preferRandomWindow: usedLocalPool
+    });
+    text = enforceToneSteering(text, toneSteering);
+    text = enforceFocusSteering(text, focusSteering);
+    text = constrainThoughtText(text, {
+      minWords: THOUGHT_WORD_MIN,
+      maxWords: THOUGHT_WORD_MAX,
+      maxFirstPersonRatio: FIRST_PERSON_MAX_RATIO,
+      preferRandomWindow: false
     });
 
     engine.newTrace({
@@ -1199,6 +1302,10 @@
   function buildPacketPromptContext({ sceneId, scene, character, whisperText, priorMonologueCount, disclosurePhase }) {
     const packet = normalizeCharacterPacket(character, scene);
     const state = getApiCharacterState(sceneId, character?.id);
+    const turnNumber = state.turnIndex + 1;
+    const toneCadenceDirective = (turnNumber % 2 === 0)
+      ? "- Tonal cadence (required this turn): keep the overall thought neutral-to-gently-hopeful. Include one concrete stabilizing or competence cue."
+      : "- Tonal cadence: darker pressure is allowed, but retain one concrete anchor of agency or steadiness.";
 
     const activeThread = pickLifeThread({
       threads: packet.lifeThreads,
@@ -1236,7 +1343,8 @@
       .map((s) => trimForPrompt(s, 56));
 
     const promptBlock = [
-      `- Turn index in this scene for this character: ${state.turnIndex + 1}.`,
+      `- Turn index in this scene for this character: ${turnNumber}.`,
+      toneCadenceDirective,
       `- Character premise anchor: ${packet.core.premise}.`,
       `- Preserve central conflict: ${packet.core.centralConflict}.`,
       `- Preserve contradiction: ${packet.core.contradiction}.`,
@@ -1598,7 +1706,14 @@
   // CRITICAL FIX FOR YOUR 400:
   // `name` must be at text.format.name (NOT inside a json_schema wrapper).
   // -----------------------------
-  async function generateFromOpenAI({ characterId, channel, whisperText, kind }) {
+  async function generateFromOpenAI({
+    characterId,
+    channel,
+    whisperText,
+    kind,
+    toneSteering = null,
+    focusSteering = null
+  }) {
     const sc = engine.getScene();
     const sceneId = engine.getSceneId();
     const ch = sc.characters.find(c => c.id === characterId);
@@ -1631,7 +1746,7 @@
     const stateStyleMap = [
       "State-to-style mapping (follow):",
       "- Higher arousal => more immediate pressure, urgency, and sharper cuts between images.",
-      "- Lower valence => darker interpretations and threat-biased framing of neutral details.",
+      "- Lower valence => heavier interpretations, but retain one neutral or constructive anchor.",
       "- Higher agency => firmer verbs, self-directed intention, less passivity.",
       "- Higher permeability => stronger influence from surrounding atmosphere and others.",
       "- Lower coherence => fragmented transitions, associative leaps, and unresolved turns.",
@@ -1643,6 +1758,21 @@
     const whisperTone = classifyWhisperTone(whisperClean);
     const recentThoughts = engine.getRecentMonologues(characterId, 3);
     const priorMonologueCount = engine.getMonologueCount(characterId);
+    const steering = toneSteering || buildToneSteering({
+      characterId,
+      kind,
+      whisperText: whisperClean,
+      priorMonologueCount
+    });
+    const toneSteeringBlock = buildToneSteeringBlock(steering);
+    const focusPlan = focusSteering || buildFocusSteering({
+      characterId,
+      kind,
+      whisperText: whisperClean,
+      priorMonologueCount,
+      scene: sc
+    });
+    const focusSteeringBlock = buildFocusSteeringBlock(focusPlan);
     const disclosurePhase =
       priorMonologueCount <= 3 ? "early" :
       priorMonologueCount <= 7 ? "middle" :
@@ -1800,6 +1930,13 @@
       "- No meta-talk (no mention of prompts, models, AI, system).",
       "- No dialogue formatting; this is interior thought.",
       "- Keep backstory allusive, not explanatory.",
+      "- Across successive turns for a character, maintain at least a 50/50 balance of neutral-or-gently-hopeful thoughts versus darker thoughts.",
+      "",
+      "Tone steering for this turn (hard constraints):",
+      toneSteeringBlock,
+      "",
+      "Attention steering for this turn (hard constraints):",
+      focusSteeringBlock,
       "",
       "Scene:",
       sceneFrame,
@@ -2173,6 +2310,240 @@
     out = trimDanglingEnding(out, minWords);
     out = ensureTerminalPunctuation(out);
     return out;
+  }
+
+  function countLexHits(text, lexemes) {
+    const t = normalizeWhitespace(text).toLowerCase();
+    if (!t) return 0;
+    let hits = 0;
+    for (const raw of (Array.isArray(lexemes) ? lexemes : [])) {
+      const token = normalizeWhitespace(raw).toLowerCase();
+      if (!token) continue;
+      const pattern = token.includes(" ")
+        ? escapeRegExp(token)
+        : `\\b${escapeRegExp(token)}\\b`;
+      if (new RegExp(pattern, "i").test(t)) hits += 1;
+    }
+    return hits;
+  }
+
+  function thoughtToneScore(text) {
+    const positiveLex = [
+      "steady", "relief", "possible", "manage", "manageable", "prepared", "calm",
+      "clear", "clearer", "useful", "warm", "kind", "trust", "hope", "shelter",
+      "anchored", "grounded", "decent", "support", "soften", "ease"
+    ];
+    const negativeLex = [
+      "panic", "fear", "threat", "danger", "collapse", "ruin", "ruined", "unsafe",
+      "hopeless", "alone", "grief", "failure", "forgery", "shame", "dread", "empty",
+      "no one", "nothing", "trapped", "catastrophe", "cruelty"
+    ];
+
+    const posHits = countLexHits(text, positiveLex);
+    const negHits = countLexHits(text, negativeLex);
+    return posHits - negHits;
+  }
+
+  function classifyThoughtTone(text) {
+    const score = thoughtToneScore(text);
+    if (score <= -2) return "dark";
+    if (score >= 2) return "hopeful";
+    return "neutral";
+  }
+
+  function openingSignature(text, size = 5) {
+    return splitWords(text)
+      .slice(0, Math.max(1, Number(size) || 5))
+      .map(canonicalToken)
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  function pickToneLift(pool, turnIndex = 0) {
+    const list = Array.isArray(pool) ? pool.filter(Boolean) : [];
+    if (!list.length) return "";
+    const idx = Math.abs(Number(turnIndex) || 0) % list.length;
+    return list[idx];
+  }
+
+  function buildToneSteering({ characterId, kind, whisperText, priorMonologueCount }) {
+    const turnIndex = Math.max(1, (Number(priorMonologueCount) || 0) + 1);
+    const recent = engine.getRecentMonologues(characterId, Math.max(1, TONE_BALANCER.windowSize - 1));
+    const tones = recent.map((entry) => classifyThoughtTone(entry.text));
+    const darkCount = tones.filter((t) => t === "dark").length;
+    const nonDarkCount = tones.length - darkCount;
+    const projectedCount = Math.min(TONE_BALANCER.windowSize, tones.length + 1);
+    const minNonDarkNeeded = Math.ceil(projectedCount * TONE_BALANCER.minNonDarkRatio);
+    const requireNonDark = nonDarkCount < minNonDarkNeeded;
+    const whisperTone = classifyWhisperTone(whisperText).tone;
+
+    let target = "neutral";
+    if (requireNonDark) {
+      target = "non_dark_required";
+    } else if (whisperTone === "calm" || whisperTone === "tender" || (turnIndex % 3 === 0 && whisperTone !== "threat")) {
+      target = "gently_hopeful";
+    } else if (kind === EVENT_KIND.WHISPER && whisperTone === "threat") {
+      target = "steady";
+    }
+
+    const lenses = TONE_BALANCER.variationLenses;
+    const lens = lenses[(turnIndex - 1) % lenses.length] || lenses[0] || null;
+
+    return {
+      turnIndex,
+      target,
+      lens,
+      darkCount,
+      nonDarkCount,
+      sampleCount: tones.length,
+      recentOpenings: recent.map((entry) => openingSignature(entry.text)).filter(Boolean)
+    };
+  }
+
+  function buildToneSteeringBlock(steering) {
+    if (!steering) return "- Tone steering unavailable.";
+
+    const targetLine = steering.target === "non_dark_required"
+      ? "- This turn MUST land neutral-to-gently-hopeful (not dark). Include one concrete stabilizing action or relief cue."
+      : steering.target === "gently_hopeful"
+        ? "- This turn should read gently hopeful overall; include one feasible good-outcome signal."
+        : steering.target === "steady"
+          ? "- This turn may hold pressure, but must stay steady (no doom spiral). Include one concrete agency cue."
+          : "- This turn should be neutral/varied with at least one concrete anchor of agency.";
+
+    const lensLine = steering.lens
+      ? `- Variation lens: ${steering.lens.instruction}`
+      : "- Variation lens: use a fresh opening angle.";
+
+    return [
+      targetLine,
+      lensLine,
+      "- End on a workable next step, steadier interpretation, or small relief.",
+      `- Recent tone mix (last ${steering.sampleCount}): non-dark ${steering.nonDarkCount}, dark ${steering.darkCount}.`
+    ].join("\n");
+  }
+
+  function enforceToneSteering(text, steering) {
+    let out = normalizeWhitespace(text);
+    if (!out || !steering) return out;
+
+    const opening = openingSignature(out);
+    if (opening && steering.recentOpenings.includes(opening) && steering.lens?.opener) {
+      out = `${steering.lens.opener} ${out}`;
+    }
+
+    const tone = classifyThoughtTone(out);
+    if (steering.target === "non_dark_required" && tone === "dark") {
+      const lift = pickToneLift(TONE_BALANCER.steadyLifts, steering.turnIndex);
+      if (lift) out = `${out} ${lift}`;
+    } else if (steering.target === "gently_hopeful" && tone !== "hopeful") {
+      const lift = pickToneLift(TONE_BALANCER.hopefulLifts, steering.turnIndex + 1);
+      if (lift) out = `${out} ${lift}`;
+    } else if (steering.target === "steady" && tone === "dark") {
+      const lift = pickToneLift(TONE_BALANCER.steadyLifts, steering.turnIndex + 2);
+      if (lift) out = `${out} ${lift}`;
+    }
+
+    return normalizeWhitespace(out);
+  }
+
+  function simplifyLanguage(text) {
+    let out = normalizeWhitespace(text);
+    if (!out) return out;
+
+    for (const [from, to] of Object.entries(ATTENTION_BALANCER.simpleWordReplacements)) {
+      out = out.replace(new RegExp(`\\b${escapeRegExp(from)}\\b`, "gi"), to);
+    }
+
+    out = out
+      .replace(/\bI think\b/gi, "")
+      .replace(/\bI feel\b/gi, "")
+      .replace(/\bit feels like\b/gi, "it seems")
+      .replace(/\bthere is\b/gi, "there's")
+      .replace(/\bthere are\b/gi, "there are");
+
+    return cleanSpacing(out);
+  }
+
+  function classifyAttentionFocus(text) {
+    const t = normalizeWhitespace(text);
+    if (!t) return "mixed";
+
+    const words = splitWords(t);
+    const fp = firstPersonRatio(words);
+    const selfHits = countLexHits(t, ATTENTION_BALANCER.selfCueWords);
+    const worldHits = countLexHits(t, ATTENTION_BALANCER.worldCueWords);
+
+    if (worldHits >= 2 && fp <= 0.12) return "world";
+    if ((fp >= 0.16 || selfHits >= 3) && worldHits <= 1) return "self";
+    return "mixed";
+  }
+
+  function hasConcreteWorldCue(text) {
+    const t = normalizeWhitespace(text);
+    if (!t) return false;
+    const worldHits = countLexHits(t, ATTENTION_BALANCER.worldCueWords);
+    return worldHits >= 1;
+  }
+
+  function sceneAnchors(scene = null) {
+    const motifAnchors = uniqList(scene?.motifs || [])
+      .filter((m) => countLexHits(m, ATTENTION_BALANCER.worldCueWords) > 0)
+      .slice(0, 12)
+      .map((m) => `${m}.`);
+    const base = ATTENTION_BALANCER.sceneFallbackAnchors.slice();
+    return motifAnchors.length ? motifAnchors.concat(base) : base;
+  }
+
+  function buildFocusSteering({ characterId, kind, whisperText, priorMonologueCount, scene }) {
+    const turnIndex = Math.max(1, (Number(priorMonologueCount) || 0) + 1);
+    const recent = engine.getRecentMonologues(characterId, Math.max(1, ATTENTION_BALANCER.windowSize - 1));
+    const focusMix = recent.map((entry) => classifyAttentionFocus(entry.text));
+    const selfCount = focusMix.filter((f) => f === "self").length;
+    const requireWorld = selfCount >= ATTENTION_BALANCER.maxSelfFocusedInWindow || (turnIndex % 2 === 0);
+    const anchors = sceneAnchors(scene);
+    const anchor = anchors.length ? anchors[(turnIndex - 1) % anchors.length] : ATTENTION_BALANCER.sceneFallbackAnchors[0];
+    const whisperTone = classifyWhisperTone(whisperText).tone;
+
+    return {
+      turnIndex,
+      requireWorld,
+      keepSimple: true,
+      maxFirstPersonRatio: requireWorld ? 0.10 : 0.14,
+      anchor,
+      whisperTone,
+      selfCount,
+      sampleCount: focusMix.length
+    };
+  }
+
+  function buildFocusSteeringBlock(plan) {
+    if (!plan) return "- Focus steering unavailable.";
+
+    const worldLine = plan.requireWorld
+      ? "- This turn MUST start from the outside world: one object/sound/other person in the room before inner commentary."
+      : "- This turn should include at least one concrete room detail before self-analysis.";
+
+    return [
+      worldLine,
+      "- Keep language plain and simple. Prefer short sentences over layered abstraction.",
+      `- Keep first-person usage low (target <=${Math.round(plan.maxFirstPersonRatio * 100)}%).`,
+      `- Suggested world anchor for this turn: ${plan.anchor}`,
+      `- Recent self-focused count (last ${plan.sampleCount}): ${plan.selfCount}.`
+    ].join("\n");
+  }
+
+  function enforceFocusSteering(text, plan) {
+    let out = normalizeWhitespace(text);
+    if (!out || !plan) return out;
+
+    if (plan.requireWorld && !hasConcreteWorldCue(out)) {
+      out = `${plan.anchor} ${out}`;
+    }
+
+    out = simplifyLanguage(out);
+    out = reduceFirstPersonReferences(out, plan.maxFirstPersonRatio, THOUGHT_WORD_MIN);
+    return normalizeWhitespace(out);
   }
 
 
