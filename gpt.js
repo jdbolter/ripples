@@ -20,7 +20,7 @@
   "use strict";
 
   // Build marker (helps confirm browser is loading this exact file)
-  const __RIPPLES_BUILD__ = "2026-02-26-tone-balance-variation";
+  const __RIPPLES_BUILD__ = "2026-02-26-continuity-seed-buffer";
   console.log("[RIPPLES] gpt.js loaded", __RIPPLES_BUILD__);
 
   if (!window.SCENES || !window.SCENE_ORDER) {
@@ -32,6 +32,7 @@
   const EVENT_KIND = { LISTEN: "LISTEN", WHISPER: "WHISPER" };
   const THOUGHT_WORD_MIN = 20;
   const THOUGHT_WORD_MAX = 40;
+  const CONTINUITY_LEAD_MAX_WORDS = 16;
   const FIRST_PERSON_MAX_RATIO = 0.20;
   const AUTO_THOUGHT = {
     enabled: true,
@@ -206,6 +207,7 @@
     // Whisper memory (for later prompts)
     const lastWhisper = {}; // lastWhisper[characterId] = string
     const whisperHistory = []; // {tick, characterId, text, time}
+    let openingBuffer = ""; // carry-over fragment for next thought opening
 
     // Psychic state (persistent per character, per scene)
     // Values are normalized to [0, 1]
@@ -459,6 +461,7 @@
       for (const k of Object.keys(cursorRecent)) delete cursorRecent[k];
       for (const k of Object.keys(lastWhisper)) delete lastWhisper[k];
       whisperHistory.length = 0;
+      openingBuffer = "";
       for (const k of Object.keys(psyche)) delete psyche[k];
       initPsycheForScene();
       return snapshot({ worldtext: getScene().meta.baseline, mode: "baseline" });
@@ -518,6 +521,15 @@
         typeof entry.text === "string" &&
         entry.text.trim()
       ).length;
+    }
+
+    function getOpeningBuffer() {
+      return openingBuffer;
+    }
+
+    function setOpeningBufferFromThought(text) {
+      openingBuffer = extractLastSentenceOrFragment(text, CONTINUITY_LEAD_MAX_WORDS);
+      return openingBuffer;
     }
 
     function nextMonologue(characterId, channel) {
@@ -601,6 +613,8 @@
       getWhisperHistory,
       getRecentMonologues,
       getMonologueCount,
+      getOpeningBuffer,
+      setOpeningBufferFromThought,
       getPsyche,
       applyRipple
     };
@@ -838,6 +852,13 @@
     if (isGenerating) return;
     isGenerating = true;
 
+    const whisperLead = (kind === EVENT_KIND.WHISPER && String(whisperText || "").trim())
+      ? extractFirstSentenceOrFragment(whisperText, CONTINUITY_LEAD_MAX_WORDS)
+      : "";
+    const carriedLead = whisperLead ? "" : engine.getOpeningBuffer();
+    const openingLead = whisperLead || carriedLead;
+    const openingLeadSource = whisperLead ? "whisper" : (carriedLead ? "carryover" : "none");
+
     const priorMonologueCount = engine.getMonologueCount(characterId);
     const toneSteering = buildToneSteering({
       characterId,
@@ -873,6 +894,8 @@
           channel,
           whisperText,
           kind,
+          openingLead,
+          openingLeadSource,
           toneSteering,
           focusSteering
         });
@@ -921,6 +944,11 @@
       maxFirstPersonRatio: FIRST_PERSON_MAX_RATIO,
       preferRandomWindow: false
     });
+    text = enforceContinuityLead(text, openingLead);
+    text = finalizeWithContinuityLead(text, openingLead, {
+      minWords: THOUGHT_WORD_MIN,
+      maxWords: THOUGHT_WORD_MAX
+    });
 
     engine.newTrace({
       kind,
@@ -929,6 +957,7 @@
       whisperText: whisperText || "",
       text
     });
+    engine.setOpeningBufferFromThought(text);
 
     setWorldtext(text, { mode: "ripple" });
     const snap = engine.snapshot();
@@ -1711,6 +1740,8 @@
     channel,
     whisperText,
     kind,
+    openingLead = "",
+    openingLeadSource = "none",
     toneSteering = null,
     focusSteering = null
   }) {
@@ -1859,10 +1890,24 @@
       disclosurePhase
     });
 
+    const openingLeadClean = normalizeWhitespace(openingLead);
+    const openingContinuityBlock = openingLeadClean
+      ? [
+          "Opening continuity (MANDATORY):",
+          openingLeadSource === "whisper"
+            ? `- Begin with this whisper-derived phrase, more or less intact: ${openingLeadClean}`
+            : `- Begin with this carried-over phrase from the previous thought, more or less intact: ${openingLeadClean}`,
+          "- Keep meaning and wording close; small variation is allowed.",
+          "- This opening rule overrides default opening randomness."
+        ].join("\n")
+      : "Opening continuity: none.";
+
     const whisperImpact = whisperClean
       ? [
           "WHISPER IMPACT (MANDATORY):",
-          "- Do NOT quote the whisper and do NOT address the whisperer.",
+          openingLeadSource === "whisper"
+            ? "- Start from the whisper-derived opening phrase, then continue as interior thought; do not address the whisperer."
+            : "- Do NOT quote the whisper and do NOT address the whisperer.",
           "- Let the whisper clearly bend mood and imagery.",
           "- The bend must be visible in the opening clause and still present at the end.",
           "- Include one concrete bodily response influenced by the whisper.",
@@ -1938,6 +1983,8 @@
       "Attention steering for this turn (hard constraints):",
       focusSteeringBlock,
       "",
+      openingContinuityBlock,
+      "",
       "Scene:",
       sceneFrame,
       "",
@@ -1967,7 +2014,7 @@
       whisperRule,
       "",
       whisperImpact,
-      `Whisper (do not quote): ${whisperClean || "(none)"}`,
+      `Whisper input: ${whisperClean || "(none)"}`,
       "",
       "Return JSON with:",
       `- monologue: string (${THOUGHT_WORD_MIN}-${THOUGHT_WORD_MAX} words)`,
@@ -2132,6 +2179,113 @@
       .replace(/\(\s+/g, "(")
       .replace(/\s+\)/g, ")")
       .trim();
+  }
+
+  function normalizeLeadFragment(fragment, maxWords, { keepHead = true } = {}) {
+    let out = normalizeWhitespace(stripOuterQuotes(fragment))
+      .replace(/^[`"'“”‘’\s]+/, "")
+      .replace(/[`"'“”‘’\s]+$/, "")
+      .replace(/[.!?…]+$/, "");
+    if (!out) return "";
+
+    const words = splitWords(out);
+    const cap = Math.max(4, Number(maxWords) || CONTINUITY_LEAD_MAX_WORDS);
+    if (wordCount(words) > cap) {
+      out = keepHead
+        ? words.slice(0, cap).join(" ")
+        : words.slice(-cap).join(" ");
+    } else {
+      out = words.join(" ");
+    }
+
+    out = trimDanglingEnding(out, 0);
+    return normalizeWhitespace(out);
+  }
+
+  function extractFirstSentenceOrFragment(text, maxWords = CONTINUITY_LEAD_MAX_WORDS) {
+    const clean = normalizeWhitespace(stripOuterQuotes(text));
+    if (!clean) return "";
+
+    const pieces = clean
+      .split(/(?<=[.!?])\s+/)
+      .map((s) => normalizeWhitespace(s))
+      .filter(Boolean);
+    const candidate = pieces[0] || clean;
+
+    let lead = normalizeLeadFragment(candidate, maxWords, { keepHead: true });
+    if (wordCount(lead) < 2) {
+      lead = normalizeLeadFragment(clean, maxWords, { keepHead: true });
+    }
+    return lead;
+  }
+
+  function extractLastSentenceOrFragment(text, maxWords = CONTINUITY_LEAD_MAX_WORDS) {
+    const clean = normalizeWhitespace(stripOuterQuotes(text));
+    if (!clean) return "";
+
+    const pieces = clean
+      .split(/(?<=[.!?])\s+/)
+      .map((s) => normalizeWhitespace(s))
+      .filter(Boolean);
+    const candidate = pieces.length ? pieces[pieces.length - 1] : clean;
+
+    let lead = normalizeLeadFragment(candidate, maxWords, { keepHead: false });
+    if (wordCount(lead) < 2) {
+      lead = normalizeLeadFragment(clean, maxWords, { keepHead: false });
+    }
+    return lead;
+  }
+
+  function canonicalizeForLeadMatch(text) {
+    return normalizeWhitespace(text)
+      .toLowerCase()
+      .replace(/[’]/g, "'")
+      .replace(/[^a-z0-9'\s]/g, "");
+  }
+
+  function startsWithApproxLead(text, lead) {
+    const body = canonicalizeForLeadMatch(text);
+    const seed = canonicalizeForLeadMatch(lead);
+    if (!body || !seed) return false;
+    if (body.startsWith(seed)) return true;
+
+    const bodyTokens = body.split(" ").filter(Boolean);
+    const seedTokens = seed.split(" ").filter(Boolean);
+    const sample = Math.min(6, seedTokens.length, bodyTokens.length);
+    if (sample < 3) return false;
+
+    let exact = 0;
+    for (let i = 0; i < sample; i++) {
+      if (bodyTokens[i] === seedTokens[i]) exact += 1;
+    }
+    return exact >= Math.max(3, sample - 1);
+  }
+
+  function enforceContinuityLead(text, lead) {
+    const base = normalizeWhitespace(stripOuterQuotes(text));
+    const seed = normalizeLeadFragment(lead, CONTINUITY_LEAD_MAX_WORDS, { keepHead: true });
+    if (!seed) return base;
+    if (!base) return seed;
+    if (startsWithApproxLead(base, seed)) return base;
+    return normalizeWhitespace(`${seed}. ${base}`);
+  }
+
+  function finalizeWithContinuityLead(text, lead, { minWords, maxWords }) {
+    const seed = normalizeLeadFragment(lead, CONTINUITY_LEAD_MAX_WORDS, { keepHead: true });
+    let out = enforceContinuityLead(text, seed);
+    if (!out) return out;
+
+    out = truncateToWordCount(out, maxWords);
+    if (wordCount(out) < minWords) {
+      out = clampWordRange(out, {
+        minWords,
+        maxWords,
+        fallback: `${seed} ${out}`.trim()
+      });
+    }
+    out = trimDanglingEnding(out, minWords);
+    out = ensureTerminalPunctuation(out);
+    return cleanSpacing(out);
   }
 
   function splitWords(text) {
