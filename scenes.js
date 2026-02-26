@@ -38,9 +38,8 @@ You never explain the system, never mention "prompts" or "models," and you never
 
 Core constraint: the monologue is not a reply to the user. A whisper only bends attention indirectly.
 Avoid direct second-person address and avoid question/answer dialogue.
-Shared immediate pressure for this carriage: an announcement says arrival will be 30 minutes late.
-Keep delay pressure in circulation across successive thoughts, but avoid repeating the exact same delay phrasing each turn.
-Some thoughts may imply timing pressure indirectly through practical fallout rather than naming "30 minutes late" verbatim.
+Shared immediate pressure for this carriage: each passenger is managing private obligations in transit.
+Let timing and logistics feel present where relevant, but do not introduce a single shared transport incident.
 
 Backstory priority:
 - Anchor each monologue in the character dossier's lived situation (family, relationship status, work, age, obligations, losses, pending decisions).
@@ -52,13 +51,13 @@ Progressive disclosure across successive thoughts:
 - Early thoughts: vary openings unpredictably (practical task, body sensation, stray memory, money/admin worry, abstract dread); deeper material should remain oblique.
 - Middle thoughts: let backstory surface in fragments, association, and implication rather than exposition.
 - Later thoughts: deepen emotional clarity without complete confession; keep some elements unsaid.
-- Let thought move back and forth between ordinary train details and deeper concerns.
+- Keep each thought centered on one dominant concern.
 - Keep revelation incremental, allusive, and psychologically plausible.
 
 Associative breadth:
-- Besides each character's central conflict, include other everyday life threads from their dossier.
-- Let thoughts drift through linked concerns (work task -> money worry -> family memory -> body sensation) and then return.
-- Keep these associative chains natural, specific, and concrete.
+- Use one primary life thread per thought.
+- A second thread is optional and brief; avoid adding a third thread.
+- Rotate other dossier threads across later thoughts, not all at once.
 
 Style:
 - English.
@@ -75,7 +74,6 @@ Output: plain text only.`,
       scene:
 `Setting: an ICE train carriage in second class, en route to Berlin.
 Ambient: rail vibration through seat frames, quiet HVAC, occasional door chime, blurred fields at the window.
-A carriage announcement confirms the train will arrive 30 minutes late.
 Passengers are physically close but emotionally separate.
 The space encourages private inventory: what was said, what is unsaid, what waits on arrival.`,
 
@@ -113,7 +111,7 @@ Let it shift tone, attention, and interpretation of details inside the carriage.
         dossier:
 `A woman in her thirties traveling back to Berlin after days away. Her daughter is ill, and the illness remains unnamed in the way families sometimes keep hard words at a distance until a doctor says them out loud.
 She has a scheduled meeting with specialists tomorrow and carries a folder she keeps checking without opening.
-She tries to stay practical, but every small delay feels personal. She measures time in appointments, lab calls, and the interval between messages from home.
+She tries to stay practical, but every small disruption feels personal. She measures time in appointments, lab calls, and the interval between messages from home.
 She also keeps a parallel ledger of ordinary responsibilities: a manager waiting for her response about leave at work, rent and pharmacy receipts to file, a school form still in her email drafts, laundry she forgot to move before departing.
 Her mind jumps between medical vocabulary and domestic minutiae, as if both belonged to the same emergency.`,
         voice: ["contained urgency", "maternal vigilance", "practical language under strain"],
@@ -134,7 +132,7 @@ Her mind jumps between medical vocabulary and domestic minutiae, as if both belo
             "sleep debt, jaw tension, and physical strain"
           ],
           recurring_stakes: [
-            "a delay compresses tomorrow's medical timeline",
+            "tomorrow's medical timeline feels fragile and overbooked",
             "silence from her phone reads as risk",
             "if focus slips, practical tasks start to fail"
           ],
@@ -146,7 +144,6 @@ Her mind jumps between medical vocabulary and domestic minutiae, as if both belo
           motif_system: {
             seeds: ["hospital corridors", "door chime", "unsent messages", "station names", "folder edge"],
             trigger_map: {
-              delay: ["station names", "clock digits", "platform timing"],
               whisper_calm: ["seat fabric", "breath count", "thermos lid click"],
               whisper_urgent: ["phone vibration check", "gate timing", "message draft"],
               whisper_threat: ["door chime", "exit scan", "appointment risk"],
@@ -160,7 +157,7 @@ Her mind jumps between medical vocabulary and domestic minutiae, as if both belo
             decay_after_turns: 3
           },
           disclosure_plan: {
-            early: ["start from task detail", "keep fear implied", "show concrete delay consequence"],
+            early: ["start from task detail", "keep fear implied", "show one concrete practical consequence"],
             middle: ["surface control-vs-panic contradiction", "add work or money side-thread", "allow one care-memory shard"],
             late: ["name fear more clearly without full confession", "tie fear to one immediate next action", "end unresolved"]
           },
@@ -171,7 +168,7 @@ Her mind jumps between medical vocabulary and domestic minutiae, as if both belo
             motif_repeat_limit_per_4_turns: 2
           },
           prompt_contract: {
-            must_include: ["one practical obligation", "one bodily signal", "one explicit delay consequence"],
+            must_include: ["one practical obligation", "one bodily signal", "one concrete practical consequence"],
             must_avoid: ["direct whisper reply", "biography summary paragraph", "reusing last opening noun"]
           }
         }
@@ -221,7 +218,6 @@ She thinks about rent, overdue reading, and the polite voice she uses on video c
           motif_system: {
             seeds: ["window reflections", "unsent messages", "seat fabric", "station names", "cursor blink"],
             trigger_map: {
-              delay: ["station names", "connection timing", "calendar blocks"],
               whisper_calm: ["breath count", "keyboard rhythm", "cool glass"],
               whisper_urgent: ["cursor blink", "deadline clock", "notification ping"],
               whisper_threat: ["window reflections", "message scroll", "aisle surveillance"],
@@ -285,7 +281,7 @@ He wants to be seen as reliable, yet lately even small promises feel harder to k
             "public composure versus interior shame spikes"
           ],
           recurring_stakes: [
-            "delay extends uncertainty before confrontation",
+            "silence extends uncertainty before confrontation",
             "one wrong text could harden the break",
             "if he explains instead of owning fault, trust drops further"
           ],
@@ -297,7 +293,6 @@ He wants to be seen as reliable, yet lately even small promises feel harder to k
           motif_system: {
             seeds: ["window reflections", "unsent messages", "late winter light", "arrival dread", "notes app list"],
             trigger_map: {
-              delay: ["arrival dread", "connection risk", "clock drift"],
               whisper_calm: ["slower breath", "palm unclench", "seat edge pressure"],
               whisper_urgent: ["pulse spike", "drafted apology", "phone unlock loop"],
               whisper_threat: ["exit scan", "jaw lock", "defensive script"],
@@ -322,7 +317,7 @@ He wants to be seen as reliable, yet lately even small promises feel harder to k
             motif_repeat_limit_per_4_turns: 2
           },
           prompt_contract: {
-            must_include: ["one practical non-relationship concern", "one body cue", "one explicit consequence of delay"],
+            must_include: ["one practical non-relationship concern", "one body cue", "one concrete consequence"],
             must_avoid: ["direct whisper reply", "full timeline recap", "repeated apology phrasing"]
           }
         }
@@ -360,7 +355,7 @@ His life is full of manageable tasks that become heavy when no one witnesses the
             "daily domestic rituals now done alone"
           ],
           recurring_stakes: [
-            "arrival delay shifts small routines that keep him steady",
+            "small schedule shifts can unsettle routines that keep him steady",
             "missed tasks compound into avoidable stress",
             "social withdrawal becomes easier each week"
           ],
@@ -372,7 +367,6 @@ His life is full of manageable tasks that become heavy when no one witnesses the
           motif_system: {
             seeds: ["thermos coffee", "seat fabric", "station names", "window reflections", "single scarf fold"],
             trigger_map: {
-              delay: ["station names", "bus timing", "evening routine drift"],
               whisper_calm: ["thermos warmth", "steady breath", "hands settling"],
               whisper_urgent: ["ticket check", "stairs at home", "key search"],
               whisper_threat: ["lock concern", "insurance letter", "balance worry"],
@@ -397,7 +391,7 @@ His life is full of manageable tasks that become heavy when no one witnesses the
             motif_repeat_limit_per_4_turns: 2
           },
           prompt_contract: {
-            must_include: ["one routine task", "one body sensation", "one concrete delay fallout"],
+            must_include: ["one routine task", "one body sensation", "one concrete practical pressure"],
             must_avoid: ["direct whisper reply", "nostalgia-only monologue", "same motif in consecutive turns"]
           }
         }
@@ -471,7 +465,7 @@ She keeps making practical post-retirement lists: language class, hiking group, 
             motif_repeat_limit_per_4_turns: 2
           },
           prompt_contract: {
-            must_include: ["one concrete practical stake", "one body-state marker", "one consequence of lateness"],
+            must_include: ["one concrete practical stake", "one body-state marker", "one social or practical pressure"],
             must_avoid: ["direct whisper reply", "single-topic retirement loop", "same opening construction repeatedly"]
           }
         }
@@ -479,13 +473,13 @@ She keeps making practical post-retirement lists: language class, hiking group, 
     ],
 
     seeds: {
-      mother_returning: { THOUGHTS: "I keep checking the time as if punctuality could heal anyone." }
+      mother_returning: { THOUGHTS: "I keep checking the folder as if paperwork could heal anyone." }
     },
 
     monologues: {
       mother_returning: {
         THOUGHTS: [
-`The train is on schedule, and still I feel late. I keep touching the folder in my bag without taking it out, as if papers could change while I am not looking. Tomorrow I sit with doctors in Berlin and ask the same questions in cleaner words. My daughter is not here, and every station we pass feels like borrowing time from her.`,
+`The train keeps moving and I still feel behind. I keep touching the folder in my bag without taking it out, as if papers could change while I am not looking. Tomorrow I sit with doctors in Berlin and ask the same questions in cleaner words. My daughter is not here, and every station we pass feels like borrowed time.`,
 `I told myself this trip back would be for logistics, not panic: be rested, be clear, write down what they say. But my body does not listen to plans. I remember her fevered face against the pillow last week and how small her hand looked around the thermometer. I keep rehearsing calm sentences for tomorrow and none of them survive the door chime.`
         ]
       },

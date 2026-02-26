@@ -33,6 +33,11 @@
   const THOUGHT_WORD_MIN = 20;
   const THOUGHT_WORD_MAX = 40;
   const FIRST_PERSON_MAX_RATIO = 0.20;
+  const AUTO_THOUGHT = {
+    enabled: true,
+    intervalMs: 30_000,
+    retryWhileBusyMs: 1_200
+  };
 
   // Single switch for system dynamics:
   // - "intense": strongest whisper impact + wider propagation
@@ -89,6 +94,7 @@
   let userApiKey = null;
   let isGenerating = false;
   const apiNarrativeState = {};
+  let autoThoughtTimer = null;
 
   // -----------------------------
   // DOM
@@ -534,6 +540,38 @@
   let isFocusOpen = false;
   let focusMode = "none"; // "none" | "prompt" | "photo"
 
+  function clearAutoThoughtTimer() {
+    if (autoThoughtTimer) {
+      clearTimeout(autoThoughtTimer);
+      autoThoughtTimer = null;
+    }
+  }
+
+  function scheduleAutoThought(delayMs = AUTO_THOUGHT.intervalMs) {
+    clearAutoThoughtTimer();
+    if (!AUTO_THOUGHT.enabled) return;
+
+    const selectedId = engine.getSelectedId();
+    if (!selectedId) return;
+
+    autoThoughtTimer = window.setTimeout(async () => {
+      const activeId = engine.getSelectedId();
+      if (!activeId) return;
+
+      if (isGenerating) {
+        scheduleAutoThought(AUTO_THOUGHT.retryWhileBusyMs);
+        return;
+      }
+
+      await requestMonologue({
+        characterId: activeId,
+        channel: DEFAULT_CHANNEL,
+        kind: EVENT_KIND.LISTEN,
+        whisperText: null
+      });
+    }, Math.max(250, Number(delayMs) || AUTO_THOUGHT.intervalMs));
+  }
+
   // -----------------------------
   // Init
   // -----------------------------
@@ -548,6 +586,7 @@
 
     render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
     showSelectPromptIfNeeded();
+    clearAutoThoughtTimer();
   }
 
   function populateScenes() {
@@ -562,6 +601,7 @@
 
   function bindUI() {
     elScenarioSelect.addEventListener("change", () => {
+      clearAutoThoughtTimer();
       closeFocus();
       const snap = engine.loadScene(elScenarioSelect.value);
 
@@ -652,6 +692,7 @@
   // Actions
   // -----------------------------
   function onSelectCharacter(id) {
+    clearAutoThoughtTimer();
     engine.selectCharacter(id);
     const sc = engine.getScene();
     const ch = sc.characters.find(c => c.id === id);
@@ -686,6 +727,7 @@
     if (!whisper) return;
 
     engine.recordWhisper(selectedId, whisper);
+    clearAutoThoughtTimer();
 
     // Begin generating new monologue (API or local)
     void requestMonologue({
@@ -770,10 +812,6 @@
       });
     }
 
-    if (usedLocalPool && isTrainDelayScene(engine.getScene())) {
-      text = ensureTrainDelayPressure(text);
-    }
-
     text = constrainThoughtText(text, {
       minWords: THOUGHT_WORD_MIN,
       maxWords: THOUGHT_WORD_MAX,
@@ -794,9 +832,11 @@
     renderReplay(snap);
     renderGrid(snap);
     renderLinks(snap);
+    scheduleAutoThought(AUTO_THOUGHT.intervalMs);
   }
 
   function cycleScene(dir) {
+    clearAutoThoughtTimer();
     const scenes = engine.listScenes();
     const cur = elScenarioSelect.value;
     const idx = scenes.findIndex(s => s.id === cur);
@@ -1159,23 +1199,16 @@
   function buildPacketPromptContext({ sceneId, scene, character, whisperText, priorMonologueCount, disclosurePhase }) {
     const packet = normalizeCharacterPacket(character, scene);
     const state = getApiCharacterState(sceneId, character?.id);
-    const isTrainScene = isTrainDelayScene(scene);
 
     const activeThread = pickLifeThread({
       threads: packet.lifeThreads,
       state,
       cooldown: packet.antiRepeat.topicCooldownTurns
     });
-    const secondaryThread = pickLifeThread({
-      threads: packet.lifeThreads.filter((t) => t !== activeThread),
-      state,
-      cooldown: Math.max(1, packet.antiRepeat.topicCooldownTurns - 1)
-    });
     const motifSelection = pickMotifForTurn({
       packet,
       state,
-      whisperText,
-      trainDelay: isTrainDelayScene(scene)
+      whisperText
     });
 
     const phase = disclosurePhase || (
@@ -1183,13 +1216,14 @@
       priorMonologueCount <= 7 ? "middle" : "late"
     );
     const phaseDirectives = packet.disclosurePlan[phase] || [];
-    const rawMustInclude = packet.promptContract.mustInclude || [];
-    const delayContractRx = /\b(delay|late|lateness|timing)\b/i;
-    const enforceDelayContractThisTurn =
-      !isTrainScene || priorMonologueCount <= 1 || state.turnIndex % 3 === 0;
-    const mustIncludeTurn = rawMustInclude.filter((item) =>
-      enforceDelayContractThisTurn ? true : !delayContractRx.test(String(item))
-    );
+    const includeSecondaryThread = shouldIncludeSecondaryThread(phase, state.turnIndex);
+    const secondaryThread = includeSecondaryThread
+      ? pickLifeThread({
+          threads: packet.lifeThreads.filter((t) => t !== activeThread),
+          state,
+          cooldown: Math.max(1, packet.antiRepeat.topicCooldownTurns - 1)
+        })
+      : null;
 
     const openingAvoid = state.recentOpenings
       .slice(-packet.antiRepeat.openingCooldownTurns)
@@ -1206,8 +1240,12 @@
       `- Character premise anchor: ${packet.core.premise}.`,
       `- Preserve central conflict: ${packet.core.centralConflict}.`,
       `- Preserve contradiction: ${packet.core.contradiction}.`,
-      `- Active life thread (required, concrete): ${activeThread}.`,
-      `- Secondary life thread (required, brief): ${secondaryThread}.`,
+      `- Primary life thread (required, concrete): ${activeThread}.`,
+      secondaryThread
+        ? `- Optional secondary thread (at most one brief clause): ${secondaryThread}.`
+        : "- No secondary thread this turn; stay with the primary thread.",
+      "- Hard cap: keep this thought to one dominant concern, with at most one brief secondary pivot.",
+      "- Do not introduce a third concern thread in this thought.",
       `- Motif pick for this turn: ${motifSelection.seed} (stage ${motifSelection.stage}).`,
       `- Motif stage guidance: ${motifSelection.stageDirective}.`,
       `- Motif trigger route: ${motifSelection.triggerRoute}.`,
@@ -1217,8 +1255,8 @@
       phaseDirectives.length
         ? `- Disclosure directives (${phase.toUpperCase()}): ${phaseDirectives.join(" | ")}.`
         : `- Disclosure directives (${phase.toUpperCase()}): keep incremental and allusive.`,
-      mustIncludeTurn.length
-        ? `- Must include this turn: ${mustIncludeTurn.join("; ")}.`
+      packet.promptContract.mustInclude.length
+        ? `- Must include this turn: ${packet.promptContract.mustInclude.join("; ")}.`
         : "- Must include this turn: one practical stake, one body cue, one concrete anchor.",
       packet.promptContract.mustAvoid.length
         ? `- Must avoid this turn: ${packet.promptContract.mustAvoid.join("; ")}.`
@@ -1228,7 +1266,7 @@
         : "- Opening cooldown: use a fresh opening shape.",
       topicAvoid.length
         ? `- Topic cooldown: avoid centering these recently used topics: ${topicAvoid.join(", ")}.`
-        : "- Topic cooldown: rotate to a different concern domain than the previous turn.",
+        : "- Topic cooldown: rotate primary concern across turns, not multiple concerns within one thought.",
       phraseAvoid.length
         ? `- Phrase suppression: avoid close variants of these recent fragments: ${phraseAvoid.join(" || ")}.`
         : "- Phrase suppression: keep noun/imagery set fresh."
@@ -1332,7 +1370,16 @@
     return scored[0].thread;
   }
 
-  function pickMotifForTurn({ packet, state, whisperText, trainDelay }) {
+  function shouldIncludeSecondaryThread(phase, turnIndex) {
+    const p = String(phase || "").toLowerCase();
+    const t = Math.max(0, Number(turnIndex) || 0);
+
+    if (p === "middle") return t % 2 === 0; // about half of turns
+    if (p === "late") return t % 3 === 1;   // occasional late-stage pivot
+    return false; // early thoughts stay single-threaded
+  }
+
+  function pickMotifForTurn({ packet, state, whisperText }) {
     const seeds = uniqList(packet?.motifSystem?.seeds || []).filter(Boolean);
     if (!seeds.length) {
       return {
@@ -1345,7 +1392,6 @@
 
     const tone = classifyWhisperTone(whisperText).tone;
     const triggerKeys = [];
-    if (trainDelay) triggerKeys.push("delay");
     if (tone && tone !== "neutral") triggerKeys.push(`whisper_${tone}`);
 
     const triggerMap = packet?.motifSystem?.triggerMap || {};
@@ -1559,7 +1605,6 @@
     const sceneLabel = String(sc?.meta?.label || "");
     const sceneTitle = String(sc?.meta?.title || "");
     const isPosthuman = /forest|post[- ]?human/i.test(sceneLabel);
-    const isTrainDelay = isTrainDelayScene(sc) || /train|ice|berlin/i.test(`${sceneLabel} ${sceneTitle}`);
 
     const sys = (sc.prompts && sc.prompts.system) ? sc.prompts.system :
       "You write short interior monologues.";
@@ -1606,19 +1651,19 @@
       ? [
           "- Vary openings unpredictably (object detail, body sensation, admin/money task, stray memory, abstract dread).",
           "- Keep core conflict mostly indirect; at most one brief allusive signal.",
-          "- One abrupt topic shift is allowed if it still feels psychologically plausible.",
+          "- Stay with one dominant concern; avoid piling multiple concern threads.",
           "- Do not name the character's deepest fear or full backstory directly yet."
         ]
       : disclosurePhase === "middle"
         ? [
-            "- Keep oscillating between present-moment detail, practical life threads, and deeper concern.",
+            "- Keep one dominant concern in view; a second concern can appear briefly if it returns to the core thread.",
             "- Allow at most one modestly clearer backstory signal, still indirect and understated.",
             "- Avoid full explanations, timelines, or confessional summaries."
           ]
         : [
             "- Deepen emotional clarity, but remain allusive rather than fully explanatory.",
             "- Leave some core material implied; avoid exhaustive disclosure.",
-            "- Let mundane detail and side-concerns interrupt heavier thoughts so the voice stays lived-in."
+            "- Keep the thought centered; avoid introducing extra side-concerns."
           ];
     const continuityBlock = recentThoughts.length
       ? [
@@ -1630,24 +1675,24 @@
           "Disclosure pacing rules:",
           ...disclosureGuidance,
           "Associative movement rules:",
-          "- Move at least once from mundane immediate detail to deeper concern and back to lived practical detail.",
-          "- Keep transitions subtle and psychologically natural, not abrupt."
+          "- Keep one dominant concern thread; optional secondary pivot is brief.",
+          "- If a secondary pivot appears, return quickly to the primary concern."
         ].join("\n")
       : [
           "Continuity context: none yet for this character.",
           "Disclosure phase: EARLY (first thought).",
           "Disclosure pacing rules:",
           "- Start with a surprising angle; do not default to biography summary.",
-          "- Range across everyday concerns with at least one quick associative jump.",
+          "- Keep first thought focused on one concern thread.",
           "- Hint at deeper history indirectly; avoid explicit backstory exposition.",
           "Associative movement rules:",
-          "- Let one detail open a sideways association; returning to practical detail is optional."
+          "- Optional brief side association is allowed, but keep a single dominant concern."
         ].join("\n");
 
     const openingModes = [
-      "begin with a concrete object, then jump to an unrelated obligation",
+      "begin with a concrete object and stay with one concern",
       "begin vague and atmospheric, then snap to one practical detail",
-      "begin practical and precise, then blur into an unnamed unease",
+      "begin practical and precise, then deepen the same concern",
       "begin mid-thought as a fragment, no setup sentence"
     ];
     const openingMode = openingModes[Math.floor(Math.random() * openingModes.length)];
@@ -1669,10 +1714,10 @@
 
     const lifeThreadBlock = [
       "Life-thread breadth constraints:",
-      "- Besides the central worry, include at least one secondary life thread from ordinary life.",
-      "- Secondary threads may include work tasks, money, admin, health routines, family logistics, social duties, study pressure, or unfinished errands.",
-      "- Build a short associative chain (2-4 linked turns of thought) rather than a single fixed topic.",
-      "- Do not stay only on train surroundings."
+      "- Keep each monologue focused on one dominant life thread.",
+      "- At most one secondary thread is allowed, and only as a brief pivot.",
+      "- Hard cap: no more than two concern threads in a single thought.",
+      "- Rotate additional concerns across later thoughts (progressive disclosure), not within the same thought."
     ].join("\n");
 
     const packetContext = buildPacketPromptContext({
@@ -1736,21 +1781,6 @@
       ? "- Include one immediate embodied concern (shelter, hunger, injury risk, weather, territory, energy, predation, mating pressure, seasonal survival)."
       : "- Include one immediate personal concern (status, work, money, health, aging, regret, belonging, obligation, reputation, deadline, body discomfort).";
 
-    const recentDelayMentions = recentThoughts
-      .filter((entry) => hasTrainDelayPressure(entry?.text || ""))
-      .length;
-    const forceExplicitDelay = priorMonologueCount <= 1 || recentDelayMentions === 0;
-    const delayPressureBlock = isTrainDelay
-      ? [
-          "Train timing pressure:",
-          "- A carriage announcement says arrival is 30 minutes late.",
-          forceExplicitDelay
-            ? "- In this turn, include one concrete timing consequence (connection risk, missed timing, call rescheduling, pickup friction, appointment pressure, or admin fallout)."
-            : "- Keep timing pressure present, but avoid repeating exact '30 minutes late' wording from recent turns; implication is acceptable.",
-          "- Vary wording and consequence type across turns; do not reuse the same delay phrase repeatedly."
-        ].join("\n")
-      : "No scene-wide delay requirement.";
-
     const userPrompt = [
       "Generate an interior monologue.",
       `Length: ${THOUGHT_WORD_MIN}-${THOUGHT_WORD_MAX} words.`,
@@ -1782,8 +1812,6 @@
       "",
       "Packet steering (apply exactly as constraints):",
       packetContext.promptBlock,
-      "",
-      delayPressureBlock,
       "",
       continuityBlock,
       "",
@@ -2147,26 +2175,6 @@
     return out;
   }
 
-  function isTrainDelayScene(sc) {
-    const id = String(sc?.id || "");
-    const label = String(sc?.meta?.label || "");
-    const title = String(sc?.meta?.title || "");
-    return /ice_to_berlin_second_class/i.test(id) || /train|ice|berlin/i.test(`${label} ${title}`);
-  }
-
-  function hasTrainDelayPressure(text) {
-    const t = normalizeWhitespace(text).toLowerCase();
-    if (!t) return false;
-
-    const late = /\b(late|delay|delayed|behind schedule)\b/.test(t);
-    const thirty = /\b(30|thirty|half an hour)\b/.test(t);
-    const minute = /\b(minute|minutes)\b/.test(t);
-    const announcement = /\b(announcement|announced|speaker|conductor)\b/.test(t);
-
-    if (late && (thirty || minute)) return true;
-    if (announcement && late) return true;
-    return false;
-  }
 
   function classifyWhisperTone(whisperText) {
     const t = normalizeWhitespace(whisperText).toLowerCase();
@@ -2274,22 +2282,6 @@
 
     const cue = buildWhisperCue(whisper, psyche);
     return normalizeWhitespace(`${cue}. ${base}`);
-  }
-
-  function ensureTrainDelayPressure(text) {
-    const base = normalizeWhitespace(text);
-    if (!base) return base;
-    if (hasTrainDelayPressure(base)) return base;
-
-    const additions = [
-      "Announcement: 30 minutes late; connection window narrowing",
-      "Thirty minutes late now; planned timing starts to slip",
-      "Delay holds at 30 minutes; appointments move into risk",
-      "Now 30 minutes late; calls and pickup timing tighten"
-    ];
-
-    const extra = additions[randInt(0, additions.length - 1)];
-    return normalizeWhitespace(`${extra}. ${base}`);
   }
 
   function clampWordRange(text, { minWords, maxWords, fallback }) {
