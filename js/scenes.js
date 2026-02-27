@@ -248,7 +248,7 @@ She thinks about rent, overdue reading, and the polite voice she uses on video c
       },
       {
         id: "worried_boyfriend",
-        label: "Man by the window",
+        label: "Young man by the window",
         icon: "🪟",
         image: "images/train-boyfriend.png",
         position: { x: 1, y: 2 },
