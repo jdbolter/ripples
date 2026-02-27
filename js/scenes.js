@@ -72,7 +72,7 @@ Style:
 Output: plain text only.`,
 
       scene:
-`Setting: an ICE train carriage in second class, en route to Berlin.
+`Setting: an iC train carriage in second class, en route to Berlin.
 Ambient: rail vibration through seat frames, quiet HVAC, occasional door chime, blurred fields at the window.
 Passengers are physically close but emotionally separate.
 The space encourages private inventory: what was said, what is unsaid, what waits on arrival.`,

@@ -69,6 +69,20 @@
     "is", "it", "its", "of", "on", "or", "so", "than", "that", "the", "their", "there", "they",
     "this", "to", "up", "was", "were", "with", "you", "your"
   ]);
+  const FOCUSED_PRESSURE_CHARACTER_IDS = new Set([
+    "mother_returning",
+    "student_alone"
+  ]);
+  const OPEN_PROFILE_AMBIENT_THREADS = Object.freeze([
+    "passing landscape details and weather changes",
+    "ordinary body comfort adjustments in the seat",
+    "small practical rituals like checking pockets, tickets, or notes",
+    "mundane observations about strangers and shared space",
+    "quiet memory flashes with no urgent problem attached",
+    "food, coffee, or simple sensory cravings",
+    "tiny plans for the next stop, meal, or evening",
+    "neutral curiosity about objects, sounds, and routines nearby"
+  ]);
   const AUTO_THOUGHT = {
     enabled: true,
     intervalMs: 30_000,
@@ -487,13 +501,21 @@
       maxFirstPersonRatio: FIRST_PERSON_MAX_RATIO,
       preferRandomWindow: false
     });
-    const continuityMode = openingLeadSource === "carryover" ? "riff" : "literal";
+    const continuityMode = (openingLeadSource === "carryover" || openingLeadSource === "whisper")
+      ? "riff"
+      : "literal";
     text = enforceContinuityLead(text, openingLead, { mode: continuityMode });
     text = finalizeWithContinuityLead(text, openingLead, {
       minWords: THOUGHT_WORD_MIN,
       maxWords: THOUGHT_WORD_MAX,
       mode: continuityMode
     });
+    if (openingLeadSource === "whisper") {
+      text = dedupeWhisperLeadRepetition(text, openingLead, {
+        minWords: THOUGHT_WORD_MIN,
+        maxWords: THOUGHT_WORD_MAX
+      });
+    }
     if (continuityMode === "riff") {
       text = enforceCarryoverRiffPersistence(text, openingLead, {
         minWords: THOUGHT_WORD_MIN,
@@ -554,6 +576,17 @@
     return `${oneLine.slice(0, max - 3)}...`;
   }
 
+  function isFocusedPressureCharacter(characterId) {
+    const id = String(characterId || "").trim();
+    return !!id && FOCUSED_PRESSURE_CHARACTER_IDS.has(id);
+  }
+
+  function getCharacterPressureProfile(characterId, packetProfile = "") {
+    const explicit = String(packetProfile || "").trim().toLowerCase();
+    if (explicit === "focused" || explicit === "open") return explicit;
+    return isFocusedPressureCharacter(characterId) ? "focused" : "open";
+  }
+
   function resetApiNarrativeState(sceneId) {
     const id = String(sceneId || "").trim();
     if (!id) return;
@@ -569,8 +602,6 @@
         recentTopics: [],
         recentOpenings: [],
         recentNgrams: [],
-        motifStages: {},
-        motifLastUsed: {},
         threadLastUsed: {}
       };
     }
@@ -582,8 +613,6 @@
         recentTopics: [],
         recentOpenings: [],
         recentNgrams: [],
-        motifStages: {},
-        motifLastUsed: {},
         threadLastUsed: {}
       };
     }
@@ -591,30 +620,32 @@
   }
 
   function buildPacketPromptContext({ sceneId, scene, character, whisperText, priorMonologueCount, disclosurePhase }) {
-    const packet = normalizeCharacterPacket(character, scene);
+    const packet = normalizeCharacterPacket(character);
     const state = getApiCharacterState(sceneId, character?.id);
     const turnNumber = state.turnIndex + 1;
-    const toneCadenceDirective = (turnNumber % 2 === 0)
-      ? "- Tonal cadence (required this turn): keep the overall thought neutral-to-gently-hopeful. Include one concrete stabilizing or competence cue."
-      : "- Tonal cadence: darker pressure is allowed, but retain one concrete anchor of agency or steadiness.";
+    const pressureProfile = packet.pressureProfile;
+    const toneCadenceDirective = pressureProfile === "focused"
+      ? (
+          (turnNumber % 2 === 0)
+            ? "- Tonal cadence (required this turn): keep the overall thought neutral-to-gently-hopeful. Include one concrete stabilizing or competence cue."
+            : "- Tonal cadence: darker pressure is allowed, but retain one concrete anchor of agency or steadiness."
+        )
+      : "- Tonal cadence (required this turn): keep the overall thought mostly neutral, curious, or gently pleasant; pressure can appear, but do not let it dominate.";
 
     const activeThread = pickLifeThread({
       threads: packet.lifeThreads,
       state,
       cooldown: packet.antiRepeat.topicCooldownTurns
     });
-    const motifSelection = pickMotifForTurn({
-      packet,
-      state,
-      whisperText
-    });
+    const ambientThread = pickAmbientThread({ scene, state, turnNumber });
+    const shouldSurfaceLongTermThread = pressureProfile === "focused" || (turnNumber % 3 === 0);
 
     const phase = disclosurePhase || (
       priorMonologueCount <= 3 ? "early" :
       priorMonologueCount <= 7 ? "middle" : "late"
     );
     const phaseDirectives = packet.disclosurePlan[phase] || [];
-    const includeSecondaryThread = shouldIncludeSecondaryThread(phase, state.turnIndex);
+    const includeSecondaryThread = pressureProfile === "focused" && shouldIncludeSecondaryThread(phase, state.turnIndex);
     const secondaryThread = includeSecondaryThread
       ? pickLifeThread({
           threads: packet.lifeThreads.filter((t) => t !== activeThread),
@@ -633,33 +664,59 @@
       .slice(-packet.antiRepeat.bannedRecentNgrams)
       .map((s) => trimForPrompt(s, 56));
 
+    const longTermThreadLines = pressureProfile === "focused"
+      ? [
+          `- Preserve central conflict: ${packet.core.centralConflict}.`,
+          `- Preserve contradiction: ${packet.core.contradiction}.`,
+          `- Primary life thread (required, concrete): ${activeThread}.`
+        ]
+      : [
+          `- Long-term life thread to keep in background: ${activeThread}.`,
+          shouldSurfaceLongTermThread
+            ? "- Mention the long-term thread in at most one short clause this turn."
+            : "- Keep the long-term thread implicit this turn unless naturally needed.",
+          `- Primary thread this turn (required, ordinary/everyday): ${ambientThread}.`
+        ];
+
+    const mustIncludeLine = pressureProfile === "focused"
+      ? (
+          packet.promptContract.mustInclude.length
+            ? `- Must include this turn: ${packet.promptContract.mustInclude.join("; ")}.`
+            : "- Must include this turn: one practical stake, one body cue, one concrete anchor."
+        )
+      : "- Must include this turn: one ordinary concrete detail and one small agency, ease, or pleasant cue.";
+
+    const mustAvoidLine = pressureProfile === "focused"
+      ? (
+          packet.promptContract.mustAvoid.length
+            ? `- Must avoid this turn: ${packet.promptContract.mustAvoid.join("; ")}.`
+            : "- Must avoid this turn: direct whisper reply; life-summary exposition."
+        )
+      : "- Must avoid this turn: direct whisper reply; problem-only monologue; life-summary exposition.";
+
     const promptBlock = [
       `- Turn index in this scene for this character: ${turnNumber}.`,
       toneCadenceDirective,
       `- Character premise anchor: ${packet.core.premise}.`,
-      `- Preserve central conflict: ${packet.core.centralConflict}.`,
-      `- Preserve contradiction: ${packet.core.contradiction}.`,
-      `- Primary life thread (required, concrete): ${activeThread}.`,
+      ...longTermThreadLines,
       secondaryThread
         ? `- Optional secondary thread (at most one brief clause): ${secondaryThread}.`
         : "- No secondary thread this turn; stay with the primary thread.",
-      "- Hard cap: keep this thought to one dominant concern, with at most one brief secondary pivot.",
+      pressureProfile === "focused"
+        ? "- Hard cap: keep this thought to one dominant concern, with at most one brief secondary pivot."
+        : "- Hard cap: keep this thought to one dominant thread; if long-term pressure appears, keep it brief and non-dominant.",
       "- Do not introduce a third concern thread in this thought.",
-      `- Motif pick for this turn: ${motifSelection.seed} (stage ${motifSelection.stage}).`,
-      `- Motif stage guidance: ${motifSelection.stageDirective}.`,
-      `- Motif trigger route: ${motifSelection.triggerRoute}.`,
+      pressureProfile === "focused"
+        ? "- Associative range: stay grounded in immediate detail while tension remains plausible."
+        : "- Associative range: allow mild randomness and everyday drift (travel, landscape, ordinary life observations).",
       `- Voice texture: ${packet.voiceRules.texture.join(", ")}.`,
       `- Syntax bias: ${packet.voiceRules.syntaxBias.join(", ")}.`,
       `- Taboo stylistic moves: ${packet.voiceRules.tabooMoves.join("; ")}.`,
       phaseDirectives.length
         ? `- Disclosure directives (${phase.toUpperCase()}): ${phaseDirectives.join(" | ")}.`
         : `- Disclosure directives (${phase.toUpperCase()}): keep incremental and allusive.`,
-      packet.promptContract.mustInclude.length
-        ? `- Must include this turn: ${packet.promptContract.mustInclude.join("; ")}.`
-        : "- Must include this turn: one practical stake, one body cue, one concrete anchor.",
-      packet.promptContract.mustAvoid.length
-        ? `- Must avoid this turn: ${packet.promptContract.mustAvoid.join("; ")}.`
-        : "- Must avoid this turn: direct whisper reply; life-summary exposition.",
+      mustIncludeLine,
+      mustAvoidLine,
       openingAvoid.length
         ? `- Opening cooldown: do not reuse these recent openings: ${openingAvoid.join(" || ")}.`
         : "- Opening cooldown: use a fresh opening shape.",
@@ -676,19 +733,15 @@
       selection: {
         packet,
         activeThread,
-        secondaryThread,
-        motif: motifSelection.seed,
-        motifStage: motifSelection.stage,
-        motifDecayTurns: packet.motifSystem.decayAfterTurns
+        secondaryThread
       }
     };
   }
 
-  function normalizeCharacterPacket(character, scene) {
+  function normalizeCharacterPacket(character) {
     const packet = (character && typeof character.packet === "object" && character.packet) ? character.packet : {};
     const core = (packet.core && typeof packet.core === "object") ? packet.core : {};
     const voiceRules = (packet.voice_rules && typeof packet.voice_rules === "object") ? packet.voice_rules : {};
-    const motifSystem = (packet.motif_system && typeof packet.motif_system === "object") ? packet.motif_system : {};
     const disclosurePlan = (packet.disclosure_plan && typeof packet.disclosure_plan === "object") ? packet.disclosure_plan : {};
     const antiRepeat = (packet.anti_repeat && typeof packet.anti_repeat === "object") ? packet.anti_repeat : {};
     const promptContract = (packet.prompt_contract && typeof packet.prompt_contract === "object") ? packet.prompt_contract : {};
@@ -704,11 +757,8 @@
           "future identity uncertainty"
         ];
 
-    const mergedMotifSeeds = uniqList([
-      ...(motifSystem.seeds || []),
-      ...(character?.motifSeeds || []),
-      ...(scene?.motifs || [])
-    ]).slice(0, 40);
+    const profileHint = String(packet.pressure_profile || packet.tone_profile || "").toLowerCase();
+    const pressureProfile = getCharacterPressureProfile(character?.id, profileHint);
 
     return {
       core: {
@@ -723,18 +773,7 @@
         syntaxBias: uniqList(voiceRules.syntax_bias || ["concrete clauses", "occasional fragment"]).slice(0, 5),
         tabooMoves: uniqList(voiceRules.taboo_moves || ["direct whisper reply", "biography summary"]).slice(0, 5)
       },
-      motifSystem: {
-        seeds: mergedMotifSeeds.length ? mergedMotifSeeds : ["object detail", "body cue", "ambient sound"],
-        triggerMap: (motifSystem.trigger_map && typeof motifSystem.trigger_map === "object")
-          ? motifSystem.trigger_map
-          : {},
-        evolution: {
-          stage_1: String(motifSystem?.evolution?.stage_1 || "literal mention in present scene detail"),
-          stage_2: String(motifSystem?.evolution?.stage_2 || "associative link to practical or emotional stake"),
-          stage_3: String(motifSystem?.evolution?.stage_3 || "reframed motif as decision pressure")
-        },
-        decayAfterTurns: Math.max(1, Number(motifSystem.decay_after_turns) || 3)
-      },
+      pressureProfile,
       disclosurePlan: {
         early: uniqList(disclosurePlan.early || []),
         middle: uniqList(disclosurePlan.middle || []),
@@ -769,6 +808,28 @@
     return scored[0].thread;
   }
 
+  function pickAmbientThread({ scene, state, turnNumber }) {
+    const sceneLabel = normalizeWhitespace(String(scene?.meta?.label || "")).toLowerCase();
+    const sceneSpecific = sceneLabel.includes("train")
+      ? [
+          "window views, tracks, stations, and winter light",
+          "the carriage rhythm and small passenger movements",
+          "arrival logistics, platform timing, and simple next-step planning"
+        ]
+      : sceneLabel.includes("reading room") || sceneLabel.includes("library")
+        ? [
+            "page texture, shelf order, and room acoustics",
+            "quiet human choreography across tables and aisles",
+            "small reading rituals and attention resets"
+          ]
+        : [];
+
+    const pool = uniqList(sceneSpecific.concat(OPEN_PROFILE_AMBIENT_THREADS));
+    if (!pool.length) return "ordinary present-moment details";
+    const idx = (Math.max(1, Number(turnNumber) || 1) + Math.max(0, Number(state?.turnIndex) || 0)) % pool.length;
+    return pool[idx];
+  }
+
   function shouldIncludeSecondaryThread(phase, turnIndex) {
     const p = String(phase || "").toLowerCase();
     const t = Math.max(0, Number(turnIndex) || 0);
@@ -776,52 +837,6 @@
     if (p === "middle") return t % 2 === 0; // about half of turns
     if (p === "late") return t % 3 === 1;   // occasional late-stage pivot
     return false; // early thoughts stay single-threaded
-  }
-
-  function pickMotifForTurn({ packet, state, whisperText }) {
-    const seeds = uniqList(packet?.motifSystem?.seeds || []).filter(Boolean);
-    if (!seeds.length) {
-      return {
-        seed: "concrete object detail",
-        stage: 1,
-        stageDirective: "literal mention in the immediate scene",
-        triggerRoute: "fallback"
-      };
-    }
-
-    const tone = classifyWhisperTone(whisperText).tone;
-    const triggerKeys = [];
-    if (tone && tone !== "neutral") triggerKeys.push(`whisper_${tone}`);
-
-    const triggerMap = packet?.motifSystem?.triggerMap || {};
-    const triggeredSeeds = new Set();
-    for (const key of triggerKeys) {
-      for (const seed of uniqList(triggerMap[key] || [])) {
-        triggeredSeeds.add(String(seed));
-      }
-    }
-
-    let best = null;
-    for (const seed of seeds) {
-      const key = String(seed);
-      const last = Number.isFinite(state.motifLastUsed[key]) ? state.motifLastUsed[key] : -999;
-      const age = state.turnIndex - last;
-      const triggerBoost = triggeredSeeds.has(key) ? 2.5 : 0;
-      const recencyPenalty = age <= 1 ? 1.2 : 0;
-      const score = age * 0.25 + triggerBoost - recencyPenalty + (Math.random() * 0.3);
-      if (!best || score > best.score) {
-        best = { seed: key, score };
-      }
-    }
-
-    const stage = Math.max(1, Math.min(3, Number(state.motifStages[best.seed]) || 1));
-    const stageDirective = packet?.motifSystem?.evolution?.[`stage_${stage}`] || "literal mention in present scene detail";
-    return {
-      seed: best.seed,
-      stage,
-      stageDirective,
-      triggerRoute: triggerKeys.length ? triggerKeys.join("+") : "none"
-    };
   }
 
   function updateApiNarrativeState({ sceneId, characterId, text, packetContext }) {
@@ -851,25 +866,6 @@
     }
     for (const phrase of extractNgramPhrases(clean, 3, 12)) {
       rememberRecent(state.recentNgrams, phrase, 24);
-    }
-
-    if (selection && selection.motif) {
-      const motif = String(selection.motif);
-      const prior = Math.max(1, Math.min(3, Number(state.motifStages[motif]) || 1));
-      const mentioned = motifMentioned(clean, motif);
-      state.motifStages[motif] = mentioned ? Math.min(3, prior + 1) : prior;
-      state.motifLastUsed[motif] = state.turnIndex;
-      rememberRecent(state.recentTopics, motif, 10);
-    }
-
-    const decayAfter = Math.max(1, Number(selection?.motifDecayTurns) || 3);
-    for (const seed of Object.keys(state.motifLastUsed)) {
-      const last = Number(state.motifLastUsed[seed]);
-      if (!Number.isFinite(last)) continue;
-      if ((state.turnIndex - last) > decayAfter) {
-        const current = Math.max(1, Math.min(3, Number(state.motifStages[seed]) || 1));
-        state.motifStages[seed] = Math.max(1, current - 1);
-      }
     }
   }
 
@@ -922,18 +918,6 @@
       if (out.length >= Math.max(1, Number(limit) || 1)) break;
     }
     return out;
-  }
-
-  function motifMentioned(text, motifSeed) {
-    const t = normalizeWhitespace(text).toLowerCase();
-    const motif = normalizeWhitespace(motifSeed).toLowerCase();
-    if (!t || !motif) return false;
-    if (t.includes(motif)) return true;
-
-    const parts = motif.split(/\s+/).map(canonicalToken).filter(Boolean);
-    if (!parts.length) return false;
-    const hits = parts.reduce((n, p) => n + (new RegExp(`\\b${escapeRegExp(p)}\\b`, "i").test(t) ? 1 : 0), 0);
-    return hits >= Math.min(2, parts.length);
   }
 
   function uniqList(values) {
@@ -1320,6 +1304,58 @@
       .join(". ");
   }
 
+  function buildWhisperLeadRiffClause(lead) {
+    const anchors = extractLeadAnchorTokens(lead, { maxTokens: 3 });
+    if (anchors.length >= 2) {
+      const a = anchors[0].replace(/^./, (m) => m.toUpperCase());
+      const b = anchors[1];
+      return `${a} shifts against ${b}`;
+    }
+    if (anchors.length === 1) {
+      const a = anchors[0].replace(/^./, (m) => m.toUpperCase());
+      return `${a} changes cadence`;
+    }
+    return "the cadence changes";
+  }
+
+  function dedupeWhisperLeadRepetition(text, lead, { minWords, maxWords }) {
+    const base = normalizeWhitespace(stripOuterQuotes(text));
+    const seed = normalizeLeadFragment(lead, CONTINUITY_LEAD_MAX_WORDS, { keepHead: true });
+    if (!base || !seed) return base;
+
+    const seedWords = splitWords(seed).filter(Boolean);
+    if (seedWords.length < 2) return base;
+
+    const pattern = seedWords
+      .map((w) => escapeRegExp(w))
+      .join("[\\s\\W_]+");
+    const phraseRegex = new RegExp(pattern, "ig");
+    const riffClause = buildWhisperLeadRiffClause(seed);
+
+    let seen = 0;
+    let replaced = false;
+    let out = base.replace(phraseRegex, (match) => {
+      seen += 1;
+      if (seen === 1) return match;
+      replaced = true;
+      return riffClause;
+    });
+    if (!replaced) return base;
+
+    out = cleanSpacing(out);
+    out = truncateToWordCount(out, maxWords);
+    if (wordCount(out) < minWords) {
+      out = clampWordRange(out, {
+        minWords,
+        maxWords,
+        fallback: `${out} ${riffClause}`.trim()
+      });
+    }
+    out = trimDanglingEnding(out, minWords);
+    out = ensureTerminalPunctuation(out);
+    return cleanSpacing(out);
+  }
+
   function enforceContinuityLead(text, lead, opts = {}) {
     const mode = opts.mode === "riff" ? "riff" : "literal";
     const base = normalizeWhitespace(stripOuterQuotes(text));
@@ -1577,14 +1613,24 @@
     const tones = recent.map((entry) => classifyThoughtTone(entry.text));
     const darkCount = tones.filter((t) => t === "dark").length;
     const nonDarkCount = tones.length - darkCount;
+    const pressureProfile = getCharacterPressureProfile(characterId);
     const projectedCount = Math.min(TONE_BALANCER.windowSize, tones.length + 1);
-    const minNonDarkNeeded = Math.ceil(projectedCount * TONE_BALANCER.minNonDarkRatio);
+    const minNonDarkRatio = pressureProfile === "focused"
+      ? TONE_BALANCER.minNonDarkRatio
+      : 0.75;
+    const minNonDarkNeeded = Math.ceil(projectedCount * minNonDarkRatio);
     const requireNonDark = nonDarkCount < minNonDarkNeeded;
     const whisperTone = classifyWhisperTone(whisperText).tone;
 
     let target = "neutral";
     if (requireNonDark) {
       target = "non_dark_required";
+    } else if (pressureProfile === "open") {
+      if (kind === EVENT_KIND.WHISPER && whisperTone === "threat") {
+        target = "steady";
+      } else if (whisperTone === "calm" || whisperTone === "tender" || turnIndex % 2 === 0) {
+        target = "gently_hopeful";
+      }
     } else if (whisperTone === "calm" || whisperTone === "tender" || (turnIndex % 3 === 0 && whisperTone !== "threat")) {
       target = "gently_hopeful";
     } else if (kind === EVENT_KIND.WHISPER && whisperTone === "threat") {
@@ -1596,6 +1642,7 @@
 
     return {
       turnIndex,
+      profile: pressureProfile,
       target,
       lens,
       darkCount,
@@ -1608,13 +1655,16 @@
   function buildToneSteeringBlock(steering) {
     if (!steering) return "- Tone steering unavailable.";
 
+    const openProfile = steering.profile === "open";
     const targetLine = steering.target === "non_dark_required"
       ? "- This turn MUST land neutral-to-gently-hopeful (not dark). Include one concrete stabilizing action or relief cue."
       : steering.target === "gently_hopeful"
         ? "- This turn should read gently hopeful overall; include one feasible good-outcome signal."
         : steering.target === "steady"
           ? "- This turn may hold pressure, but must stay steady (no doom spiral). Include one concrete agency cue."
-          : "- This turn should be neutral/varied with at least one concrete anchor of agency.";
+          : openProfile
+            ? "- This turn should feel natural and mostly neutral-to-pleasant, with ordinary observations and at least one concrete anchor of agency."
+            : "- This turn should be neutral/varied with at least one concrete anchor of agency.";
 
     const lensLine = steering.lens
       ? `- Variation lens: ${steering.lens.instruction}`
@@ -1692,12 +1742,7 @@
   }
 
   function sceneAnchors(scene = null) {
-    const motifAnchors = uniqList(scene?.motifs || [])
-      .filter((m) => countLexHits(m, ATTENTION_BALANCER.worldCueWords) > 0)
-      .slice(0, 12)
-      .map((m) => `${m}.`);
-    const base = ATTENTION_BALANCER.sceneFallbackAnchors.slice();
-    return motifAnchors.length ? motifAnchors.concat(base) : base;
+    return ATTENTION_BALANCER.sceneFallbackAnchors.slice();
   }
 
   function buildFocusSteering({ characterId, kind, whisperText, priorMonologueCount, scene }) {

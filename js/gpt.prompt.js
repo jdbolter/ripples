@@ -43,8 +43,6 @@
 
     const dossier = (ch && ch.dossier) ? ch.dossier : "";
     const voice = uniqList(ch?.voice || []);
-    const characterMotifSeeds = uniqList(ch?.motifSeeds || []);
-    const sceneMotifPalette = uniqList(sc?.motifs || []);
 
     const psycheBlock = [
       "Current psychic state (0–1):",
@@ -139,7 +137,8 @@
 
     const lifeThreadBlock = [
       "Life-thread breadth constraints:",
-      "- Keep each monologue focused on one dominant life thread.",
+      "- Keep each monologue focused on one dominant thread.",
+      "- The dominant thread can be ordinary/everyday observation or a life-pressure thread, depending on turn context.",
       "- At most one secondary thread is allowed, and only as a brief pivot.",
       "- Hard cap: no more than two concern threads in a single thought.",
       "- Rotate additional concerns across later thoughts (progressive disclosure), not within the same thought."
@@ -153,16 +152,17 @@
       priorMonologueCount,
       disclosurePhase
     });
+    const pressureProfile = String(packetContext?.selection?.packet?.pressureProfile || "open").toLowerCase();
 
     const openingLeadClean = normalizeWhitespace(openingLead);
     const openingContinuityBlock = openingLeadClean
       ? [
           "Opening continuity (MANDATORY):",
           openingLeadSource === "whisper"
-            ? `- Begin with this whisper-derived phrase, more or less intact: ${openingLeadClean}`
+            ? `- Echo 2-5 distinctive words from this whisper-derived phrase in the opening, then riff forward: ${openingLeadClean}`
             : `- Riff on this carried-over phrase from the previous thought: ${openingLeadClean}`,
           openingLeadSource === "whisper"
-            ? "- Keep meaning and wording close; small variation is allowed."
+            ? "- Keep the emotional direction, but do NOT repeat the full phrase verbatim."
             : "- Reuse 2-5 distinctive words, but do NOT repeat the full phrase verbatim.",
           openingLeadSource === "whisper"
             ? "- This opening rule overrides default opening randomness."
@@ -182,8 +182,9 @@
       ? [
           "WHISPER IMPACT (MANDATORY):",
           openingLeadSource === "whisper"
-            ? "- Start from the whisper-derived opening phrase, then continue as interior thought; do not address the whisperer."
+            ? "- Start from a partial echo of the whisper-derived opening phrase, then continue as interior thought; do not address the whisperer."
             : "- Do NOT quote the whisper and do NOT address the whisperer.",
+          "- Do not repeat the same whisper phrase twice in one monologue.",
           "- Let the whisper clearly bend mood and imagery.",
           "- The bend must be visible in the opening clause and still present at the end.",
           "- Include one concrete bodily response influenced by the whisper.",
@@ -230,7 +231,9 @@
 
     const concernConstraint = isPosthuman
       ? "- Include one immediate embodied concern (shelter, hunger, injury risk, weather, territory, energy, predation, mating pressure, seasonal survival)."
-      : "- Include one immediate personal concern (status, work, money, health, aging, regret, belonging, obligation, reputation, deadline, body discomfort).";
+      : pressureProfile === "focused"
+        ? "- Include one immediate personal concern (status, work, money, health, aging, regret, belonging, obligation, reputation, deadline, body discomfort)."
+        : "- Include one concrete present-moment observation; concern can be background rather than the center.";
 
     const userPrompt = [
       "Generate an interior monologue.",
@@ -239,6 +242,7 @@
       "Grounded and immediate with a light allusive layer.",
       "Explicit first-person references should stay sparse (target <=20% of words using I/me/my/mine/myself).",
       "Prioritize concrete stakes over decorative abstraction.",
+      "Allow ordinary, neutral, or gently pleasant observations when natural; not every thought should center on a problem.",
       "Sentence fragments are allowed.",
       "At most ONE clause may lean strongly lyrical/metaphoric.",
       "Do not rely on dust, light, shadow, air, or silence as primary imagery.",
@@ -268,8 +272,6 @@
       "Character:",
       dossier,
       voice.length ? `Voice tags: ${voice.join(", ")}.` : "Voice tags: (none).",
-      characterMotifSeeds.length ? `Character motif seeds: ${characterMotifSeeds.join(", ")}.` : "Character motif seeds: (none).",
-      sceneMotifPalette.length ? `Scene motif palette: ${sceneMotifPalette.slice(0, 14).join(", ")}.` : "Scene motif palette: (none).",
       "",
       "Packet steering (apply exactly as constraints):",
       packetContext.promptBlock,
