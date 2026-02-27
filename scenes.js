@@ -25,10 +25,7 @@ window.SCENES = {
       cols: 6,
       rows: 4,
       baseline:
-`An ICE train runs north toward Berlin through late light and winter fields.
-The second class carriage is mostly empty, upholstered in muted blues and grays.
-Luggage racks hum softly. Glass reflects faces back at themselves.
-No one speaks across the aisle, but everyone keeps revising a private future.`
+`An intercity train runs north toward Berlin through winter fields and the light of late afternoon.  The second class carriage is mostly empty, only five passengers, each sitting alone with their thoughts. You are a traveler too, but not like others. You are a ghost or an angel, who can read their thoughts and whisper back to them. In your presence the carriage ripples with intersecting thoughts and whispers. An unacknowledged, collective conversation.`
     },
 
     prompts: {
@@ -43,8 +40,9 @@ Let timing and logistics feel present where relevant, but do not introduce a sin
 
 Backstory priority:
 - Anchor each monologue in the character dossier's lived situation (family, relationship status, work, age, obligations, losses, pending decisions).
-- Treat those biographical facts as the engine of thought, not decorative background.
+- Treat those biographical facts as one engine of thought, not decorative background. 
 - Keep continuity with what the character has already implied or admitted; do not contradict established facts.
+-But the character also have many random thoughts about the world, memories, and associations that are not just backstory. Let those roam freely as long as they do not contradict the dossier.
 
 Progressive disclosure across successive thoughts:
 - Do not reveal the full life story at once; stretch disclosure across many thoughts.
@@ -90,15 +88,14 @@ Let it shift tone, attention, and interpretation of details inside the carriage.
 
     motifs: [
       "window reflections",
-      "door chime",
-      "seat fabric",
+      "gentle swaying of the carriage",
+      "slightly snowy fields",
       "unsent messages",
       "hospital corridors",
       "metal luggage rack",
       "station names",
-      "thermos coffee",
       "late winter light",
-      "arrival dread"
+      "arrival anticipation"
     ],
 
     characters: [
@@ -111,19 +108,19 @@ Let it shift tone, attention, and interpretation of details inside the carriage.
         sensitivity: "high",
         adjacentTo: ["retired_widower"],
         dossier:
-`A woman in her thirties traveling back to Berlin after days away. Her daughter is ill, and the illness remains unnamed in the way families sometimes keep hard words at a distance until a doctor says them out loud.
+`A woman in her thirties traveling back to Berlin after days away. Her daughter is ill, and the illness remains unnamed in the way families sometimes keep hard words at a distance until a doctor says them out loud. But she maintains a sense of optimism that the news will not be too bad. She is strong
 She has a scheduled meeting with specialists tomorrow and carries a folder she keeps checking without opening.
 She tries to stay practical, but every small disruption feels personal. She measures time in appointments, lab calls, and the interval between messages from home.
 She also keeps a parallel ledger of ordinary responsibilities: a manager waiting for her response about leave at work, rent and pharmacy receipts to file, a school form still in her email drafts, laundry she forgot to move before departing.
 Her mind jumps between medical vocabulary and domestic minutiae, as if both belonged to the same emergency.`,
         voice: ["contained urgency", "maternal vigilance", "practical language under strain"],
         psyche0: { arousal: 0.62, valence: 0.42, agency: 0.67, permeability: 0.48, coherence: 0.55 },
-        motifSeeds: ["hospital corridors", "arrival dread", "unsent messages", "door chime"],
+        motifSeeds: ["hospital corridors", "fields in winter light", "unsent messages", "gentle swaying of the carriage"],
         packet: {
           version: 1,
           core: {
             premise: "A mother returning to Berlin, using logistics to survive medical uncertainty.",
-            central_conflict: "She needs control to function, but the situation cannot be controlled.",
+            central_conflict: "She wants control to function, but the situation cannot be fully controlled.",
             contradiction: "Operationally calm in public, internally close to panic."
           },
           life_threads: [

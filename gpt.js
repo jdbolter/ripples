@@ -20,7 +20,7 @@
   "use strict";
 
   // Build marker (helps confirm browser is loading this exact file)
-  const __RIPPLES_BUILD__ = "2026-02-26-continuity-seed-buffer";
+  const __RIPPLES_BUILD__ = "2026-02-27-continuity-riff-persistence";
   console.log("[RIPPLES] gpt.js loaded", __RIPPLES_BUILD__);
 
   if (!window.SCENES || !window.SCENE_ORDER) {
@@ -34,6 +34,11 @@
   const THOUGHT_WORD_MAX = 40;
   const CONTINUITY_LEAD_MAX_WORDS = 16;
   const FIRST_PERSON_MAX_RATIO = 0.20;
+  const CONTINUITY_STOPWORDS = new Set([
+    "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "from", "if", "in", "into",
+    "is", "it", "its", "of", "on", "or", "so", "than", "that", "the", "their", "there", "they",
+    "this", "to", "up", "was", "were", "with", "you", "your"
+  ]);
   const AUTO_THOUGHT = {
     enabled: true,
     intervalMs: 30_000,
@@ -174,6 +179,7 @@
   const elWorldtext = byId("worldtext");
   const elAuditLog = byId("auditLog");
   const elSelectedPill = byId("selectedPill");
+  const defaultSelectedPillText = String(elSelectedPill.textContent || "").trim() || "NO CHARACTER";
 
   // Whisper UI
   const elWhisperInput = byId("whisperInput");
@@ -740,12 +746,11 @@
     // Whisper button
     btnWhisperSend.addEventListener("click", onWhisperSend);
 
-    // Cmd/Ctrl+Enter sends whisper
+    // Enter sends whisper. Shift+Enter keeps newline behavior.
     elWhisperInput.addEventListener("keydown", (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-        e.preventDefault();
-        onWhisperSend();
-      }
+      if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+      e.preventDefault();
+      onWhisperSend();
     });
 
     // Overlay click closes only in PHOTO mode (prompt is click-through via CSS)
@@ -784,7 +789,9 @@
     const sc = engine.getScene();
     const ch = sc.characters.find(c => c.id === id);
 
-    elSelectedPill.textContent = (ch?.label || id || "NO CHARACTER").toUpperCase();
+    elSelectedPill.textContent = ch?.label
+      ? ch.label.toUpperCase()
+      : (id ? String(id).toUpperCase() : defaultSelectedPillText);
 
     if (focusMode === "prompt") closeFocus();
 
@@ -944,11 +951,19 @@
       maxFirstPersonRatio: FIRST_PERSON_MAX_RATIO,
       preferRandomWindow: false
     });
-    text = enforceContinuityLead(text, openingLead);
+    const continuityMode = openingLeadSource === "carryover" ? "riff" : "literal";
+    text = enforceContinuityLead(text, openingLead, { mode: continuityMode });
     text = finalizeWithContinuityLead(text, openingLead, {
       minWords: THOUGHT_WORD_MIN,
-      maxWords: THOUGHT_WORD_MAX
+      maxWords: THOUGHT_WORD_MAX,
+      mode: continuityMode
     });
+    if (continuityMode === "riff") {
+      text = enforceCarryoverRiffPersistence(text, openingLead, {
+        minWords: THOUGHT_WORD_MIN,
+        maxWords: THOUGHT_WORD_MAX
+      });
+    }
 
     engine.newTrace({
       kind,
@@ -994,7 +1009,7 @@
   // -----------------------------
   function render(snapshot, opts = {}) {
     if (!snapshot.selection.characterId) {
-      elSelectedPill.textContent = "NO CHARACTER";
+      elSelectedPill.textContent = defaultSelectedPillText;
     } else {
       const sc = engine.getScene();
       const ch = sc.characters.find(c => c.id === snapshot.selection.characterId);
@@ -1896,11 +1911,23 @@
           "Opening continuity (MANDATORY):",
           openingLeadSource === "whisper"
             ? `- Begin with this whisper-derived phrase, more or less intact: ${openingLeadClean}`
-            : `- Begin with this carried-over phrase from the previous thought, more or less intact: ${openingLeadClean}`,
-          "- Keep meaning and wording close; small variation is allowed.",
-          "- This opening rule overrides default opening randomness."
+            : `- Riff on this carried-over phrase from the previous thought: ${openingLeadClean}`,
+          openingLeadSource === "whisper"
+            ? "- Keep meaning and wording close; small variation is allowed."
+            : "- Reuse 2-5 distinctive words, but do NOT repeat the full phrase verbatim.",
+          openingLeadSource === "whisper"
+            ? "- This opening rule overrides default opening randomness."
+            : "- Keep the emotional direction, but vary syntax and imagery."
         ].join("\n")
       : "Opening continuity: none.";
+    const carryoverRiffBlock = (openingLeadClean && openingLeadSource !== "whisper")
+      ? [
+          "Carry-over riff persistence (MANDATORY):",
+          "- Let carried-over anchor words recur beyond the opening.",
+          "- Reintroduce at least one carried-over anchor in the middle of the thought.",
+          "- End with at least one carried-over anchor still present (not necessarily the same anchor)."
+        ].join("\n")
+      : "Carry-over riff persistence: n/a.";
 
     const whisperImpact = whisperClean
       ? [
@@ -1969,7 +1996,7 @@
       "Introduce at least one concrete anchor (object, admin task, bodily sensation, sound, or memory shard).",
       concernConstraint,
       "Output must be JSON only (no markdown, no extra text).",
-      "Avoid repeating imagery or nouns from recent monologues.",
+      "Avoid repeating imagery or nouns from recent monologues, except deliberate carried-over riff anchors.",
       "Hard constraints:",
       "- No direct second-person reply to a whisper.",
       "- No meta-talk (no mention of prompts, models, AI, system).",
@@ -1984,6 +2011,7 @@
       focusSteeringBlock,
       "",
       openingContinuityBlock,
+      carryoverRiffBlock,
       "",
       "Scene:",
       sceneFrame,
@@ -2261,18 +2289,89 @@
     return exact >= Math.max(3, sample - 1);
   }
 
-  function enforceContinuityLead(text, lead) {
+  function extractLeadAnchorTokens(lead, { maxTokens = 5 } = {}) {
+    const seed = normalizeLeadFragment(lead, CONTINUITY_LEAD_MAX_WORDS, { keepHead: true });
+    if (!seed) return [];
+    const tokens = splitWords(seed);
+    const out = [];
+
+    function pushUnique(tok) {
+      if (!tok || out.includes(tok)) return;
+      out.push(tok);
+    }
+
+    for (const token of tokens) {
+      const canon = canonicalToken(token);
+      if (!canon) continue;
+      if (canon.length <= 2) continue;
+      if (CONTINUITY_STOPWORDS.has(canon)) continue;
+      pushUnique(canon);
+      if (out.length >= maxTokens) return out;
+    }
+
+    for (const token of tokens) {
+      const canon = canonicalToken(token);
+      if (!canon) continue;
+      if (canon.length <= 1) continue;
+      pushUnique(canon);
+      if (out.length >= maxTokens) return out;
+    }
+
+    return out;
+  }
+
+  function hasAnchorOverlapAtOpening(text, anchors, { minHits = 2, windowWords = 20 } = {}) {
+    const bodyTokens = splitWords(text)
+      .map(canonicalToken)
+      .filter(Boolean)
+      .slice(0, Math.max(6, windowWords));
+    if (!bodyTokens.length || !anchors.length) return false;
+
+    let hits = 0;
+    for (const anchor of anchors) {
+      if (bodyTokens.includes(anchor)) hits += 1;
+    }
+    return hits >= Math.min(minHits, anchors.length);
+  }
+
+  function buildLeadRiffPrefix(lead) {
+    const anchors = extractLeadAnchorTokens(lead, { maxTokens: 4 });
+    if (!anchors.length) return "";
+    const picked = anchors.slice(0, anchors.length >= 3 ? 3 : anchors.length);
+    return picked
+      .map((tok) => tok.replace(/^./, (m) => m.toUpperCase()))
+      .join(". ");
+  }
+
+  function enforceContinuityLead(text, lead, opts = {}) {
+    const mode = opts.mode === "riff" ? "riff" : "literal";
     const base = normalizeWhitespace(stripOuterQuotes(text));
     const seed = normalizeLeadFragment(lead, CONTINUITY_LEAD_MAX_WORDS, { keepHead: true });
     if (!seed) return base;
-    if (!base) return seed;
-    if (startsWithApproxLead(base, seed)) return base;
-    return normalizeWhitespace(`${seed}. ${base}`);
+    if (!base) {
+      if (mode === "riff") return buildLeadRiffPrefix(seed) || seed;
+      return seed;
+    }
+
+    if (mode === "literal") {
+      if (startsWithApproxLead(base, seed)) return base;
+      return normalizeWhitespace(`${seed}. ${base}`);
+    }
+
+    const anchors = extractLeadAnchorTokens(seed, { maxTokens: 5 });
+    if (hasAnchorOverlapAtOpening(base, anchors, { minHits: 2, windowWords: 20 })) return base;
+
+    const riffPrefix = buildLeadRiffPrefix(seed);
+    if (!riffPrefix) return base;
+    return normalizeWhitespace(`${riffPrefix}. ${base}`);
   }
 
-  function finalizeWithContinuityLead(text, lead, { minWords, maxWords }) {
+  function finalizeWithContinuityLead(text, lead, { minWords, maxWords, mode = "literal" }) {
     const seed = normalizeLeadFragment(lead, CONTINUITY_LEAD_MAX_WORDS, { keepHead: true });
-    let out = enforceContinuityLead(text, seed);
+    const fallbackSeed = mode === "riff"
+      ? normalizeWhitespace(buildLeadRiffPrefix(seed).replace(/[.]/g, " "))
+      : seed;
+    let out = enforceContinuityLead(text, seed, { mode });
     if (!out) return out;
 
     out = truncateToWordCount(out, maxWords);
@@ -2280,7 +2379,60 @@
       out = clampWordRange(out, {
         minWords,
         maxWords,
-        fallback: `${seed} ${out}`.trim()
+        fallback: `${fallbackSeed || seed} ${out}`.trim()
+      });
+    }
+    out = trimDanglingEnding(out, minWords);
+    out = ensureTerminalPunctuation(out);
+    return cleanSpacing(out);
+  }
+
+  function hasAnchorInText(text, anchors) {
+    const tokens = splitWords(text).map(canonicalToken).filter(Boolean);
+    if (!tokens.length || !anchors.length) return false;
+    return anchors.some((a) => tokens.includes(a));
+  }
+
+  function formatAnchorClause(anchor, flavor = "middle") {
+    const clean = String(anchor || "").replace(/^./, (m) => m.toUpperCase());
+    if (!clean) return "";
+    if (flavor === "tail") return `${clean} stays in the frame.`;
+    return `${clean} keeps returning.`;
+  }
+
+  function enforceCarryoverRiffPersistence(text, lead, { minWords, maxWords }) {
+    let out = normalizeWhitespace(stripOuterQuotes(text));
+    if (!out) return out;
+
+    const anchors = extractLeadAnchorTokens(lead, { maxTokens: 5 });
+    if (!anchors.length) return out;
+
+    const clauses = splitClauses(out);
+    if (!clauses.length) return out;
+
+    if (clauses.length >= 3) {
+      const middleIdx = Math.floor(clauses.length / 2);
+      if (!hasAnchorInText(clauses[middleIdx], anchors)) {
+        const midAnchor = anchors[0];
+        const add = formatAnchorClause(midAnchor, "middle");
+        if (add) clauses.splice(middleIdx + 1, 0, add);
+      }
+    }
+
+    const tailIdx = clauses.length - 1;
+    if (!hasAnchorInText(clauses[tailIdx], anchors)) {
+      const tailAnchor = anchors[Math.min(1, anchors.length - 1)] || anchors[0];
+      const add = formatAnchorClause(tailAnchor, "tail");
+      if (add) clauses.push(add);
+    }
+
+    out = normalizeWhitespace(clauses.join(" "));
+    out = truncateToWordCount(out, maxWords);
+    if (wordCount(out) < minWords) {
+      out = clampWordRange(out, {
+        minWords,
+        maxWords,
+        fallback: `${out} ${formatAnchorClause(anchors[0], "tail")}`.trim()
       });
     }
     out = trimDanglingEnding(out, minWords);
