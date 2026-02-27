@@ -10,10 +10,14 @@ The system is intentionally minimal, explicit, and modular.
 
 	1.	System Overview
 
-Ripples consists of four primary files:
+Ripples consists of eight primary files:
 	•	index.html — UI scaffold and layout
-	•	gpt.js — engine logic, state model, OpenAI integration
-	•	scenes.js — declarative scene definitions and prompt materials
+	•	js/gpt.js — composition root and runtime orchestration
+	•	js/gpt.text-utils.js — shared text processing and word-window helpers
+	•	js/gpt.prompt.js — OpenAI prompt assembly and composition helpers
+	•	js/gpt.engine.js — scene state, psyche vectors, diffusion, and trace/audit management
+	•	js/gpt.ui.js — DOM wiring, rendering, overlays, and input event handling
+	•	js/scenes.js — declarative scene definitions and prompt materials
 	•	gpt.css — visual styling and animation layer
 
 All computation occurs in the browser. No server is required.
@@ -46,7 +50,7 @@ The psyche is:
 
 Backward compatibility:
 	•	Legacy 4D seeds (`tension`, `clarity`, `openness`, `drift`) are still accepted.
-	•	`gpt.js` migrates legacy shape into the 5D model at load time.
+	•	`js/gpt.js` migrates legacy shape into the 5D model at load time.
 
 ⸻
 
@@ -76,7 +80,7 @@ This ensures stability while preserving immediate local shifts.
 
 	4.	Diffusion Model
 
-Ripples propagate according to adjacency relationships defined in scenes.js.
+Ripples propagate according to adjacency relationships defined in `js/scenes.js`.
 
 The diffusion model is:
 
@@ -89,7 +93,7 @@ High-immediacy profile:
 	•	This keeps whisper impact legible before slow settling.
 
 Runtime switch:
-	•	`gpt.js` exposes a single `DYNAMICS_MODE` config (`"high"` or `"subtle"`).
+	•	`js/gpt.js` exposes a single `DYNAMICS_MODE` config (`"high"` or `"subtle"`).
 	•	The mode controls diffusion strength, stabilization, local fallback deltas, and prompt steering.
 
 No global broadcast diffusion is currently implemented beyond adjacency.
@@ -140,7 +144,7 @@ If the API call fails or structured output is invalid, the system falls back to 
 	7.	Local Mode
 
 If no API key is provided:
-	•	Monologues are drawn from predefined arrays in scenes.js.
+	•	Monologues are drawn from predefined arrays in `js/scenes.js`.
 	•	Delta values are estimated using lightweight keyword heuristics.
 	•	The diffusion and rendering systems remain identical.
 

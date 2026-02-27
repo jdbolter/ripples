@@ -1,7 +1,7 @@
 /* scenes.js
    RIPPLES — Wings of Desire (Library Reading Room)
    Refactor: authorable prompt materials + character dossiers + initial psyche + motifs
-   Backward-compatible with current gpt.js:
+   Backward-compatible with current js/gpt.js:
      - window.SCENE_ORDER
      - window.SCENES[sceneId].meta.cols/rows/baseline
      - window.SCENES[sceneId].characters[] (id/label/image/position/adjacentTo)
@@ -525,7 +525,7 @@ No one speaks, but everyone is thinking.`
 
     /* =========================================================
        Prompt materials (authorable)
-       Used by gpt.js in API mode (system/scene/whisperRule).
+       Used by js/gpt.js in API mode (system/scene/whisperRule).
        ========================================================= */
     prompts: {
 
@@ -972,7 +972,7 @@ The reading room feels like permission and danger at once.`,
 
     /* =========================================================
        Backward-compatible monologues
-       Current gpt.js rotates through monologues[characterId].THOUGHTS only.
+       Current js/gpt.js rotates through monologues[characterId].THOUGHTS only.
        ========================================================= */
     monologues: {
 

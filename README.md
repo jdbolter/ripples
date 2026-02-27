@@ -44,7 +44,7 @@ Backward compatibility note:
 ## How It Works
 
 ### Local Mode
-If no API key is entered, Ripples uses predefined monologues stored in `scenes.js`.
+If no API key is entered, Ripples uses predefined monologues stored in `js/scenes.js`.
 Psychic deltas are estimated heuristically.
 
 ### API Mode
@@ -57,7 +57,7 @@ If a valid OpenAI API key is entered:
 The delta is bounded and diffused across the scene.
 
 ### Dynamics Mode
-`gpt.js` exposes a single switch:
+`js/gpt.js` exposes a single switch:
 
 - `DYNAMICS_MODE = "high"`: stronger whisper impact, lighter stabilization
 - `DYNAMICS_MODE = "subtle"`: gentler whisper impact, stronger stabilization
@@ -68,7 +68,7 @@ This mode affects diffusion strength, stabilization, local fallback deltas, and 
 
 ## Scenes
 
-Scenes are defined in `scenes.js`.
+Scenes are defined in `js/scenes.js`.
 
 Each scene contains:
 

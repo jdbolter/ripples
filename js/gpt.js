@@ -8,7 +8,7 @@
    - API mode: a SINGLE OpenAI call returns BOTH monologue + psyche delta (semantic)
    - Local mode: deterministic monologue rotation + heuristic delta
 
-   Depends on: scenes.js providing window.SCENES and window.SCENE_ORDER
+   Depends on: js/scenes.js providing window.SCENES and window.SCENE_ORDER
    Requires index.html elements:
      #scenarioSelect, #grid, #linkLayer, #worldtext, #auditLog, #selectedPill
      #focusOverlay, #focusImage, #focusMessage
@@ -20,12 +20,42 @@
   "use strict";
 
   // Build marker (helps confirm browser is loading this exact file)
-  const __RIPPLES_BUILD__ = "2026-02-27-continuity-riff-persistence";
+  const __RIPPLES_BUILD__ = "2026-02-27-refactor-stage4-ui-module";
   console.log("[RIPPLES] gpt.js loaded", __RIPPLES_BUILD__);
 
   if (!window.SCENES || !window.SCENE_ORDER) {
-    throw new Error("Missing SCENES/SCENE_ORDER. Ensure scenes.js is loaded before gpt.js.");
+    throw new Error("Missing SCENES/SCENE_ORDER. Ensure js/scenes.js is loaded before js/gpt.js.");
   }
+  if (!window.RipplesTextUtils) {
+    throw new Error("Missing RipplesTextUtils. Ensure js/gpt.text-utils.js is loaded before js/gpt.js.");
+  }
+  if (!window.RipplesPromptBuilder) {
+    throw new Error("Missing RipplesPromptBuilder. Ensure js/gpt.prompt.js is loaded before js/gpt.js.");
+  }
+  if (!window.RipplesEngine) {
+    throw new Error("Missing RipplesEngine. Ensure js/gpt.engine.js is loaded before js/gpt.js.");
+  }
+  if (!window.RipplesUI) {
+    throw new Error("Missing RipplesUI. Ensure js/gpt.ui.js is loaded before js/gpt.js.");
+  }
+
+  const {
+    stripOuterQuotes,
+    normalizeWhitespace,
+    cleanSpacing,
+    splitWords,
+    wordCount,
+    canonicalToken,
+    splitClauses,
+    truncateToWordCount,
+    trimDanglingEnding,
+    ensureTerminalPunctuation,
+    randInt,
+    clampWordRange
+  } = window.RipplesTextUtils;
+  const { buildOpenAIUserPrompt } = window.RipplesPromptBuilder;
+  const { createEngine } = window.RipplesEngine;
+  const { createUIController } = window.RipplesUI;
 
   // Single implicit channel for now
   const DEFAULT_CHANNEL = "THOUGHTS";
@@ -170,468 +200,25 @@
   const apiNarrativeState = {};
   let autoThoughtTimer = null;
 
-  // -----------------------------
-  // DOM
-  // -----------------------------
-  const elScenarioSelect = byId("scenarioSelect");
-  const elGrid = byId("grid");
-  const elLinks = byId("linkLayer");
-  const elWorldtext = byId("worldtext");
-  const elAuditLog = byId("auditLog");
-  const elSelectedPill = byId("selectedPill");
-  const defaultSelectedPillText = String(elSelectedPill.textContent || "").trim() || "NO CHARACTER";
-
-  // Whisper UI
-  const elWhisperInput = byId("whisperInput");
-  const btnWhisperSend = byId("whisperSend");
-
-  // Focus overlay
-  const elFocusOverlay = byId("focusOverlay");
-  const elFocusImage = byId("focusImage");
-  const elFocusMessage = byId("focusMessage");
-
-  // API Key Modal
-  const elApiModal = byId("apiModal");
-  const elApiKeyInput = byId("apiKeyInput");
-  const elApiKeyStatus = byId("apiKeyStatus");
-  const btnApiSubmit = byId("apiSubmit");
-  const btnApiSkip = byId("apiSkip");
   let isApiKeyChecking = false;
 
   // -----------------------------
   // ENGINE (scene state + rotation + psyche)
   // -----------------------------
-  const engine = (() => {
-    let sceneId = window.SCENE_ORDER[0]?.id || Object.keys(window.SCENES)[0];
-    let tick = 0;
-    let selectedId = null;
+  const engine = createEngine({
+    scenes: window.SCENES,
+    sceneOrder: window.SCENE_ORDER,
+    eventKind: EVENT_KIND,
+    dynamics: DYNAMICS,
+    resetApiNarrativeState,
+    extractLastSentenceOrFragment,
+    continuityLeadMaxWords: CONTINUITY_LEAD_MAX_WORDS
+  });
 
-    // pool memory per character/channel
-    const cursor = {}; // cursor[characterId][channel] = lastIndexUsed
-    const cursorRecent = {}; // cursorRecent[characterId][channel] = [recentIndices...]
-
-    // Whisper memory (for later prompts)
-    const lastWhisper = {}; // lastWhisper[characterId] = string
-    const whisperHistory = []; // {tick, characterId, text, time}
-    let openingBuffer = ""; // carry-over fragment for next thought opening
-
-    // Psychic state (persistent per character, per scene)
-    // Values are normalized to [0, 1]
-    const psyche = {}; // psyche[characterId] = { arousal, valence, agency, permeability, coherence }
-
-    function initPsycheForScene() {
-      const sc = getScene();
-      for (const ch of (sc.characters || [])) {
-        const p0 = upgradeLegacyPsyche(ch.psyche0 || {});
-        psyche[ch.id] = normalizePsyche(p0);
-      }
-    }
-
-    function getPsyche(id) {
-      const p = psyche[id];
-      if (!p) return defaultPsyche();
-      return {
-        arousal: p.arousal,
-        valence: p.valence,
-        agency: p.agency,
-        permeability: p.permeability,
-        coherence: p.coherence
-      };
-    }
-
-    function applyRipple({ sourceId, kind, whisperText, deltaOverride = null }) {
-      const sc = getScene();
-      const src = sc.characters.find(c => c.id === sourceId);
-      if (!src) return;
-
-      // Ensure psyche exists
-      if (!psyche[sourceId]) initPsycheForScene();
-
-      // Compute delta for source (override wins)
-      const delta =
-        (deltaOverride && typeof deltaOverride === "object")
-          ? sanitizeDelta(deltaOverride)
-          : computeDelta(kind, whisperText);
-
-      applyDeltaTo(sourceId, delta, 1.0);
-
-      // Diffuse to adjacency list only (measurable but contained)
-      const nbs = (src.adjacentTo || []).slice();
-      for (const nbId of nbs) {
-        applyDeltaTo(nbId, delta, DYNAMICS.neighborScale);
-      }
-
-      // Global settling depends on active dynamics mode.
-      for (const ch of (sc.characters || [])) {
-        if (!psyche[ch.id]) continue;
-        psyche[ch.id].arousal = clamp01(psyche[ch.id].arousal + DYNAMICS.stabilization.arousal);
-        psyche[ch.id].coherence = clamp01(psyche[ch.id].coherence + DYNAMICS.stabilization.coherence);
-      }
-    }
-
-    function computeDelta(kind, whisperText) {
-      let arousal = 0;
-      let valence = 0;
-      let agency = 0;
-      let permeability = 0;
-      let coherence = 0;
-
-      if (kind === EVENT_KIND.WHISPER) {
-        arousal += DYNAMICS.whisperBase.arousal;
-        permeability += DYNAMICS.whisperBase.permeability;
-        coherence += DYNAMICS.whisperBase.coherence;
-
-        // Lightweight heuristic (LOCAL MODE / fallback only)
-        const w = String(whisperText || "").toLowerCase();
-
-        const neg = [
-          "fear","danger","blood","die","dead","dark","cold","threat","loss","gone","alone","unsafe","panic",
-          "sad","sorrow","grief","cry","tears","depressed","depress","misery","hopeless","lonely"
-        ];
-        const pos = [
-          "warm","light","forgive","tender","safe","home","quiet","kind","hold","soft",
-          "happy","joy","joyful","smile","glad","delight","hope","bright"
-        ];
-
-        if (neg.some(k => w.includes(k))) {
-          arousal += 0.10;
-          valence -= 0.12;
-          agency -= 0.07;
-          coherence -= 0.05;
-        }
-        if (pos.some(k => w.includes(k))) {
-          arousal -= 0.05;
-          valence += 0.10;
-          agency += 0.06;
-          permeability += 0.03;
-          coherence += 0.04;
-        }
-
-        const urgent = ["now", "hurry", "must", "never", "don't", "dont", "stop", "run"];
-        if (urgent.some(k => w.includes(k))) {
-          arousal += 0.06;
-          agency -= 0.04;
-        }
-
-        const exclamations = (w.match(/!/g) || []).length;
-        if (exclamations > 0) {
-          arousal += Math.min(0.06, exclamations * 0.02);
-          coherence -= Math.min(0.04, exclamations * 0.015);
-        }
-
-        if (w && w.length < 18) {
-          arousal += 0.05;
-          coherence -= 0.02;
-        }
-      } else {
-        // LISTEN recenters state based on active mode.
-        arousal += DYNAMICS.listenBase.arousal;
-        valence += DYNAMICS.listenBase.valence;
-        agency += DYNAMICS.listenBase.agency;
-        permeability += DYNAMICS.listenBase.permeability;
-        coherence += DYNAMICS.listenBase.coherence;
-      }
-
-      return { arousal, valence, agency, permeability, coherence };
-    }
-
-    // IMPORTANT: Coerce numeric strings from the model ("0.06") into real numbers.
-    function sanitizeDelta(d) {
-      const dd = mapLegacyDeltaShape(d);
-      return {
-        arousal: clampDelta("arousal", numCoerce(dd?.arousal, 0)),
-        valence: clampDelta("valence", numCoerce(dd?.valence, 0)),
-        agency: clampDelta("agency", numCoerce(dd?.agency, 0)),
-        permeability: clampDelta("permeability", numCoerce(dd?.permeability, 0)),
-        coherence: clampDelta("coherence", numCoerce(dd?.coherence, 0))
-      };
-    }
-    function clampDelta(axis, x) {
-      const limits = {
-        arousal: 0.15,
-        valence: 0.12,
-        agency: 0.10,
-        permeability: 0.15,
-        coherence: 0.10
-      };
-      const lim = limits[axis] || 0.12;
-      return Math.max(-lim, Math.min(lim, x));
-    }
-
-    function applyDeltaTo(id, delta, scale) {
-      if (!psyche[id]) return;
-
-      psyche[id].arousal = clamp01(psyche[id].arousal + delta.arousal * axisScale(scale, "arousal"));
-      psyche[id].valence = clamp01(psyche[id].valence + delta.valence * axisScale(scale, "valence"));
-      psyche[id].agency = clamp01(psyche[id].agency + delta.agency * axisScale(scale, "agency"));
-      psyche[id].permeability = clamp01(psyche[id].permeability + delta.permeability * axisScale(scale, "permeability"));
-      psyche[id].coherence = clamp01(psyche[id].coherence + delta.coherence * axisScale(scale, "coherence"));
-
-      // Cross-coupling keeps dynamics plausible while preserving immediacy.
-      psyche[id].coherence = clamp01(psyche[id].coherence - 0.015 * psyche[id].arousal + 0.010 * psyche[id].agency);
-      psyche[id].agency = clamp01(psyche[id].agency - 0.010 * psyche[id].arousal + 0.006 * psyche[id].coherence);
-      psyche[id].valence = clamp01(psyche[id].valence + 0.008 * (psyche[id].coherence - 0.5));
-    }
-
-    function axisScale(scale, axis) {
-      if (typeof scale === "number") return scale;
-      if (scale && typeof scale === "object") return numOr(scale[axis], 1);
-      return 1;
-    }
-
-    function defaultPsyche() {
-      return {
-        arousal: 0.35,
-        valence: 0.55,
-        agency: 0.55,
-        permeability: 0.40,
-        coherence: 0.55
-      };
-    }
-
-    function normalizePsyche(p) {
-      return {
-        arousal: clamp01(numOr(p.arousal, 0.35)),
-        valence: clamp01(numOr(p.valence, 0.55)),
-        agency: clamp01(numOr(p.agency, 0.55)),
-        permeability: clamp01(numOr(p.permeability, 0.40)),
-        coherence: clamp01(numOr(p.coherence, 0.55))
-      };
-    }
-
-    function upgradeLegacyPsyche(p0) {
-      const hasNewShape =
-        p0 && typeof p0 === "object" &&
-        ["arousal", "valence", "agency", "permeability", "coherence"].every((k) => k in p0);
-      if (hasNewShape) return p0;
-
-      const tension = clamp01(numOr(p0?.tension, 0.35));
-      const clarity = clamp01(numOr(p0?.clarity, 0.55));
-      const openness = clamp01(numOr(p0?.openness, 0.40));
-      const drift = clamp01(numOr(p0?.drift, 0.45));
-
-      return {
-        arousal: tension,
-        permeability: openness,
-        coherence: clamp01(0.65 * clarity + 0.35 * (1 - drift)),
-        agency: clamp01(0.55 * clarity + 0.45 * (1 - tension)),
-        valence: clamp01(0.5 + 0.35 * (clarity - 0.5) - 0.45 * (tension - 0.5) - 0.2 * (drift - 0.5))
-      };
-    }
-
-    function mapLegacyDeltaShape(d) {
-      const hasNew = d && typeof d === "object" &&
-        ["arousal", "valence", "agency", "permeability", "coherence"].some((k) => k in d);
-      if (hasNew) return d || {};
-
-      const hasLegacy = d && typeof d === "object" &&
-        ["tension", "clarity", "openness", "drift"].some((k) => k in d);
-      if (!hasLegacy) return d || {};
-
-      const tension = numCoerce(d.tension, 0);
-      const clarity = numCoerce(d.clarity, 0);
-      const openness = numCoerce(d.openness, 0);
-      const drift = numCoerce(d.drift, 0);
-
-      return {
-        arousal: tension,
-        permeability: openness,
-        coherence: 0.65 * clarity - 0.35 * drift,
-        agency: 0.55 * clarity - 0.45 * tension,
-        valence: 0.35 * clarity - 0.45 * tension - 0.2 * drift
-      };
-    }
-
-    function clamp01(x) { return Math.max(0, Math.min(1, x)); }
-    function numOr(v, d) { return (typeof v === "number" && Number.isFinite(v)) ? v : d; }
-    function numCoerce(v, fallback) {
-      if (typeof v === "number" && Number.isFinite(v)) return v;
-      if (typeof v === "string") {
-        const n = Number(v);
-        if (Number.isFinite(n)) return n;
-      }
-      return fallback;
-    }
-
-    // Traces
-    let audit = [];
-
-    function loadScene(newSceneId) {
-      if (!window.SCENES[newSceneId]) throw new Error(`Unknown scene: ${newSceneId}`);
-      sceneId = newSceneId;
-      resetApiNarrativeState(newSceneId);
-      tick = 0;
-      selectedId = null;
-      audit = [];
-      for (const k of Object.keys(cursor)) delete cursor[k];
-      for (const k of Object.keys(cursorRecent)) delete cursorRecent[k];
-      for (const k of Object.keys(lastWhisper)) delete lastWhisper[k];
-      whisperHistory.length = 0;
-      openingBuffer = "";
-      for (const k of Object.keys(psyche)) delete psyche[k];
-      initPsycheForScene();
-      return snapshot({ worldtext: getScene().meta.baseline, mode: "baseline" });
-    }
-
-    function getScene() { return window.SCENES[sceneId]; }
-    function getSceneId() { return sceneId; }
-    function listScenes() { return window.SCENE_ORDER.slice(); }
-
-    function selectCharacter(id) {
-      selectedId = id;
-      return snapshot();
-    }
-
-    function getSelectedId() { return selectedId; }
-
-    function recordWhisper(characterId, text) {
-      const clean = String(text || "").trim();
-      lastWhisper[characterId] = clean;
-      whisperHistory.push({
-        tick,
-        time: new Date().toLocaleTimeString(),
-        characterId,
-        text: clean
-      });
-    }
-
-    function getLastWhisper(characterId) {
-      return lastWhisper[characterId] || "";
-    }
-
-    function getWhisperHistory(limit = 10) {
-      return whisperHistory.slice(-limit);
-    }
-
-    function getRecentMonologues(characterId, limit = 3) {
-      const n = Math.max(0, Math.min(10, Number(limit) || 0));
-      if (!n) return [];
-
-      // `audit` is newest-first because entries are unshifted.
-      // Return oldest->newest to preserve narrative progression.
-      return audit
-        .filter((entry) => entry.characterId === characterId && typeof entry.text === "string" && entry.text.trim())
-        .slice(0, n)
-        .reverse()
-        .map((entry) => ({
-          tick: entry.tick,
-          kind: entry.kind,
-          text: entry.text,
-          whisperText: entry.whisperText || ""
-        }));
-    }
-
-    function getMonologueCount(characterId) {
-      return audit.filter((entry) =>
-        entry.characterId === characterId &&
-        typeof entry.text === "string" &&
-        entry.text.trim()
-      ).length;
-    }
-
-    function getOpeningBuffer() {
-      return openingBuffer;
-    }
-
-    function setOpeningBufferFromThought(text) {
-      openingBuffer = extractLastSentenceOrFragment(text, CONTINUITY_LEAD_MAX_WORDS);
-      return openingBuffer;
-    }
-
-    function nextMonologue(characterId, channel) {
-      const sc = getScene();
-
-      const pool = sc.monologues?.[characterId]?.[channel];
-      if (!pool || !pool.length) {
-        const seed = sc.seeds?.[characterId]?.[channel] || "";
-        return seed ? `${seed}\n\n(There is no full monologue pool for this character/channel.)`
-          : "(No monologue available.)";
-      }
-
-      if (!cursor[characterId]) cursor[characterId] = {};
-      if (!cursorRecent[characterId]) cursorRecent[characterId] = {};
-      const recent = Array.isArray(cursorRecent[characterId][channel])
-        ? cursorRecent[characterId][channel]
-        : [];
-      const blockSize = Math.min(pool.length - 1, 2);
-      const blocked = new Set(recent.slice(-Math.max(0, blockSize)));
-      const candidates = pool
-        .map((_, i) => i)
-        .filter((i) => !blocked.has(i));
-      const choicePool = candidates.length ? candidates : pool.map((_, i) => i);
-      const next = choicePool[Math.floor(Math.random() * choicePool.length)];
-      cursor[characterId][channel] = next;
-      cursorRecent[characterId][channel] = recent.concat(next).slice(-3);
-      return pool[next];
-    }
-
-    function pushTrace(entry) {
-      audit.unshift(entry);
-      audit = audit.slice(0, 80);
-    }
-
-    function newTrace({ kind, characterId, channel, text, whisperText = "" }) {
-      const sc = getScene();
-      const ch = sc.characters.find(c => c.id === characterId);
-      const label = ch?.label || characterId;
-
-      const entry = {
-        tick,
-        time: new Date().toLocaleTimeString(),
-        kind,
-        characterId,
-        characterLabel: label,
-        channel,
-        whisperText,
-        text,
-        psyche: getPsyche(characterId) // snapshot at time of trace
-      };
-
-      pushTrace(entry);
-      tick++;
-      return entry;
-    }
-
-    function snapshot(extra = {}) {
-      const sc = getScene();
-      return {
-        meta: { sceneId, label: sc.meta.label, title: sc.meta.title, tick },
-        scene: { cols: sc.meta.cols, rows: sc.meta.rows, baseline: sc.meta.baseline },
-        characters: sc.characters,
-        selection: { characterId: selectedId },
-        audit: audit.slice(0, 50),
-        uiText: { worldtext: extra.worldtext ?? null, mode: extra.mode ?? null }
-      };
-    }
-
-    return {
-      listScenes,
-      loadScene,
-      getSceneId,
-      getScene,
-      snapshot,
-      selectCharacter,
-      getSelectedId,
-      nextMonologue,
-      newTrace,
-      recordWhisper,
-      getLastWhisper,
-      getWhisperHistory,
-      getRecentMonologues,
-      getMonologueCount,
-      getOpeningBuffer,
-      setOpeningBufferFromThought,
-      getPsyche,
-      applyRipple
-    };
-  })();
-
-  // -----------------------------
-  // UI STATE
-  // -----------------------------
-  let lastWorldMode = "baseline";
-  let isFocusOpen = false;
-  let focusMode = "none"; // "none" | "prompt" | "photo"
+  const ui = createUIController({
+    eventKind: EVENT_KIND,
+    getScene: () => engine.getScene()
+  });
 
   function clearAutoThoughtTimer() {
     if (autoThoughtTimer) {
@@ -669,114 +256,64 @@
   // Init
   // -----------------------------
   function init() {
-    populateScenes();
+    ui.populateScenes(engine.listScenes());
     bindUI();
 
     const firstSceneId = engine.listScenes()[0]?.id || Object.keys(window.SCENES)[0];
     const snap = engine.loadScene(firstSceneId);
 
-    preloadSceneImages(engine.getScene());
+    ui.preloadSceneImages(engine.getScene());
 
-    render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
+    ui.render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
     showSelectPromptIfNeeded();
     clearAutoThoughtTimer();
   }
 
-  function populateScenes() {
-    elScenarioSelect.innerHTML = "";
-    for (const s of engine.listScenes()) {
-      const opt = document.createElement("option");
-      opt.value = s.id;
-      opt.textContent = s.label;
-      elScenarioSelect.appendChild(opt);
-    }
-  }
-
   function bindUI() {
-    elScenarioSelect.addEventListener("change", () => {
-      clearAutoThoughtTimer();
-      closeFocus();
-      const snap = engine.loadScene(elScenarioSelect.value);
-
-      preloadSceneImages(engine.getScene());
-
-      render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
-      showSelectPromptIfNeeded();
-    });
-
-    // API key modal
-    btnApiSubmit.addEventListener("click", async () => {
-      if (isApiKeyChecking) return;
-      const val = String(elApiKeyInput.value || "").trim();
-      if (!val) {
-        setApiKeyStatus("Enter an API key or choose Skip.", true);
-        return;
-      }
-
-      setApiKeyChecking(true);
-      setApiKeyStatus("Validating key...", false);
-
-      try {
-        const ok = await validateApiKey(val);
-        if (!ok) return;
-
-        userApiKey = val;
-        elApiModal.classList.add("hidden");
-        elApiKeyInput.value = "";
-        setApiKeyStatus("", false);
-      } finally {
-        setApiKeyChecking(false);
-      }
-    });
-
-    btnApiSkip.addEventListener("click", () => {
-      userApiKey = null;
-      elApiModal.classList.add("hidden");
-      elApiKeyInput.value = "";
-      setApiKeyStatus("", false);
-    });
-
-    elApiKeyInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        btnApiSubmit.click();
-      }
-    });
-
-    // Whisper button
-    btnWhisperSend.addEventListener("click", onWhisperSend);
-
-    // Enter sends whisper. Shift+Enter keeps newline behavior.
-    elWhisperInput.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
-      e.preventDefault();
-      onWhisperSend();
-    });
-
-    // Overlay click closes only in PHOTO mode (prompt is click-through via CSS)
-    elFocusOverlay.addEventListener("click", (e) => {
-      e.preventDefault();
-      if (focusMode === "photo") closeFocus();
-    });
-
-    window.addEventListener("keydown", (e) => {
-      const k = e.key;
-
-      if (k === "Escape") {
-        if (isFocusOpen && focusMode === "photo") {
-          e.preventDefault();
-          closeFocus();
+    ui.bindUI({
+      onScenarioChange: (sceneId) => {
+        clearAutoThoughtTimer();
+        ui.closeFocus();
+        const snap = engine.loadScene(sceneId);
+        ui.preloadSceneImages(engine.getScene());
+        ui.render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
+        showSelectPromptIfNeeded();
+      },
+      onApiSubmit: async () => {
+        if (isApiKeyChecking) return;
+        const val = String(ui.getApiKeyInputValue() || "").trim();
+        if (!val) {
+          setApiKeyStatus("Enter an API key or choose Skip.", true);
+          return;
         }
-        return;
+
+        setApiKeyChecking(true);
+        setApiKeyStatus("Validating key...", false);
+
+        try {
+          const ok = await validateApiKey(val);
+          if (!ok) return;
+
+          userApiKey = val;
+          ui.hideApiModal();
+          ui.clearApiKeyInput();
+          setApiKeyStatus("", false);
+        } finally {
+          setApiKeyChecking(false);
+        }
+      },
+      onApiSkip: () => {
+        userApiKey = null;
+        ui.hideApiModal();
+        ui.clearApiKeyInput();
+        setApiKeyStatus("", false);
+      },
+      onWhisperSend,
+      onCycleScene: cycleScene,
+      onSelectCharacter,
+      onResize: () => {
+        ui.renderLinks(engine.snapshot());
       }
-
-      if (k === "ArrowLeft") { e.preventDefault(); cycleScene(-1); }
-      if (k === "ArrowRight") { e.preventDefault(); cycleScene(1); }
-    });
-
-    window.addEventListener("resize", () => {
-      clearTimeout(window.__linksDebounce);
-      window.__linksDebounce = setTimeout(() => renderLinks(engine.snapshot()), 120);
     });
   }
 
@@ -787,19 +324,21 @@
     clearAutoThoughtTimer();
     engine.selectCharacter(id);
     const sc = engine.getScene();
-    const ch = sc.characters.find(c => c.id === id);
+    const ch = sc.characters.find((c) => c.id === id);
 
-    elSelectedPill.textContent = ch?.label
-      ? ch.label.toUpperCase()
-      : (id ? String(id).toUpperCase() : defaultSelectedPillText);
+    ui.setSelectedPillText(
+      ch?.label
+        ? ch.label.toUpperCase()
+        : (id ? String(id).toUpperCase() : ui.getDefaultSelectedPillText())
+    );
 
-    if (focusMode === "prompt") closeFocus();
+    if (ui.getFocusMode() === "prompt") ui.closeFocus();
 
     // Open photo slightly delayed (aesthetic)
     if (ch?.image) {
-      window.setTimeout(() => openFocusImage(ch.image, ch.label || ch.id), 220);
+      window.setTimeout(() => ui.openFocusImage(ch.image, ch.label || ch.id), 220);
     } else {
-      closeFocus();
+      ui.closeFocus();
     }
 
     void requestMonologue({
@@ -813,11 +352,11 @@
   function onWhisperSend() {
     const selectedId = engine.getSelectedId();
     if (!selectedId) {
-      openPrompt("Select a character");
+      ui.openPrompt("Select a character");
       return;
     }
 
-    const whisper = String(elWhisperInput.value || "").trim();
+    const whisper = String(ui.getWhisperValue() || "").trim();
     if (!whisper) return;
 
     engine.recordWhisper(selectedId, whisper);
@@ -834,25 +373,22 @@
     // TEMPORARILY HIDE PHOTO → SHOW RIPPLE → RESTORE (slow cinematic cycle)
     let restorePhoto = null;
 
-    if (focusMode === "photo") {
-      restorePhoto = {
-        src: elFocusImage.getAttribute("src"),
-        alt: elFocusImage.getAttribute("alt") || ""
-      };
-      closeFocus();
+    if (ui.getFocusMode() === "photo") {
+      restorePhoto = ui.getFocusImageState();
+      ui.closeFocus();
     }
 
     window.setTimeout(() => {
-      flashRippleFor(selectedId);
+      ui.flashRippleFor(selectedId);
 
       if (restorePhoto && restorePhoto.src) {
         window.setTimeout(() => {
-          openFocusImage(restorePhoto.src, restorePhoto.alt);
+          ui.openFocusImage(restorePhoto.src, restorePhoto.alt);
         }, 1900);
       }
     }, 240);
 
-    elWhisperInput.value = "";
+    ui.clearWhisperValue();
   }
 
   async function requestMonologue({ characterId, channel, kind, whisperText }) {
@@ -884,7 +420,7 @@
     let usedLocalPool = false;
     let generatedFromApi = false;
 
-    setWorldtext("…", { mode: "baseline" });
+    ui.setWorldtext("…", { mode: "baseline" });
 
     // Drift update strategy:
     // - Local mode (no API): applyRipple BEFORE selecting from pool.
@@ -974,328 +510,39 @@
     });
     engine.setOpeningBufferFromThought(text);
 
-    setWorldtext(text, { mode: "ripple" });
+    ui.setWorldtext(text, { mode: "ripple" });
     const snap = engine.snapshot();
-    renderReplay(snap);
-    renderGrid(snap);
-    renderLinks(snap);
+    ui.renderReplay(snap);
+    ui.renderGrid(snap);
+    ui.renderLinks(snap);
     scheduleAutoThought(AUTO_THOUGHT.intervalMs);
   }
 
   function cycleScene(dir) {
     clearAutoThoughtTimer();
     const scenes = engine.listScenes();
-    const cur = elScenarioSelect.value;
+    const cur = ui.getScenarioValue();
     const idx = scenes.findIndex(s => s.id === cur);
     const next = (idx + dir + scenes.length) % scenes.length;
-    elScenarioSelect.value = scenes[next].id;
+    ui.setScenarioValue(scenes[next].id);
 
-    closeFocus();
+    ui.closeFocus();
     const snap = engine.loadScene(scenes[next].id);
 
-    preloadSceneImages(engine.getScene());
+    ui.preloadSceneImages(engine.getScene());
 
-    render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
+    ui.render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
     showSelectPromptIfNeeded();
   }
 
   function showSelectPromptIfNeeded() {
     const snap = engine.snapshot();
-    if (!snap.selection.characterId) openPrompt("Select a character");
-  }
-
-  // -----------------------------
-  // Render
-  // -----------------------------
-  function render(snapshot, opts = {}) {
-    if (!snapshot.selection.characterId) {
-      elSelectedPill.textContent = defaultSelectedPillText;
-    } else {
-      const sc = engine.getScene();
-      const ch = sc.characters.find(c => c.id === snapshot.selection.characterId);
-      elSelectedPill.textContent = (ch?.label || snapshot.selection.characterId).toUpperCase();
-    }
-
-    elScenarioSelect.value = snapshot.meta.sceneId;
-
-    renderGrid(snapshot);
-    renderLinks(snapshot);
-    renderReplay(snapshot);
-
-    if (opts.forceWorldtext != null) {
-      setWorldtext(opts.forceWorldtext, { mode: opts.mode || "baseline" });
-    } else {
-      setWorldtext(snapshot.scene.baseline, { mode: "baseline" });
-    }
-  }
-
-  function renderGrid(snapshot) {
-    const { cols, rows } = snapshot.scene;
-    document.documentElement.style.setProperty("--cols", String(cols));
-    document.documentElement.style.setProperty("--rows", String(rows));
-
-    elGrid.innerHTML = "";
-
-    const occupied = new Map();
-    for (const ch of snapshot.characters) {
-      occupied.set(`${ch.position.x},${ch.position.y}`, ch);
-    }
-
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
-        const cell = document.createElement("div");
-        cell.className = "grid-cell";
-
-        const ch = occupied.get(`${x},${y}`);
-        if (ch) {
-          cell.classList.add("has-entity");
-          cell.dataset.characterId = ch.id;
-
-          if (snapshot.selection.characterId === ch.id) cell.classList.add("selected");
-
-          const inner = document.createElement("div");
-          const hasPhoto = !!ch.image;
-          inner.className = "grid-entity" + (hasPhoto ? " has-photo" : "");
-
-          if (hasPhoto) {
-            inner.innerHTML = `
-              <img class="thumb" src="${escapeHtml(ch.image)}" alt="${escapeHtml(ch.label || ch.id)}" loading="lazy" />
-            `;
-          } else {
-            inner.innerHTML = `
-              <div class="icon">${escapeHtml(ch.icon || "•")}</div>
-              <div class="label">${escapeHtml(ch.id)}</div>
-            `;
-          }
-
-          cell.appendChild(inner);
-          cell.addEventListener("click", () => onSelectCharacter(ch.id));
-        }
-
-        elGrid.appendChild(cell);
-      }
-    }
-  }
-
-  function renderLinks(snapshot) {
-    elLinks.innerHTML = "";
-
-    const rect = elGrid.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return;
-
-    const cols = snapshot.scene.cols;
-    const cellSize = rect.width / cols;
-    elLinks.setAttribute("viewBox", `0 0 ${rect.width} ${rect.height}`);
-
-    const centers = {};
-    for (const ch of snapshot.characters) {
-      centers[ch.id] = {
-        cx: (ch.position.x + 0.5) * cellSize,
-        cy: (ch.position.y + 0.5) * cellSize
-      };
-    }
-
-    const drawn = new Set();
-    for (const ch of snapshot.characters) {
-      const a = centers[ch.id];
-      if (!a) continue;
-
-      for (const adjId of (ch.adjacentTo || [])) {
-        const b = centers[adjId];
-        if (!b) continue;
-
-        const key = [ch.id, adjId].sort().join("::");
-        if (drawn.has(key)) continue;
-        drawn.add(key);
-
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", String(a.cx));
-        line.setAttribute("y1", String(a.cy));
-        line.setAttribute("x2", String(b.cx));
-        line.setAttribute("y2", String(b.cy));
-        elLinks.appendChild(line);
-      }
-    }
-  }
-
-  function renderReplay(snapshot) {
-    elAuditLog.innerHTML = "";
-
-    const whispers = snapshot.audit.filter((entry) => entry.kind === EVENT_KIND.WHISPER);
-
-    if (!whispers.length) {
-      const d = document.createElement("div");
-      d.className = "help";
-      d.textContent = "No whispers yet.";
-      elAuditLog.appendChild(d);
-      return;
-    }
-
-    for (const entry of whispers) {
-      const item = document.createElement("div");
-      item.className = "audit-item";
-
-      const character = entry.characterLabel || entry.characterId;
-      const whisperText = String(entry.whisperText || "").trim() || "(empty whisper)";
-
-      item.innerHTML = `
-        <div class="row">To ${escapeHtml(character)}: "${escapeHtml(whisperText)}"</div>
-      `;
-
-      item.addEventListener("click", () => {
-        onSelectCharacter(entry.characterId);
-      });
-
-      elAuditLog.appendChild(item);
-    }
-  }
-
-  function setWorldtext(text, opts = {}) {
-    const mode = opts.mode || "baseline";
-    lastWorldMode = mode;
-
-    const sc = engine.getScene();
-    let html = escapeHtml(String(text));
-
-    const tokens = [];
-    for (const ch of sc.characters) {
-      if (ch.label) tokens.push({ key: ch.label, id: ch.id });
-      tokens.push({ key: ch.id, id: ch.id });
-    }
-    tokens.sort((a, b) => b.key.length - a.key.length);
-
-    for (const t of tokens) {
-      const safeKey = escapeRegExp(t.key);
-      html = html.replace(
-        new RegExp(`\\b${safeKey}\\b`, "g"),
-        `<span class="entity-link" data-character="${escapeHtml(t.id)}">${escapeHtml(t.key)}</span>`
-      );
-    }
-
-    elWorldtext.innerHTML = html;
-    elWorldtext.scrollTop = 0;
-
-    elWorldtext.querySelectorAll(".entity-link").forEach(span => {
-      span.addEventListener("click", (e) => {
-        const id = e.currentTarget.getAttribute("data-character");
-        if (id) onSelectCharacter(id);
-      });
-    });
-  }
-
-  // -----------------------------
-  // Focus overlay modes
-  // -----------------------------
-  function openPrompt(message) {
-    focusMode = "prompt";
-    elFocusOverlay.classList.add("prompt-mode");
-
-    elFocusImage.style.display = "none";
-    elFocusMessage.textContent = message || "Select a character";
-
-    elFocusOverlay.classList.add("open");
-    elFocusOverlay.setAttribute("aria-hidden", "false");
-    isFocusOpen = true;
-  }
-
-  function openFocusImage(src, altText) {
-    if (!src) return;
-
-    focusMode = "photo";
-    elFocusOverlay.classList.remove("prompt-mode");
-
-    elFocusImage.style.display = "";
-    elFocusMessage.textContent = "";
-
-    if (elFocusImage.getAttribute("src") !== src) {
-      elFocusImage.setAttribute("src", src);
-    }
-    elFocusImage.setAttribute("alt", altText || "");
-
-    elFocusOverlay.classList.add("open");
-    elFocusOverlay.setAttribute("aria-hidden", "false");
-    isFocusOpen = true;
-  }
-
-  function closeFocus() {
-    focusMode = "none";
-    elFocusOverlay.classList.remove("prompt-mode");
-    elFocusOverlay.classList.remove("open");
-    elFocusOverlay.setAttribute("aria-hidden", "true");
-    isFocusOpen = false;
-  }
-
-  // -----------------------------
-  // Image preload/decode (best-effort)
-  // -----------------------------
-  function preloadSceneImages(scene) {
-    if (!scene?.characters) return;
-    for (const ch of scene.characters) {
-      if (!ch.image) continue;
-      const img = new Image();
-      img.src = ch.image;
-      if (img.decode) img.decode().catch(() => {});
-    }
-  }
-
-  // -----------------------------
-  // Visual ripple only
-  // -----------------------------
-  function flashRippleFor(characterId) {
-    const sc = engine.getScene();
-    const ch = sc.characters.find(c => c.id === characterId);
-    if (!ch) return;
-
-    // If a full-screen photo is open, briefly fade it so the grid ripples can be seen.
-    if (isFocusOpen && focusMode === "photo") {
-      elFocusOverlay.style.opacity = "0.05";
-      window.setTimeout(() => {
-        elFocusOverlay.style.opacity = "";
-      }, 1600);
-    }
-
-    rippleAtCharacter(ch.id, "thoughts", 1.0);
-
-    (ch.adjacentTo || []).forEach((nbId, i) => {
-      window.setTimeout(() => rippleAtCharacter(nbId, "thoughts", 0.55), 180 + i * 110);
-    });
-  }
-
-  function rippleAtCharacter(characterId, cls, intensity) {
-    const cell = Array.from(elGrid.querySelectorAll(".grid-cell.has-entity"))
-      .find(c => c.dataset.characterId === characterId);
-    if (!cell) return;
-
-    const klass = cls || "thoughts";
-
-    cell.classList.add("flash", klass);
-    window.setTimeout(() => cell.classList.remove("flash", klass), 900);
-
-    for (let i = 0; i < 2; i++) {
-      const ring = document.createElement("div");
-      ring.className = `ripple-ring ${klass}`;
-      ring.style.opacity = String(0.90 * intensity);
-      ring.style.animationDelay = `${i * 110}ms`;
-      cell.appendChild(ring);
-      window.setTimeout(() => ring.remove(), 1600);
-    }
+    if (!snap.selection.characterId) ui.openPrompt("Select a character");
   }
 
   // -----------------------------
   // Utilities
   // -----------------------------
-  function byId(id) {
-    const el = document.getElementById(id);
-    if (!el) throw new Error(`Missing element #${id} in HTML.`);
-    return el;
-  }
-
-  function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, (m) => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
-    }[m]));
-  }
-
   function escapeRegExp(str) {
     return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
@@ -1705,14 +952,11 @@
 
   function setApiKeyChecking(loading) {
     isApiKeyChecking = !!loading;
-    btnApiSubmit.disabled = isApiKeyChecking;
-    btnApiSkip.disabled = isApiKeyChecking;
-    elApiKeyInput.disabled = isApiKeyChecking;
+    ui.setApiKeyChecking(isApiKeyChecking);
   }
 
   function setApiKeyStatus(message, isError) {
-    elApiKeyStatus.textContent = String(message || "");
-    elApiKeyStatus.classList.toggle("error", !!isError);
+    ui.setApiKeyStatus(message, isError);
   }
 
   async function validateApiKey(key) {
@@ -1763,45 +1007,7 @@
     const sc = engine.getScene();
     const sceneId = engine.getSceneId();
     const ch = sc.characters.find(c => c.id === characterId);
-    const sceneLabel = String(sc?.meta?.label || "");
-    const sceneTitle = String(sc?.meta?.title || "");
-    const isPosthuman = /forest|post[- ]?human/i.test(sceneLabel);
-
-    const sys = (sc.prompts && sc.prompts.system) ? sc.prompts.system :
-      "You write short interior monologues.";
-
-    const sceneFrame = (sc.prompts && sc.prompts.scene) ? sc.prompts.scene : (sc.meta?.baseline || "");
-    const whisperRule = (sc.prompts && sc.prompts.whisperRule) ? sc.prompts.whisperRule :
-      "If a whisper is present, it bends mood indirectly; do not answer it directly.";
-
-    const dossier = (ch && ch.dossier) ? ch.dossier : "";
-    const voice = uniqList(ch?.voice || []);
-    const characterMotifSeeds = uniqList(ch?.motifSeeds || []);
-    const sceneMotifPalette = uniqList(sc?.motifs || []);
-
-    const ps = engine.getPsyche(characterId);
-    const psycheBlock = [
-      "Current psychic state (0–1):",
-      `- arousal: ${ps.arousal.toFixed(2)}`,
-      `- valence: ${ps.valence.toFixed(2)}`,
-      `- agency: ${ps.agency.toFixed(2)}`,
-      `- permeability: ${ps.permeability.toFixed(2)}`,
-      `- coherence: ${ps.coherence.toFixed(2)}`
-    ].join("\n");
-
-    const stateStyleMap = [
-      "State-to-style mapping (follow):",
-      "- Higher arousal => more immediate pressure, urgency, and sharper cuts between images.",
-      "- Lower valence => heavier interpretations, but retain one neutral or constructive anchor.",
-      "- Higher agency => firmer verbs, self-directed intention, less passivity.",
-      "- Higher permeability => stronger influence from surrounding atmosphere and others.",
-      "- Lower coherence => fragmented transitions, associative leaps, and unresolved turns.",
-      DYNAMICS.promptLine,
-      "Do not mention these numbers explicitly."
-    ].join("\n");
-
     const whisperClean = String(whisperText || "").trim();
-    const whisperTone = classifyWhisperTone(whisperClean);
     const recentThoughts = engine.getRecentMonologues(characterId, 3);
     const priorMonologueCount = engine.getMonologueCount(characterId);
     const steering = toneSteering || buildToneSteering({
@@ -1819,241 +1025,28 @@
       scene: sc
     });
     const focusSteeringBlock = buildFocusSteeringBlock(focusPlan);
-    const disclosurePhase =
-      priorMonologueCount <= 3 ? "early" :
-      priorMonologueCount <= 7 ? "middle" :
-      "late";
-    const disclosureGuidance = disclosurePhase === "early"
-      ? [
-          "- Vary openings unpredictably (object detail, body sensation, admin/money task, stray memory, abstract dread).",
-          "- Keep core conflict mostly indirect; at most one brief allusive signal.",
-          "- Stay with one dominant concern; avoid piling multiple concern threads.",
-          "- Do not name the character's deepest fear or full backstory directly yet."
-        ]
-      : disclosurePhase === "middle"
-        ? [
-            "- Keep one dominant concern in view; a second concern can appear briefly if it returns to the core thread.",
-            "- Allow at most one modestly clearer backstory signal, still indirect and understated.",
-            "- Avoid full explanations, timelines, or confessional summaries."
-          ]
-        : [
-            "- Deepen emotional clarity, but remain allusive rather than fully explanatory.",
-            "- Leave some core material implied; avoid exhaustive disclosure.",
-            "- Keep the thought centered; avoid introducing extra side-concerns."
-          ];
-    const continuityBlock = recentThoughts.length
-      ? [
-          "Continuity context (same character, oldest to newest):",
-          ...recentThoughts.map((entry, i) =>
-            `${i + 1}. ${entry.kind}: ${trimForPrompt(entry.text, 240)}`
-          ),
-          `Disclosure phase: ${disclosurePhase.toUpperCase()} (prior thoughts: ${priorMonologueCount}).`,
-          "Disclosure pacing rules:",
-          ...disclosureGuidance,
-          "Associative movement rules:",
-          "- Keep one dominant concern thread; optional secondary pivot is brief.",
-          "- If a secondary pivot appears, return quickly to the primary concern."
-        ].join("\n")
-      : [
-          "Continuity context: none yet for this character.",
-          "Disclosure phase: EARLY (first thought).",
-          "Disclosure pacing rules:",
-          "- Start with a surprising angle; do not default to biography summary.",
-          "- Keep first thought focused on one concern thread.",
-          "- Hint at deeper history indirectly; avoid explicit backstory exposition.",
-          "Associative movement rules:",
-          "- Optional brief side association is allowed, but keep a single dominant concern."
-        ].join("\n");
-
-    const openingModes = [
-      "begin with a concrete object and stay with one concern",
-      "begin vague and atmospheric, then snap to one practical detail",
-      "begin practical and precise, then deepen the same concern",
-      "begin mid-thought as a fragment, no setup sentence"
-    ];
-    const openingMode = openingModes[Math.floor(Math.random() * openingModes.length)];
-    const earlyRandomnessBlock = priorMonologueCount <= 1
-      ? [
-          "Early-thought variability (priority):",
-          `- Opening mode for this thought: ${openingMode}.`,
-          "- Sentence fragments are welcome.",
-          "- Coherence can be loose as long as tone and stakes remain human."
-        ].join("\n")
-      : "Variability: keep images and topics fresh; avoid repeating your last opening move.";
-
-    const antiExpositionBlock = [
-      "Anti-exposition constraints:",
-      "- Do not front-load biography.",
-      "- Do not summarize the character's life or dossier.",
-      "- Prefer implication, fragments, and oblique references over explicit explanation."
-    ].join("\n");
-
-    const lifeThreadBlock = [
-      "Life-thread breadth constraints:",
-      "- Keep each monologue focused on one dominant life thread.",
-      "- At most one secondary thread is allowed, and only as a brief pivot.",
-      "- Hard cap: no more than two concern threads in a single thought.",
-      "- Rotate additional concerns across later thoughts (progressive disclosure), not within the same thought."
-    ].join("\n");
-
-    const packetContext = buildPacketPromptContext({
+    const { sys, userPrompt, packetContext } = buildOpenAIUserPrompt({
+      sc,
+      ch,
       sceneId,
-      scene: sc,
-      character: ch,
       whisperText: whisperClean,
+      openingLead,
+      openingLeadSource,
+      recentThoughts,
       priorMonologueCount,
-      disclosurePhase
-    });
-
-    const openingLeadClean = normalizeWhitespace(openingLead);
-    const openingContinuityBlock = openingLeadClean
-      ? [
-          "Opening continuity (MANDATORY):",
-          openingLeadSource === "whisper"
-            ? `- Begin with this whisper-derived phrase, more or less intact: ${openingLeadClean}`
-            : `- Riff on this carried-over phrase from the previous thought: ${openingLeadClean}`,
-          openingLeadSource === "whisper"
-            ? "- Keep meaning and wording close; small variation is allowed."
-            : "- Reuse 2-5 distinctive words, but do NOT repeat the full phrase verbatim.",
-          openingLeadSource === "whisper"
-            ? "- This opening rule overrides default opening randomness."
-            : "- Keep the emotional direction, but vary syntax and imagery."
-        ].join("\n")
-      : "Opening continuity: none.";
-    const carryoverRiffBlock = (openingLeadClean && openingLeadSource !== "whisper")
-      ? [
-          "Carry-over riff persistence (MANDATORY):",
-          "- Let carried-over anchor words recur beyond the opening.",
-          "- Reintroduce at least one carried-over anchor in the middle of the thought.",
-          "- End with at least one carried-over anchor still present (not necessarily the same anchor)."
-        ].join("\n")
-      : "Carry-over riff persistence: n/a.";
-
-    const whisperImpact = whisperClean
-      ? [
-          "WHISPER IMPACT (MANDATORY):",
-          openingLeadSource === "whisper"
-            ? "- Start from the whisper-derived opening phrase, then continue as interior thought; do not address the whisperer."
-            : "- Do NOT quote the whisper and do NOT address the whisperer.",
-          "- Let the whisper clearly bend mood and imagery.",
-          "- The bend must be visible in the opening clause and still present at the end.",
-          "- Include one concrete bodily response influenced by the whisper.",
-          "- Incorporate ONE concrete image implied by the whisper (object/place/bodily sensation/sound).",
-          "- If the whisper is repetitive, echo a sense of repetition rhythm without quoting it.",
-          "- Keep it human and plausible, but not faint.",
-          ""
-        ].join("\n")
-      : [
-          "(No whisper present.)",
-          ""
-        ].join("\n");
-
-    const whisperSpecificBlock = whisperClean
-      ? whisperTone.tone === "calm"
-        ? [
-            "Whisper-specific rule:",
-            "- Because this whisper is calming, include a concrete de-escalation attempt (breath, jaw, shoulders, pulse, or pacing).",
-            "- If calming fails, show the failure in concrete body language."
-          ].join("\n")
-        : whisperTone.tone === "urgent"
-          ? [
-              "Whisper-specific rule:",
-              "- Because this whisper is urgent, show immediate compression of timing and decisions.",
-              "- Include one body signal of urgency (pulse, breath rate, muscle tension, or narrowed attention)."
-            ].join("\n")
-          : whisperTone.tone === "threat"
-            ? [
-                "Whisper-specific rule:",
-                "- Because this whisper is threatening, show vigilance/risk-scanning in concrete terms.",
-                "- Include one protective or avoidant micro-action."
-              ].join("\n")
-            : whisperTone.tone === "tender"
-              ? [
-                  "Whisper-specific rule:",
-                  "- Because this whisper is tender, show softening without sentimentality.",
-                  "- Include one concrete memory or body shift tied to that softening."
-                ].join("\n")
-              : [
-                  "Whisper-specific rule:",
-                  "- Show a concrete cognitive or bodily aftereffect of the whisper."
-                ].join("\n")
-      : "No whisper-specific rule.";
-
-    const concernConstraint = isPosthuman
-      ? "- Include one immediate embodied concern (shelter, hunger, injury risk, weather, territory, energy, predation, mating pressure, seasonal survival)."
-      : "- Include one immediate personal concern (status, work, money, health, aging, regret, belonging, obligation, reputation, deadline, body discomfort).";
-
-    const userPrompt = [
-      "Generate an interior monologue.",
-      `Length: ${THOUGHT_WORD_MIN}-${THOUGHT_WORD_MAX} words.`,
-      "Tense may be present, past, or near-future depending on pressure and anticipation.",
-      "Grounded and immediate with a light allusive layer.",
-      "Explicit first-person references should stay sparse (target <=20% of words using I/me/my/mine/myself).",
-      "Prioritize concrete stakes over decorative abstraction.",
-      "Sentence fragments are allowed.",
-      "At most ONE clause may lean strongly lyrical/metaphoric.",
-      "Do not rely on dust, light, shadow, air, or silence as primary imagery.",
-      "Introduce at least one concrete anchor (object, admin task, bodily sensation, sound, or memory shard).",
-      concernConstraint,
-      "Output must be JSON only (no markdown, no extra text).",
-      "Avoid repeating imagery or nouns from recent monologues, except deliberate carried-over riff anchors.",
-      "Hard constraints:",
-      "- No direct second-person reply to a whisper.",
-      "- No meta-talk (no mention of prompts, models, AI, system).",
-      "- No dialogue formatting; this is interior thought.",
-      "- Keep backstory allusive, not explanatory.",
-      "- Across successive turns for a character, maintain at least a 50/50 balance of neutral-or-gently-hopeful thoughts versus darker thoughts.",
-      "",
-      "Tone steering for this turn (hard constraints):",
       toneSteeringBlock,
-      "",
-      "Attention steering for this turn (hard constraints):",
       focusSteeringBlock,
-      "",
-      openingContinuityBlock,
-      carryoverRiffBlock,
-      "",
-      "Scene:",
-      sceneFrame,
-      "",
-      "Character:",
-      dossier,
-      voice.length ? `Voice tags: ${voice.join(", ")}.` : "Voice tags: (none).",
-      characterMotifSeeds.length ? `Character motif seeds: ${characterMotifSeeds.join(", ")}.` : "Character motif seeds: (none).",
-      sceneMotifPalette.length ? `Scene motif palette: ${sceneMotifPalette.slice(0, 14).join(", ")}.` : "Scene motif palette: (none).",
-      "",
-      "Packet steering (apply exactly as constraints):",
-      packetContext.promptBlock,
-      "",
-      continuityBlock,
-      "",
-      whisperSpecificBlock,
-      "",
-      earlyRandomnessBlock,
-      "",
-      antiExpositionBlock,
-      "",
-      lifeThreadBlock,
-      "",
-      psycheBlock,
-      "",
-      stateStyleMap,
-      "",
-      whisperRule,
-      "",
-      whisperImpact,
-      `Whisper input: ${whisperClean || "(none)"}`,
-      "",
-      "Return JSON with:",
-      `- monologue: string (${THOUGHT_WORD_MIN}-${THOUGHT_WORD_MAX} words)`,
-      "- delta: object with numeric fields arousal, valence, agency, permeability, coherence",
-      "Delta semantics:",
-      "- Interpret the whisper holistically (meaning, tone, implication), not keywords.",
-      "- The delta represents how the whisper alters the character’s internal state.",
-      "- Range guidance: arousal/permeability in [-0.15,0.15], valence in [-0.12,0.12], agency/coherence in [-0.10,0.10].",
-      DYNAMICS.deltaGuidance,
-      "- If whisper is empty/none, delta should be near 0."
-    ].join("\n");
+      thoughtWordMin: THOUGHT_WORD_MIN,
+      thoughtWordMax: THOUGHT_WORD_MAX,
+      dynamicsPromptLine: DYNAMICS.promptLine,
+      dynamicsDeltaGuidance: DYNAMICS.deltaGuidance,
+      psyche: engine.getPsyche(characterId),
+      classifyWhisperTone,
+      trimForPrompt,
+      buildPacketPromptContext,
+      normalizeWhitespace,
+      uniqList
+    });
 
     const requestPayload = {
       model: "gpt-4.1-mini",
@@ -2191,22 +1184,6 @@
     out = clampWordRange(out, { minWords, maxWords, fallback: raw });
     out = finalizeThoughtEnding(out, { minWords, maxWords, fallback: raw });
     return cleanSpacing(out);
-  }
-
-  function stripOuterQuotes(text) {
-    return String(text || "").trim().replace(/^“|^"/, "").replace(/”$|"$/, "").trim();
-  }
-
-  function normalizeWhitespace(text) {
-    return String(text || "").replace(/\s+/g, " ").trim();
-  }
-
-  function cleanSpacing(text) {
-    return normalizeWhitespace(text)
-      .replace(/\s+([,.;:!?])/g, "$1")
-      .replace(/\(\s+/g, "(")
-      .replace(/\s+\)/g, ")")
-      .trim();
   }
 
   function normalizeLeadFragment(fragment, maxWords, { keepHead = true } = {}) {
@@ -2440,22 +1417,6 @@
     return cleanSpacing(out);
   }
 
-  function splitWords(text) {
-    return normalizeWhitespace(text).split(" ").filter(Boolean);
-  }
-
-  function wordCount(words) {
-    const tokens = Array.isArray(words) ? words : splitWords(words);
-    return tokens.filter((w) => /[A-Za-z0-9]/.test(w)).length;
-  }
-
-  function canonicalToken(token) {
-    return String(token || "")
-      .toLowerCase()
-      .replace(/[’]/g, "'")
-      .replace(/^[^a-z0-9']+|[^a-z0-9']+$/g, "");
-  }
-
   function isFirstPersonToken(token) {
     const t = canonicalToken(token);
     return (
@@ -2494,33 +1455,6 @@
     }
 
     return normalizeWhitespace(words.join(" "));
-  }
-
-  function splitClauses(text) {
-    const t = normalizeWhitespace(text);
-    if (!t) return [];
-
-    // Keep clause-ending punctuation attached to preserve fragment shape.
-    const parts = t
-      .split(/(?<=[.!?;:])\s+/)
-      .map((s) => normalizeWhitespace(s))
-      .filter(Boolean);
-
-    return parts.length ? parts : [t];
-  }
-
-  function truncateToWordCount(text, maxWords) {
-    const words = splitWords(text);
-    if (wordCount(words) <= maxWords) return normalizeWhitespace(text);
-    const out = [];
-    let seen = 0;
-    for (const w of words) {
-      const isWord = /[A-Za-z0-9]/.test(w);
-      if (isWord && seen >= maxWords) break;
-      out.push(w);
-      if (isWord) seen++;
-    }
-    return normalizeWhitespace(out.join(" "));
   }
 
   function pickRandomClauseWindow(text, minWords, maxWords) {
@@ -2567,41 +1501,6 @@
     const maxStart = Math.max(0, words.length - span);
     const start = randInt(0, maxStart);
     return normalizeWhitespace(words.slice(start, start + span).join(" "));
-  }
-
-  function isDanglingEndToken(token) {
-    const t = canonicalToken(token);
-    if (!t) return false;
-
-    const dangling = new Set([
-      "a", "an", "the",
-      "to", "of", "in", "on", "at", "for", "from", "with", "by",
-      "as", "if", "than", "that", "which", "who", "whom", "whose",
-      "and", "or", "but", "nor", "so", "yet",
-      "about", "above", "across", "after", "against", "along", "around",
-      "before", "behind", "below", "beneath", "beside", "between", "beyond",
-      "during", "into", "near", "onto", "over", "through", "toward", "towards",
-      "under", "until", "upon", "within", "without", "since", "per", "via"
-    ]);
-
-    return dangling.has(t);
-  }
-
-  function trimDanglingEnding(text, minWords = 0) {
-    const words = splitWords(text);
-    while (words.length && isDanglingEndToken(words[words.length - 1])) {
-      if (wordCount(words) <= minWords) break;
-      words.pop();
-    }
-    return normalizeWhitespace(words.join(" "));
-  }
-
-  function ensureTerminalPunctuation(text) {
-    const t = normalizeWhitespace(text).replace(/…/g, "...");
-    if (!t) return t;
-    if (/\.\.\.$/.test(t) || /[.!?]$/.test(t)) return t;
-    const clipped = t.replace(/[;:,]+$/, "");
-    return `${clipped}...`;
   }
 
   function finalizeThoughtEnding(text, { minWords, maxWords, fallback }) {
@@ -2959,28 +1858,6 @@
 
     const cue = buildWhisperCue(whisper, psyche);
     return normalizeWhitespace(`${cue}. ${base}`);
-  }
-
-  function clampWordRange(text, { minWords, maxWords, fallback }) {
-    let out = truncateToWordCount(text, maxWords);
-    if (wordCount(out) >= minWords) return out;
-
-    const source = splitWords(normalizeWhitespace(fallback || ""));
-    if (!source.length) return out;
-
-    const needed = Math.max(0, minWords - wordCount(out));
-    if (!needed) return out;
-
-    const base = splitWords(out);
-    const start = randInt(0, Math.max(0, source.length - needed));
-    const add = source.slice(start, start + needed);
-    return truncateToWordCount(normalizeWhitespace(base.concat(add).join(" ")), maxWords);
-  }
-
-  function randInt(min, max) {
-    const lo = Math.ceil(Math.min(min, max));
-    const hi = Math.floor(Math.max(min, max));
-    return Math.floor(Math.random() * (hi - lo + 1)) + lo;
   }
 
   async function safeReadText(resp) {
