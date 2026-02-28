@@ -43,18 +43,18 @@ Backward compatibility note:
 
 ## How It Works
 
-### Local Mode
-If no API key is entered, Ripples uses predefined monologues stored in `js/scenes.js`.
-Psychic deltas are estimated heuristically.
-
 ### API Mode
-If a valid OpenAI API key is entered:
+If a server-side or browser-session API key is available:
 
 - A single model call generates:
-  - a 50–75 word interior monologue
+  - a 20–40 word interior monologue
   - a semantic `delta` to the psyche vector
 
 The delta is bounded and diffused across the scene.
+
+### Local Fallback
+If generation is unavailable, Ripples falls back to predefined monologues stored in `js/scenes.js`.
+Psychic deltas are then estimated heuristically.
 
 ### Dynamics Mode
 `js/gpt.js` exposes a single switch:
@@ -96,24 +96,32 @@ No dialogue. No explicit response. Only internal modulation.
 
 ## Running Locally
 
-1. Clone the repository.
-2. Open `index.html` in a browser.
-3. Enter your OpenAI API key when prompted (optional).
-4. Explore.
+Recommended local workflow:
 
-No server required.
+1. Install the Vercel CLI if you do not already have it.
+2. Create a local `.env.local` file with `OPENAI_API_KEY=...`.
+3. Run `vercel dev` from the repo root.
+4. Open the local Vercel URL and explore.
+
+This matches production: the browser talks to `/api/openai-responses`, and the key stays server-side.
+
+If you open `index.html` directly or host the app somewhere without the Vercel API routes, Ripples will prompt for a browser-session API key instead.
 
 ---
 
 ## Deployment Notes
 
-The application is entirely client-side.
+For Vercel deployment:
 
-For public deployment (e.g., GitHub Pages):
+- Set `OPENAI_API_KEY` in the Vercel project environment.
+- Deploy from `main`.
+- The frontend will automatically detect the server proxy and stop prompting for a key.
 
-- The API key is never stored.
-- Users must provide their own key.
-- If no key is provided, local mode is used.
+For static hosting without serverless routes (for example GitHub Pages):
+
+- The Vercel environment variable is not available to the browser.
+- Users will still be prompted for their own browser-session key.
+- Local fallback remains available only as an automatic recovery path if generation fails.
 
 ---
 

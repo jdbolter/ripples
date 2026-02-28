@@ -48,7 +48,7 @@ const ids = [
   "scenarioSelect", "grid", "linkLayer", "worldtext", "auditLog", "selectedPill",
   "whisperInput", "whisperSend",
   "focusOverlay", "focusImage", "focusMessage",
-  "apiModal", "apiKeyInput", "apiKeyStatus", "apiSubmit", "apiSkip"
+  "apiModal", "apiKeyInput", "apiKeyStatus", "apiSubmit"
 ];
 const nodes = new Map(ids.map((id) => [id, new FakeElement(id)]));
 
@@ -87,7 +87,6 @@ controller.bindUI({
   onScenarioChange: () => {},
   onWhisperSend: () => {},
   onApiSubmit: async () => {},
-  onApiSkip: () => {},
   onCycleScene: () => {},
   onSelectCharacter: () => {},
   onResize: () => {}
@@ -109,6 +108,8 @@ controller.closeFocus();
 controller.flashRippleFor("a");
 controller.setApiKeyChecking(true);
 controller.setApiKeyStatus("status", false);
+controller.showApiModal();
+controller.hideApiModal();
 
 assert.ok(typeof controller.getDefaultSelectedPillText() === "string");
 console.log("smoke-ui: ok");

@@ -59,17 +59,16 @@
   </div>
 
   <!-- API Key Modal -->
-  <div id="apiModal" class="api-modal">
+  <div id="apiModal" class="api-modal hidden">
     <div class="api-modal-inner">
       <h2>Enter OpenAI API Key</h2>
       <p class="api-help">
-        Your key is used only in this browser session and is not stored.
+        Your key is used only in this browser session and is not stored. This appears only when no server-side key is configured.
       </p>
       <input type="password" id="apiKeyInput" placeholder="sk-..." autocomplete="off" />
       <p id="apiKeyStatus" class="api-status" aria-live="polite"></p>
       <div class="api-actions">
         <button id="apiSubmit">Continue</button>
-        <button id="apiSkip">Skip (Local Mode)</button>
       </div>
     </div>
   </div>

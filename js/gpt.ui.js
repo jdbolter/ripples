@@ -28,7 +28,6 @@
     const elApiKeyInput = byId("apiKeyInput");
     const elApiKeyStatus = byId("apiKeyStatus");
     const btnApiSubmit = byId("apiSubmit");
-    const btnApiSkip = byId("apiSkip");
 
     let lastWorldMode = "baseline";
     let isFocusOpen = false;
@@ -37,7 +36,6 @@
       onScenarioChange: () => {},
       onWhisperSend: () => {},
       onApiSubmit: () => {},
-      onApiSkip: () => {},
       onCycleScene: () => {},
       onSelectCharacter: () => {},
       onResize: () => {}
@@ -47,7 +45,6 @@
       handlers.onScenarioChange = typeof h.onScenarioChange === "function" ? h.onScenarioChange : handlers.onScenarioChange;
       handlers.onWhisperSend = typeof h.onWhisperSend === "function" ? h.onWhisperSend : handlers.onWhisperSend;
       handlers.onApiSubmit = typeof h.onApiSubmit === "function" ? h.onApiSubmit : handlers.onApiSubmit;
-      handlers.onApiSkip = typeof h.onApiSkip === "function" ? h.onApiSkip : handlers.onApiSkip;
       handlers.onCycleScene = typeof h.onCycleScene === "function" ? h.onCycleScene : handlers.onCycleScene;
       handlers.onSelectCharacter = typeof h.onSelectCharacter === "function" ? h.onSelectCharacter : handlers.onSelectCharacter;
       handlers.onResize = typeof h.onResize === "function" ? h.onResize : handlers.onResize;
@@ -58,10 +55,6 @@
 
       btnApiSubmit.addEventListener("click", async () => {
         await handlers.onApiSubmit();
-      });
-
-      btnApiSkip.addEventListener("click", () => {
-        handlers.onApiSkip();
       });
 
       elApiKeyInput.addEventListener("keydown", (e) => {
@@ -380,7 +373,6 @@
     function setApiKeyChecking(loading) {
       const disabled = !!loading;
       btnApiSubmit.disabled = disabled;
-      btnApiSkip.disabled = disabled;
       elApiKeyInput.disabled = disabled;
     }
 
@@ -399,6 +391,13 @@
 
     function hideApiModal() {
       elApiModal.classList.add("hidden");
+    }
+
+    function showApiModal() {
+      elApiModal.classList.remove("hidden");
+      window.setTimeout(() => {
+        if (!elApiKeyInput.disabled) elApiKeyInput.focus();
+      }, 0);
     }
 
     function getWhisperValue() {
@@ -454,6 +453,7 @@
       getApiKeyInputValue,
       clearApiKeyInput,
       hideApiModal,
+      showApiModal,
       getWhisperValue,
       clearWhisperValue,
       getScenarioValue,

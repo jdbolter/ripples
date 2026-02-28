@@ -2,7 +2,7 @@ Ripples — Architecture
 
 This document describes the internal structure and design philosophy of the Ripples simulation.
 
-Ripples is a bounded psycho-dynamic literary simulation implemented entirely in client-side JavaScript. It combines interior monologue generation, measurable psychic state, adjacency-based diffusion, and structured LLM output.
+Ripples is a bounded psycho-dynamic literary simulation implemented as a static frontend with an optional thin server-side OpenAI proxy. It combines interior monologue generation, measurable psychic state, adjacency-based diffusion, and structured LLM output.
 
 The system is intentionally minimal, explicit, and modular.
 
@@ -20,12 +20,12 @@ Ripples consists of eight primary files:
 	•	js/scenes.js — declarative scene definitions and prompt materials
 	•	gpt.css — visual styling and animation layer
 
-All computation occurs in the browser. No server is required.
+Most runtime behavior occurs in the browser. When deployed on Vercel, a small serverless layer can hold `OPENAI_API_KEY` and forward OpenAI requests without exposing the key to the client.
 
 The application can operate in two modes:
 
-Local Mode (no API key)
-API Mode (OpenAI Responses API)
+API Mode (server proxy or browser-session key)
+Local Fallback (predefined monologue pools + heuristic deltas)
 
 ⸻
 
@@ -137,18 +137,23 @@ The schema requires:
 	•	monologue (string)
 	•	delta (object containing arousal, valence, agency, permeability, coherence as numbers)
 
-If the API call fails or structured output is invalid, the system falls back to local mode.
+If the API call fails or structured output is invalid, the system falls back to local monologue pools and heuristic deltas.
 
 ⸻
 
-	7.	Local Mode
+	7.	API Access and Local Fallback
 
-If no API key is provided:
-	•	Monologues are drawn from predefined arrays in `js/scenes.js`.
+Primary API path:
+	•	On Vercel, the browser calls `/api/openai-responses`.
+	•	The serverless function reads `OPENAI_API_KEY` and forwards the request to the OpenAI Responses API.
+	•	If no server-side key is detected, the UI can fall back to browser-session key entry.
+
+Fallback path:
+	•	If no API access is available, or an API call fails, monologues are drawn from predefined arrays in `js/scenes.js`.
 	•	Delta values are estimated using lightweight keyword heuristics.
 	•	The diffusion and rendering systems remain identical.
 
-Local heuristics also target the same 5D state shape, so behavior is consistent across modes.
+Local heuristics still target the same 5D state shape, so behavior is consistent across modes.
 
 ⸻
 
@@ -157,7 +162,7 @@ Local heuristics also target the same 5D state shape, so behavior is consistent 
 The runtime flow is:
 	1.	User selects character.
 	2.	Current psyche is read.
-	3.	Model is invoked (or local monologue selected).
+	3.	Model is invoked through the proxy or directly with a browser-session key (or a local monologue is selected as fallback).
 	4.	Delta is applied.
 	5.	Trace is recorded.
 	6.	Grid and adjacency links re-render.
@@ -218,7 +223,7 @@ Future expansions may include:
 	•	Cross-scene diffusion
 	•	Lexical entropy management
 	•	Multi-language support
-	•	Server-side key proxy
+	•	Expanded server-side proxy controls
 
 The architecture is modular and supports incremental extension.
 

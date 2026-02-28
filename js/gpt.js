@@ -6,21 +6,21 @@
    - Whisper text + click Whisper => re-generates monologue; whisper causes visible ripple
    - Traces log records both "LISTEN" and "WHISPER" events + psyche snapshot per trace
    - API mode: a SINGLE OpenAI call returns BOTH monologue + psyche delta (semantic)
-   - Local mode: deterministic monologue rotation + heuristic delta
+   - Local fallback: deterministic monologue rotation + heuristic delta when generation is unavailable
 
    Depends on: js/scenes.js providing window.SCENES and window.SCENE_ORDER
    Requires index.html elements:
      #scenarioSelect, #grid, #linkLayer, #worldtext, #auditLog, #selectedPill
      #focusOverlay, #focusImage, #focusMessage
      #whisperInput, #whisperSend
-     #apiModal, #apiKeyInput, #apiSubmit, #apiSkip
+     #apiModal, #apiKeyInput, #apiSubmit
 */
 
 (() => {
   "use strict";
 
   // Build marker (helps confirm browser is loading this exact file)
-  const __RIPPLES_BUILD__ = "2026-02-27-refactor-stage4-ui-module";
+  const __RIPPLES_BUILD__ = "2026-02-28-vercel-proxy";
   console.log("[RIPPLES] gpt.js loaded", __RIPPLES_BUILD__);
 
   if (!window.SCENES || !window.SCENE_ORDER) {
@@ -208,8 +208,18 @@
     }
   };
 
-  // OpenAI (client-side key entry)
+  const API_ACCESS_MODE = Object.freeze({
+    PROXY: "proxy",
+    MANUAL: "manual"
+  });
+  const RUNTIME_ENDPOINTS = Object.freeze({
+    config: "/api/runtime-config",
+    responses: "/api/openai-responses"
+  });
+
+  // OpenAI access state
   let userApiKey = null;
+  let apiAccessMode = API_ACCESS_MODE.MANUAL;
   let isGenerating = false;
   const apiNarrativeState = {};
   let autoThoughtTimer = null;
@@ -269,7 +279,7 @@
   // -----------------------------
   // Init
   // -----------------------------
-  function init() {
+  async function init() {
     ui.populateScenes(engine.listScenes());
     bindUI();
 
@@ -281,6 +291,18 @@
     ui.render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
     showSelectPromptIfNeeded();
     clearAutoThoughtTimer();
+
+    const runtimeConfig = await detectRuntimeConfig();
+    apiAccessMode = runtimeConfig.useServerProxy ? API_ACCESS_MODE.PROXY : API_ACCESS_MODE.MANUAL;
+    window.__ripplesRuntimeConfig = runtimeConfig;
+
+    if (apiAccessMode === API_ACCESS_MODE.PROXY) {
+      ui.hideApiModal();
+      setApiKeyStatus("", false);
+    } else {
+      setApiKeyStatus("Enter an API key to continue.", false);
+      ui.showApiModal();
+    }
   }
 
   function bindUI() {
@@ -297,7 +319,7 @@
         if (isApiKeyChecking) return;
         const val = String(ui.getApiKeyInputValue() || "").trim();
         if (!val) {
-          setApiKeyStatus("Enter an API key or choose Skip.", true);
+          setApiKeyStatus("Enter an API key to continue.", true);
           return;
         }
 
@@ -315,12 +337,6 @@
         } finally {
           setApiKeyChecking(false);
         }
-      },
-      onApiSkip: () => {
-        userApiKey = null;
-        ui.hideApiModal();
-        ui.clearApiKeyInput();
-        setApiKeyStatus("", false);
       },
       onWhisperSend,
       onCycleScene: cycleScene,
@@ -439,13 +455,14 @@
     // Drift update strategy:
     // - Local mode (no API): applyRipple BEFORE selecting from pool.
     // - API mode + WHISPER: model returns a delta; applyRipple AFTER generation using that delta.
-    const useModelDelta = !!userApiKey && kind === EVENT_KIND.WHISPER;
+    const canUseOpenAI = hasApiAccess();
+    const useModelDelta = canUseOpenAI && kind === EVENT_KIND.WHISPER;
     if (!useModelDelta) {
       engine.applyRipple({ sourceId: characterId, kind, whisperText });
     }
 
     try {
-      if (userApiKey) {
+      if (canUseOpenAI) {
         const out = await generateFromOpenAI({
           characterId,
           channel,
@@ -560,6 +577,35 @@
   function showSelectPromptIfNeeded() {
     const snap = engine.snapshot();
     if (!snap.selection.characterId) ui.openPrompt("Select a character");
+  }
+
+  async function detectRuntimeConfig() {
+    if (window.location?.protocol === "file:") {
+      return { useServerProxy: false, source: "file" };
+    }
+
+    try {
+      const resp = await fetch(RUNTIME_ENDPOINTS.config, {
+        method: "GET",
+        cache: "no-store"
+      });
+
+      if (!resp.ok) {
+        return { useServerProxy: false, source: `status:${resp.status}` };
+      }
+
+      const data = await resp.json();
+      return {
+        useServerProxy: !!data?.useServerProxy,
+        source: "runtime-config"
+      };
+    } catch (_) {
+      return { useServerProxy: false, source: "unavailable" };
+    }
+  }
+
+  function hasApiAccess() {
+    return apiAccessMode === API_ACCESS_MODE.PROXY || !!userApiKey;
   }
 
   // -----------------------------
@@ -964,12 +1010,31 @@
         return false;
       }
 
-      setApiKeyStatus(`API check failed (${resp.status}). Try again or use Skip.`, true);
+      setApiKeyStatus(`API check failed (${resp.status}). Try again.`, true);
       return false;
     } catch (_) {
       setApiKeyStatus("Could not validate key (network error). Try again.", true);
       return false;
     }
+  }
+
+  function getResponsesRequestTarget() {
+    if (apiAccessMode === API_ACCESS_MODE.PROXY) {
+      return {
+        url: RUNTIME_ENDPOINTS.responses,
+        headers: {
+          "Content-Type": "application/json"
+        }
+      };
+    }
+
+    return {
+      url: "https://api.openai.com/v1/responses",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${userApiKey}`
+      }
+    };
   }
 
   // -----------------------------
@@ -1076,12 +1141,10 @@
     window.__lastOpenAIRequest = requestPayload;
     console.log("[RIPPLES] sending request text.format", requestPayload?.text?.format);
 
-    const resp = await fetch("https://api.openai.com/v1/responses", {
+    const requestTarget = getResponsesRequestTarget();
+    const resp = await fetch(requestTarget.url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${userApiKey}`
-      },
+      headers: requestTarget.headers,
       body: JSON.stringify(requestPayload)
     });
 
