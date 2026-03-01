@@ -60,8 +60,8 @@
   // Single implicit channel for now
   const DEFAULT_CHANNEL = "THOUGHTS";
   const EVENT_KIND = { LISTEN: "LISTEN", WHISPER: "WHISPER" };
-  const THOUGHT_WORD_MIN = 20;
-  const THOUGHT_WORD_MAX = 40;
+  const THOUGHT_WORD_MIN = 40;
+  const THOUGHT_WORD_MAX = 60;
   const CONTINUITY_LEAD_MAX_WORDS = 16;
   const FIRST_PERSON_MAX_RATIO = 0.20;
   const CONTINUITY_STOPWORDS = new Set([
@@ -75,11 +75,11 @@
   ]);
   const OPEN_PROFILE_AMBIENT_THREADS = Object.freeze([
     "passing landscape details and weather changes",
-    "ordinary body comfort adjustments in the seat",
+    "ordinary choices about attention, pacing, and what to notice",
     "small practical rituals like checking pockets, tickets, or notes",
     "mundane observations about strangers and shared space",
     "quiet memory flashes with no urgent problem attached",
-    "food, coffee, or simple sensory cravings",
+    "food, coffee, or simple everyday preferences",
     "tiny plans for the next stop, meal, or evening",
     "neutral curiosity about objects, sounds, and routines nearby"
   ]);
@@ -150,7 +150,7 @@
       },
       {
         id: "sensory",
-        instruction: "Use a sensory lens (touch, posture, sound, object detail) before interpretation.",
+        instruction: "Use a concrete-observation lens (sound, object detail, passing image) before interpretation.",
         opener: "At the edge of the table,"
       },
       {
@@ -164,9 +164,9 @@
         opener: "By evening,"
       },
       {
-        id: "body",
-        instruction: "Use a body-regulation lens (breath, jaw, shoulders, pace) tied to agency.",
-        opener: "Shoulders settle,"
+        id: "memory",
+        instruction: "Use a time-layered lens (past version of the self, present pressure, near-future possibility).",
+        opener: "For a moment,"
       }
     ],
     steadyLifts: [
@@ -191,12 +191,26 @@
       "i", "me", "my", "myself", "worry", "fear", "panic", "regret", "shame",
       "doubt", "afraid", "confused", "collapse", "fail", "failing", "ruined"
     ],
-    sceneFallbackAnchors: [
-      "The room stays still for a second.",
-      "A chair shifts nearby.",
-      "Light sits on the table.",
-      "Pages move in small sounds."
-    ],
+    sceneFallbackAnchors: {
+      train: [
+        "The carriage rocks once.",
+        "An announcement blurs overhead.",
+        "A bag shifts in the aisle.",
+        "Passing light moves across the window."
+      ],
+      library: [
+        "The room stays still for a second.",
+        "A chair shifts nearby.",
+        "Light sits on the table.",
+        "Pages move in small sounds."
+      ],
+      generic: [
+        "The room stays still for a second.",
+        "Someone shifts nearby.",
+        "Light changes across the surface.",
+        "Small sounds return at the edge of attention."
+      ]
+    },
     simpleWordReplacements: {
       however: "but",
       therefore: "so",
@@ -206,6 +220,9 @@
       utilize: "use",
       regarding: "about"
     }
+  };
+  const IDEA_LIMITER = {
+    maxClauses: 3
   };
 
   const API_ACCESS_MODE = Object.freeze({
@@ -425,12 +442,8 @@
     if (isGenerating) return;
     isGenerating = true;
 
-    const whisperLead = (kind === EVENT_KIND.WHISPER && String(whisperText || "").trim())
-      ? extractFirstSentenceOrFragment(whisperText, CONTINUITY_LEAD_MAX_WORDS)
-      : "";
-    const carriedLead = whisperLead ? "" : engine.getOpeningBuffer();
-    const openingLead = whisperLead || carriedLead;
-    const openingLeadSource = whisperLead ? "whisper" : (carriedLead ? "carryover" : "none");
+    const openingLead = "";
+    const openingLeadSource = "none";
 
     const priorMonologueCount = engine.getMonologueCount(characterId);
     const toneSteering = buildToneSteering({
@@ -496,11 +509,6 @@
       isGenerating = false;
     }
 
-    if (kind === EVENT_KIND.WHISPER && String(whisperText || "").trim()) {
-      text = enforceWhisperBend(text, whisperText, engine.getPsyche(characterId), {
-        strict: generatedFromApi
-      });
-    }
     text = enforceToneSteering(text, toneSteering);
     text = enforceFocusSteering(text, focusSteering);
 
@@ -512,33 +520,11 @@
     });
     text = enforceToneSteering(text, toneSteering);
     text = enforceFocusSteering(text, focusSteering);
-    text = constrainThoughtText(text, {
+    text = enforceIdeaLimit(text, {
       minWords: THOUGHT_WORD_MIN,
       maxWords: THOUGHT_WORD_MAX,
-      maxFirstPersonRatio: FIRST_PERSON_MAX_RATIO,
-      preferRandomWindow: false
+      maxClauses: IDEA_LIMITER.maxClauses
     });
-    const continuityMode = (openingLeadSource === "carryover" || openingLeadSource === "whisper")
-      ? "riff"
-      : "literal";
-    text = enforceContinuityLead(text, openingLead, { mode: continuityMode });
-    text = finalizeWithContinuityLead(text, openingLead, {
-      minWords: THOUGHT_WORD_MIN,
-      maxWords: THOUGHT_WORD_MAX,
-      mode: continuityMode
-    });
-    if (openingLeadSource === "whisper") {
-      text = dedupeWhisperLeadRepetition(text, openingLead, {
-        minWords: THOUGHT_WORD_MIN,
-        maxWords: THOUGHT_WORD_MAX
-      });
-    }
-    if (continuityMode === "riff") {
-      text = enforceCarryoverRiffPersistence(text, openingLead, {
-        minWords: THOUGHT_WORD_MIN,
-        maxWords: THOUGHT_WORD_MAX
-      });
-    }
 
     engine.newTrace({
       kind,
@@ -547,8 +533,6 @@
       whisperText: whisperText || "",
       text
     });
-    engine.setOpeningBufferFromThought(text);
-
     ui.setWorldtext(text, { mode: "ripple" });
     const snap = engine.snapshot();
     ui.renderReplay(snap);
@@ -691,7 +675,11 @@
       priorMonologueCount <= 7 ? "middle" : "late"
     );
     const phaseDirectives = packet.disclosurePlan[phase] || [];
-    const includeSecondaryThread = pressureProfile === "focused" && shouldIncludeSecondaryThread(phase, state.turnIndex);
+    const includeSecondaryThread = (
+      packet.maxIdeas > 1 &&
+      pressureProfile === "focused" &&
+      shouldIncludeSecondaryThread(phase, state.turnIndex)
+    );
     const secondaryThread = includeSecondaryThread
       ? pickLifeThread({
           threads: packet.lifeThreads.filter((t) => t !== activeThread),
@@ -728,7 +716,7 @@
       ? (
           packet.promptContract.mustInclude.length
             ? `- Must include this turn: ${packet.promptContract.mustInclude.join("; ")}.`
-            : "- Must include this turn: one practical stake, one body cue, one concrete anchor."
+            : "- Must include this turn: one practical stake, one time cue, one concrete anchor."
         )
       : "- Must include this turn: one ordinary concrete detail and one small agency, ease, or pleasant cue.";
 
@@ -740,18 +728,55 @@
         )
       : "- Must avoid this turn: direct whisper reply; problem-only monologue; life-summary exposition.";
 
+    const backgroundFactsLine = packet.backgroundFacts.length
+      ? `- Background facts available without explanation: ${packet.backgroundFacts.join("; ")}.`
+      : "";
+    const worldKnowledgeLine = packet.worldKnowledge.length
+      ? `- Plausible world knowledge this character carries: ${packet.worldKnowledge.join("; ")}.`
+      : "";
+    const cityHabitsLine = packet.cityHabits.length
+      ? `- City habits / ordinary routines available for thought: ${packet.cityHabits.join("; ")}.`
+      : "";
+    const knownPlacesLine = packet.knownPlaces.length
+      ? `- Specific real-world place anchors available when natural: ${packet.knownPlaces.join("; ")}.`
+      : "";
+    const culturalReferencesLine = packet.culturalReferences.length
+      ? `- Cultural references available when natural: ${packet.culturalReferences.join("; ")}.`
+      : "";
+    const styleProfileLine = packet.styleProfile.length
+      ? `- Style profile for this character's interior prose: ${packet.styleProfile.join("; ")}.`
+      : "";
+
     const promptBlock = [
       `- Turn index in this scene for this character: ${turnNumber}.`,
       toneCadenceDirective,
       `- Character premise anchor: ${packet.core.premise}.`,
+      backgroundFactsLine,
+      worldKnowledgeLine,
+      cityHabitsLine,
+      knownPlacesLine,
+      culturalReferencesLine,
+      styleProfileLine,
+      packet.knownPlaces.length || packet.culturalReferences.length
+        ? "- Use specific references sparingly: at most one named place or cultural reference in a thought, and only if it feels native to this person."
+        : "",
+      packet.styleProfile.length
+        ? "- Follow the style profile as tonal craft guidance, not as parody or named-author imitation."
+        : "",
       ...longTermThreadLines,
-      secondaryThread
+      packet.maxIdeas <= 1
+        ? "- No secondary thread allowed this turn; keep the entire thought on a single idea."
+        : secondaryThread
         ? `- Optional secondary thread (at most one brief clause): ${secondaryThread}.`
         : "- No secondary thread this turn; stay with the primary thread.",
-      pressureProfile === "focused"
+      packet.maxIdeas <= 1
+        ? "- Hard cap: this monologue must contain exactly one substantial idea or concern thread."
+        : pressureProfile === "focused"
         ? "- Hard cap: keep this thought to one dominant concern, with at most one brief secondary pivot."
         : "- Hard cap: keep this thought to one dominant thread; if long-term pressure appears, keep it brief and non-dominant.",
-      "- Do not introduce a third concern thread in this thought.",
+      packet.maxIdeas <= 1
+        ? "- Do not introduce any second major topic, pivot, memory line, or practical side-thread."
+        : "- Do not introduce a third concern thread in this thought.",
       pressureProfile === "focused"
         ? "- Associative range: stay grounded in immediate detail while tension remains plausible."
         : "- Associative range: allow mild randomness and everyday drift (travel, landscape, ordinary life observations).",
@@ -799,7 +824,7 @@
           "immediate practical obligations",
           "relationship or social pressure",
           "money/admin constraints",
-          "body-state management",
+          "memory, anticipation, and self-interpretation",
           "future identity uncertainty"
         ];
 
@@ -814,12 +839,19 @@
       },
       lifeThreads,
       recurringStakes: uniqList(packet.recurring_stakes || []),
+      backgroundFacts: uniqList(packet.background_facts || []).slice(0, 8),
+      worldKnowledge: uniqList(packet.world_knowledge || []).slice(0, 8),
+      cityHabits: uniqList(packet.city_habits || []).slice(0, 8),
+      knownPlaces: uniqList(packet.known_places || []).slice(0, 8),
+      culturalReferences: uniqList(packet.cultural_references || []).slice(0, 8),
+      styleProfile: uniqList(packet.style_profile || []).slice(0, 10),
       voiceRules: {
         texture: uniqList(voiceRules.texture || character?.voice || ["plainspoken"]).slice(0, 6),
         syntaxBias: uniqList(voiceRules.syntax_bias || ["concrete clauses", "occasional fragment"]).slice(0, 5),
         tabooMoves: uniqList(voiceRules.taboo_moves || ["direct whisper reply", "biography summary"]).slice(0, 5)
       },
       pressureProfile,
+      maxIdeas: Math.max(1, Number(packet.max_ideas) || 2),
       disclosurePlan: {
         early: uniqList(disclosurePlan.early || []),
         middle: uniqList(disclosurePlan.middle || []),
@@ -1288,6 +1320,44 @@
     return lead;
   }
 
+  function canonicalizeClauseForAnchorMatch(text) {
+    return normalizeWhitespace(String(text || ""))
+      .toLowerCase()
+      .replace(/[’]/g, "'")
+      .replace(/[^a-z0-9'\s]/g, "")
+      .trim();
+  }
+
+  function isGenericSceneAnchorClause(text, scene) {
+    const clause = canonicalizeClauseForAnchorMatch(text);
+    if (!clause) return false;
+
+    return sceneAnchors(scene).some((anchor) => {
+      const anchorNorm = canonicalizeClauseForAnchorMatch(anchor);
+      if (!anchorNorm) return false;
+      return clause === anchorNorm || clause.startsWith(`${anchorNorm} `) || anchorNorm.startsWith(`${clause} `);
+    });
+  }
+
+  function sanitizeCarryoverLead(lead, scene) {
+    const clean = normalizeWhitespace(lead);
+    if (!clean) return "";
+    return isGenericSceneAnchorClause(clean, scene) ? "" : clean;
+  }
+
+  function sanitizeThoughtForCarryover(text, scene) {
+    const clauses = splitClauses(text);
+    if (!clauses.length) return normalizeWhitespace(text);
+
+    const trimmed = clauses.filter((clause, idx) => {
+      if (!isGenericSceneAnchorClause(clause, scene)) return true;
+      return idx !== 0 && idx !== clauses.length - 1;
+    });
+
+    const clean = normalizeWhitespace((trimmed.length ? trimmed : clauses).join(" "));
+    return sanitizeCarryoverLead(clean, scene);
+  }
+
   function canonicalizeForLeadMatch(text) {
     return normalizeWhitespace(text)
       .toLowerCase()
@@ -1361,10 +1431,13 @@
   function buildLeadRiffPrefix(lead) {
     const anchors = extractLeadAnchorTokens(lead, { maxTokens: 4 });
     if (!anchors.length) return "";
-    const picked = anchors.slice(0, anchors.length >= 3 ? 3 : anchors.length);
-    return picked
-      .map((tok) => tok.replace(/^./, (m) => m.toUpperCase()))
-      .join(". ");
+    const picked = anchors.slice(0, Math.min(2, anchors.length));
+    const words = picked.map((tok, idx) => (
+      idx === 0
+        ? tok.replace(/^./, (m) => m.toUpperCase())
+        : tok
+    ));
+    return words.join(" ... ");
   }
 
   function buildWhisperLeadRiffClause(lead) {
@@ -1516,6 +1589,30 @@
     return cleanSpacing(out);
   }
 
+  function enforceIdeaLimit(text, { minWords, maxWords, maxClauses = 3 }) {
+    let out = normalizeWhitespace(stripOuterQuotes(text));
+    if (!out) return out;
+
+    const clauses = splitClauses(out);
+    if (clauses.length <= maxClauses) return out;
+
+    const limited = clauses.slice(0, Math.max(1, maxClauses));
+    out = normalizeWhitespace(limited.join(" "));
+    out = truncateToWordCount(out, maxWords);
+
+    if (wordCount(out) < minWords) {
+      out = clampWordRange(out, {
+        minWords,
+        maxWords,
+        fallback: clauses.join(" ")
+      });
+    }
+
+    out = trimDanglingEnding(out, minWords);
+    out = ensureTerminalPunctuation(out);
+    return cleanSpacing(out);
+  }
+
   function isFirstPersonToken(token) {
     const t = canonicalToken(token);
     return (
@@ -1543,7 +1640,7 @@
       .replace(/\bI've\b/gi, "have")
       .replace(/\bmy\b/gi, "the")
       .replace(/\bmine\b/gi, "that")
-      .replace(/\bmyself\b/gi, "this body");
+      .replace(/\bmyself\b/gi, "this self");
 
     let words = splitWords(out);
     for (let i = 0; i < words.length && firstPersonRatio(words) > maxRatio; i++) {
@@ -1805,7 +1902,12 @@
   }
 
   function sceneAnchors(scene = null) {
-    return ATTENTION_BALANCER.sceneFallbackAnchors.slice();
+    const label = normalizeWhitespace(String(scene?.meta?.label || "")).toLowerCase();
+    if (label.includes("train")) return ATTENTION_BALANCER.sceneFallbackAnchors.train.slice();
+    if (label.includes("reading room") || label.includes("library")) {
+      return ATTENTION_BALANCER.sceneFallbackAnchors.library.slice();
+    }
+    return ATTENTION_BALANCER.sceneFallbackAnchors.generic.slice();
   }
 
   function buildFocusSteering({ characterId, kind, whisperText, priorMonologueCount, scene }) {
@@ -1815,13 +1917,15 @@
     const selfCount = focusMix.filter((f) => f === "self").length;
     const requireWorld = selfCount >= ATTENTION_BALANCER.maxSelfFocusedInWindow || (turnIndex % 2 === 0);
     const anchors = sceneAnchors(scene);
-    const anchor = anchors.length ? anchors[(turnIndex - 1) % anchors.length] : ATTENTION_BALANCER.sceneFallbackAnchors[0];
+    const fallbackAnchors = ATTENTION_BALANCER.sceneFallbackAnchors.generic;
+    const anchor = anchors.length ? anchors[(turnIndex - 1) % anchors.length] : fallbackAnchors[0];
     const whisperTone = classifyWhisperTone(whisperText).tone;
 
     return {
       turnIndex,
       requireWorld,
       keepSimple: true,
+      maxIdeas: 2,
       maxFirstPersonRatio: requireWorld ? 0.10 : 0.14,
       anchor,
       whisperTone,
@@ -1834,14 +1938,15 @@
     if (!plan) return "- Focus steering unavailable.";
 
     const worldLine = plan.requireWorld
-      ? "- This turn MUST start from the outside world: one object/sound/other person in the room before inner commentary."
-      : "- This turn should include at least one concrete room detail before self-analysis.";
+      ? "- Let the thought notice one outside object, sound, or person before drifting inward, but do not force a stock scene-opening line."
+      : "- A concrete outside detail is welcome, but do not force scene-setting if the thought wants to start elsewhere.";
 
     return [
       worldLine,
       "- Keep language plain and simple. Prefer short sentences over layered abstraction.",
+      `- Keep to one dominant idea, with at most one brief secondary pivot (max ${plan.maxIdeas} ideas total).`,
+      "- Do not introduce a third task, memory line, or concern.",
       `- Keep first-person usage low (target <=${Math.round(plan.maxFirstPersonRatio * 100)}%).`,
-      `- Suggested world anchor for this turn: ${plan.anchor}`,
       `- Recent self-focused count (last ${plan.sampleCount}): ${plan.selfCount}.`
     ].join("\n");
   }
@@ -1849,10 +1954,6 @@
   function enforceFocusSteering(text, plan) {
     let out = normalizeWhitespace(text);
     if (!out || !plan) return out;
-
-    if (plan.requireWorld && !hasConcreteWorldCue(out)) {
-      out = `${plan.anchor} ${out}`;
-    }
 
     out = simplifyLanguage(out);
     out = reduceFirstPersonReferences(out, plan.maxFirstPersonRatio, THOUGHT_WORD_MIN);
@@ -1864,7 +1965,7 @@
     const t = normalizeWhitespace(whisperText).toLowerCase();
     if (!t) return { tone: "neutral", repeated: false };
 
-    const calm = /(relax|calm|breathe|breath|soft|gentle|steady|slow|ease|quiet)/.test(t);
+    const calm = /(relax|calm|soft|gentle|steady|slow|ease|quiet)/.test(t);
     const threat = /(danger|fear|panic|dead|die|dark|unsafe|hurt|blood|loss|alone)/.test(t);
     const urgent = /(now|hurry|must|never|stop|run|quick|urgent)/.test(t);
     const tender = /(forgive|love|warm|home|kind|hold|safe|tender)/.test(t);
@@ -1886,86 +1987,6 @@
     if (threat) return { tone: "threat", repeated };
     if (tender) return { tone: "tender", repeated };
     return { tone: "neutral", repeated };
-  }
-
-  function hasWhisperBendCue(text) {
-    const t = normalizeWhitespace(text).toLowerCase();
-    if (!t) return false;
-    return /\b(breath|pulse|jaw|shoulders|chest|nerves|skin|heartbeat|pressure|cadence|rhythm|echo)\b/.test(t);
-  }
-
-  function hasToneSpecificWhisperBend(text, whisperText) {
-    const t = normalizeWhitespace(text).toLowerCase();
-    if (!t) return false;
-
-    const { tone, repeated } = classifyWhisperTone(whisperText);
-    const hasBody = /\b(breath|pulse|jaw|shoulders|chest|nerves|skin|heartbeat|muscle|tension|hands)\b/.test(t);
-    const hasRhythm = /\b(cadence|rhythm|echo|repetition|repeated|again)\b/.test(t);
-
-    if (tone === "calm") {
-      const hasCalmLex = /\b(calm|steady|slower|slow|ease|unclench|soften|soothe|settle)\b/.test(t);
-      return hasCalmLex && (hasBody || hasRhythm);
-    }
-    if (tone === "urgent") {
-      const hasUrgentLex = /\b(urgent|hurry|rush|faster|compress|tighten|narrow|timing)\b/.test(t);
-      return hasUrgentLex && hasBody;
-    }
-    if (tone === "threat") {
-      const hasThreatLex = /\b(risk|danger|threat|exit|scan|vigilance|unsafe|protect)\b/.test(t);
-      return hasThreatLex && (hasBody || /\b(door|aisle|window|route)\b/.test(t));
-    }
-    if (tone === "tender") {
-      const hasTenderLex = /\b(soft|tender|warm|gentle|forgive|kind|loosen)\b/.test(t);
-      return hasTenderLex && (hasBody || /\b(memory|remember)\b/.test(t));
-    }
-
-    if (repeated) return hasRhythm;
-    return hasWhisperBendCue(t);
-  }
-
-  function buildWhisperCue(whisperText, psyche = null) {
-    const { tone, repeated } = classifyWhisperTone(whisperText);
-    const highArousal = Number(psyche?.arousal || 0) > 0.62;
-
-    if (tone === "calm") {
-      if (repeated) return highArousal
-        ? "Repetition taps the ribs; breath counts, then stutters"
-        : "A repeated calming cadence lands; breath slows by increments";
-      return highArousal
-        ? "Breath is counted on purpose; shoulders try to drop"
-        : "A calmer register settles in; jaw unclenches a little";
-    }
-
-    if (tone === "urgent") {
-      return "Timing compresses; pulse and planning speed up together";
-    }
-
-    if (tone === "threat") {
-      return "Nerves spike; exits and consequences sharpen at once";
-    }
-
-    if (tone === "tender") {
-      return "A softer pressure arrives; old grief loosens slightly";
-    }
-
-    return repeated
-      ? "The repeated phrase keeps knocking against attention"
-      : "The phrase lingers as background pressure under thought";
-  }
-
-  function enforceWhisperBend(text, whisperText, psyche = null, opts = {}) {
-    const base = normalizeWhitespace(text);
-    const whisper = normalizeWhitespace(whisperText);
-    const strict = !!opts.strict;
-    if (!base || !whisper) return base;
-    if (strict) {
-      if (hasToneSpecificWhisperBend(base, whisper)) return base;
-    } else if (hasWhisperBendCue(base)) {
-      return base;
-    }
-
-    const cue = buildWhisperCue(whisper, psyche);
-    return normalizeWhitespace(`${cue}. ${base}`);
   }
 
   async function safeReadText(resp) {

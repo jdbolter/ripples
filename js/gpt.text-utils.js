@@ -56,7 +56,22 @@
       out.push(w);
       if (isWord) seen += 1;
     }
-    return normalizeWhitespace(out.join(" "));
+    let truncated = normalizeWhitespace(out.join(" "));
+    truncated = trimDanglingEnding(truncated, 0);
+
+    const clauses = splitClauses(truncated);
+    if (clauses.length > 1) {
+      const lastClause = clauses[clauses.length - 1] || "";
+      const lastWords = splitWords(lastClause);
+      const lastToken = canonicalToken(lastWords[lastWords.length - 1] || "");
+      if (lastWords.length <= 4 || !/[.!?]$/.test(lastClause) || isLikelyClippedEndToken(lastToken)) {
+        clauses.pop();
+        const trimmed = normalizeWhitespace(clauses.join(" "));
+        if (wordCount(trimmed) >= Math.max(1, maxWords - 12)) return trimmed;
+      }
+    }
+
+    return truncated;
   }
 
   function isDanglingEndToken(token) {
@@ -75,6 +90,23 @@
     ]);
 
     return dangling.has(t);
+  }
+
+  function isLikelyClippedEndToken(token) {
+    const t = canonicalToken(token);
+    if (!t) return false;
+    if (isDanglingEndToken(t)) return true;
+
+    const clipped = new Set([
+      "can", "could", "should", "would", "will", "may", "might", "must",
+      "is", "are", "was", "were", "be", "been", "being",
+      "have", "has", "had", "do", "does", "did",
+      "go", "goes", "went", "come", "comes", "came",
+      "want", "wants", "wanted", "know", "knows", "knew",
+      "think", "thinks", "thought", "mean", "means", "meant"
+    ]);
+
+    return clipped.has(t);
   }
 
   function trimDanglingEnding(text, minWords = 0) {
@@ -104,6 +136,7 @@
     let out = truncateToWordCount(text, maxWords);
     if (wordCount(out) >= minWords) return out;
 
+    const baseText = normalizeWhitespace(out);
     const source = splitWords(normalizeWhitespace(fallback || ""));
     if (!source.length) return out;
 
@@ -111,8 +144,21 @@
     if (!needed) return out;
 
     const base = splitWords(out);
-    const start = randInt(0, Math.max(0, source.length - needed));
-    const add = source.slice(start, start + needed);
+    const candidates = [];
+    for (let start = 0; start <= Math.max(0, source.length - needed); start++) {
+      const add = source.slice(start, start + needed);
+      const candidate = normalizeWhitespace(base.concat(add).join(" "));
+      if (!candidate) continue;
+      if (baseText && candidate.includes(`${baseText} ${add.join(" ")}`)) {
+        const addText = normalizeWhitespace(add.join(" "));
+        if (addText && baseText.includes(addText)) continue;
+      }
+      candidates.push(add);
+    }
+
+    const add = candidates.length
+      ? candidates[randInt(0, candidates.length - 1)]
+      : source.slice(Math.max(0, source.length - needed));
     return truncateToWordCount(normalizeWhitespace(base.concat(add).join(" ")), maxWords);
   }
 

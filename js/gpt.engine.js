@@ -28,7 +28,7 @@
 
     const lastWhisper = {};
     const whisperHistory = [];
-    let openingBuffer = "";
+    const openingBufferByCharacter = {};
 
     const psyche = {};
 
@@ -272,7 +272,7 @@
       for (const k of Object.keys(cursorRecent)) delete cursorRecent[k];
       for (const k of Object.keys(lastWhisper)) delete lastWhisper[k];
       whisperHistory.length = 0;
-      openingBuffer = "";
+      for (const k of Object.keys(openingBufferByCharacter)) delete openingBufferByCharacter[k];
       for (const k of Object.keys(psyche)) delete psyche[k];
       initPsycheForScene();
       return snapshot({ worldtext: getScene().meta.baseline, mode: "baseline" });
@@ -332,13 +332,15 @@
       ).length;
     }
 
-    function getOpeningBuffer() {
-      return openingBuffer;
+    function getOpeningBuffer(characterId) {
+      return openingBufferByCharacter[characterId] || "";
     }
 
-    function setOpeningBufferFromThought(text) {
-      openingBuffer = extractLastSentenceOrFragment(text, continuityLeadMaxWords);
-      return openingBuffer;
+    function setOpeningBufferFromThought(characterId, text) {
+      const id = String(characterId || "").trim();
+      if (!id) return "";
+      openingBufferByCharacter[id] = extractLastSentenceOrFragment(text, continuityLeadMaxWords);
+      return openingBufferByCharacter[id];
     }
 
     function nextMonologue(characterId, channel) {

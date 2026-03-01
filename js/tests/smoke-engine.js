@@ -72,7 +72,8 @@ engine.newTrace({ kind: "LISTEN", characterId: "a", channel: "THOUGHTS", text: "
 assert.equal(engine.getMonologueCount("a"), 1);
 assert.equal(engine.getRecentMonologues("a", 3).length, 1);
 
-engine.setOpeningBufferFromThought("One sentence. Another sentence.");
-assert.equal(engine.getOpeningBuffer(), "tail fragment");
+engine.setOpeningBufferFromThought("a", "One sentence. Another sentence.");
+assert.equal(engine.getOpeningBuffer("a"), "tail fragment");
+assert.equal(engine.getOpeningBuffer("b"), "");
 
 console.log("smoke-engine: ok");

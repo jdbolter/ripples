@@ -72,7 +72,7 @@
       "late";
     const disclosureGuidance = disclosurePhase === "early"
       ? [
-          "- Vary openings unpredictably (object detail, body sensation, admin/money task, stray memory, abstract dread).",
+          "- Vary openings unpredictably (object detail, admin/money task, stray memory, social observation, abstract unease).",
           "- Keep core conflict mostly indirect; at most one brief allusive signal.",
           "- Stay with one dominant concern; avoid piling multiple concern threads.",
           "- Do not name the character's deepest fear or full backstory directly yet."
@@ -185,12 +185,14 @@
             ? "- Start from a partial echo of the whisper-derived opening phrase, then continue as interior thought; do not address the whisperer."
             : "- Do NOT quote the whisper and do NOT address the whisperer.",
           "- Do not repeat the same whisper phrase twice in one monologue.",
-          "- Let the whisper clearly bend mood and imagery.",
-          "- The bend must be visible in the opening clause and still present at the end.",
-          "- Include one concrete bodily response influenced by the whisper.",
-          "- Incorporate ONE concrete image implied by the whisper (object/place/bodily sensation/sound).",
+          "- Let the whisper clearly and immediately alter the next thought.",
+          "- The effect must be visible in the opening clause and still present at the end.",
+          "- The semantic content of the whisper should enter the monologue, not just a vague atmosphere around it.",
+          "- Include one concrete shift in attention, interpretation, memory, or social perception caused by the whisper.",
+          "- If the whisper implies rest, fear, haste, permission, doubt, or longing, let that implication become active in the thought right away.",
+          "- Incorporate ONE concrete image implied by the whisper (object/place/sound/memory fragment/social detail).",
           "- If the whisper is repetitive, echo a sense of repetition rhythm without quoting it.",
-          "- Keep it human and plausible, but not faint.",
+          "- Keep it human and plausible, but not faint or delayed.",
           ""
         ].join("\n")
       : [
@@ -202,37 +204,37 @@
       ? whisperTone.tone === "calm"
         ? [
             "Whisper-specific rule:",
-            "- Because this whisper is calming, include a concrete de-escalation attempt (breath, jaw, shoulders, pulse, or pacing).",
-            "- If calming fails, show the failure in concrete body language."
+            "- Because this whisper is calming, include a concrete softening, slowing, permission to stop, or desire to rest in the very first sentence.",
+            "- If calming fails, show the failure in thought, memory, or mood rather than physical reaction."
           ].join("\n")
         : whisperTone.tone === "urgent"
           ? [
               "Whisper-specific rule:",
-              "- Because this whisper is urgent, show immediate compression of timing and decisions.",
-              "- Include one body signal of urgency (pulse, breath rate, muscle tension, or narrowed attention)."
+              "- Because this whisper is urgent, show immediate compression of timing and decisions in the first sentence.",
+              "- Include one mental or practical signal of urgency (narrowed attention, abrupt reprioritizing, or decision pressure)."
             ].join("\n")
           : whisperTone.tone === "threat"
             ? [
                 "Whisper-specific rule:",
-                "- Because this whisper is threatening, show vigilance/risk-scanning in concrete terms.",
+                "- Because this whisper is threatening, show vigilance, suspicion, or risk-scanning in concrete terms immediately.",
                 "- Include one protective or avoidant micro-action."
               ].join("\n")
             : whisperTone.tone === "tender"
               ? [
                   "Whisper-specific rule:",
-                  "- Because this whisper is tender, show softening without sentimentality.",
-                  "- Include one concrete memory or body shift tied to that softening."
+                  "- Because this whisper is tender, show softening without sentimentality immediately.",
+                  "- Include one concrete memory, reinterpretation, or social softening tied to that tenderness."
                 ].join("\n")
               : [
                   "Whisper-specific rule:",
-                  "- Show a concrete cognitive or bodily aftereffect of the whisper."
+                  "- Show a concrete cognitive, tonal, or motivational aftereffect of the whisper in the first sentence."
                 ].join("\n")
       : "No whisper-specific rule.";
 
     const concernConstraint = isPosthuman
-      ? "- Include one immediate embodied concern (shelter, hunger, injury risk, weather, territory, energy, predation, mating pressure, seasonal survival)."
+        ? "- Include one immediate survival concern (shelter, weather, territory, energy, predation, mating pressure, seasonal pressure)."
       : pressureProfile === "focused"
-        ? "- Include one immediate personal concern (status, work, money, health, aging, regret, belonging, obligation, reputation, deadline, body discomfort)."
+        ? "- Include one immediate personal concern (status, work, money, family, aging, regret, belonging, obligation, reputation, deadline, emotional discomfort)."
         : "- Include one concrete present-moment observation; concern can be background rather than the center.";
 
     const userPrompt = [
@@ -246,7 +248,7 @@
       "Sentence fragments are allowed.",
       "At most ONE clause may lean strongly lyrical/metaphoric.",
       "Do not rely on dust, light, shadow, air, or silence as primary imagery.",
-      "Introduce at least one concrete anchor (object, admin task, bodily sensation, sound, or memory shard).",
+      "Introduce at least one concrete anchor (object, admin task, sound, memory shard, or social detail).",
       concernConstraint,
       "Output must be JSON only (no markdown, no extra text).",
       "Avoid repeating imagery or nouns from recent monologues, except deliberate carried-over riff anchors.",
