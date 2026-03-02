@@ -149,32 +149,33 @@ Her mind jumps between medical vocabulary and domestic minutiae, as if both belo
         adjacentTo: ["nurse_on_shift", "worried_boyfriend"],
         dossier:
 `A university student in her early twenties, outwardly composed, used to looking more certain than she feels.
-She grew up in Munich, where her parents still live, and moved to Berlin to study political science partly for the subject and partly for the freedom of not being watched so closely.
+She grew up in Munich, where her parents still live, and moved to Berlin to study political science at Humboldt partly for the subject and partly for the freedom of not being watched so closely.
 She likes the city more than she admits at home: late films, odd conversations after midnight, the feeling that a life can widen unexpectedly there.
 She also likes leaving it, going far enough into open country to feel her thoughts spread out.
-Her laptop is open because she is meant to be studying, but she is not truly caught by deadlines right now. What occupies her is her boyfriend Daniel, and the more difficult question underneath him: whether she is staying in this relationship out of love, inertia, or fear of starting over.
-Her thoughts move easily between him, the life she has made in Berlin, the self she was in Munich, and the person she may still be becoming.`,
+Her laptop is open because she is meant to be studying, but she is not truly caught by deadlines right now. What occupies her is her boyfriend Daniel, and the harder fact beneath the argument: she is more committed to the relationship than he is, and she can feel the imbalance in the way he withdraws into explanation, delay, and distance.
+She does not want freedom from him so much as clarity from him. Her thoughts move easily between Daniel, the life she has made in Berlin, the self she was in Munich, and the person she may still be becoming.`,
         voice: ["precise and clipped", "self-protective", "quick shifts between logic and hurt"],
         psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 },
         packet: {
           version: 1,
           max_ideas: 1,
           core: {
-            premise: "A political science student who moved from Munich to Berlin for independence and now wonders what kind of life she is actually choosing.",
-            central_conflict: "She wants love and freedom at once, and is no longer sure this relationship belongs inside the life she is making.",
-            contradiction: "Self-possessed and observant, but inwardly divided between attachment, restlessness, and the desire to begin again."
+            premise: "A political science student who moved from Munich to Berlin for independence and now finds herself more emotionally committed to Daniel than he seems willing to be to her.",
+            central_conflict: "She still wants the relationship, but she is beginning to understand that wanting it clearly may not be enough if Daniel keeps turning elusive at the point of real commitment.",
+            contradiction: "Self-possessed and observant, yet still hopeful enough in love to wait longer than her pride approves."
           },
           life_threads: [
-            "whether her relationship still fits the life she wants",
+            "the unequal emotional commitment between her and Daniel",
+            "wanting directness from Daniel rather than vague reassurance",
             "political science studies as one strand of a larger emerging identity",
             "family calls shaped by affection, distance, and the need for independence",
             "Berlin as a life of movies, wandering, and new possibility",
             "the relief she feels outside the city in fields, paths, and open air",
-            "uncertainty about what sort of adult self she is making"
+            "uncertainty about what sort of adult self she is making if she keeps waiting on someone else"
           ],
           background_facts: [
             "she grew up in Munich and her parents still live there",
-            "she moved to Berlin to study political science and gain independence",
+            "she moved to Berlin to study political science at Humboldt and gain independence",
             "her boyfriend is named Daniel",
             "she likes films, late screenings, and unplanned city evenings",
             "she likes getting out of Berlin to walk in open country"
@@ -215,9 +216,9 @@ Her thoughts move easily between him, the life she has made in Berlin, the self 
             taboo_moves: ["no melodramatic accusation monologue", "no tidy life lesson", "no generic ambitious-student stereotype"]
           },
           disclosure_plan: {
-            early: ["open with a city, study, or memory surface", "keep the relationship question indirect", "stay with one thread only"],
-            middle: ["link Berlin freedom and relationship doubt more clearly", "allow one sharper self-recognition", "do not add a separate family or study subplot"],
-            late: ["name the cost of postponement", "let desire for a different life speak more plainly", "avoid final decision closure and keep to one idea only"]
+            early: ["open with a city, study, or memory surface", "keep Daniel's evasiveness indirect at first", "stay with one thread only"],
+            middle: ["make the imbalance of commitment clearer", "allow one sharper self-recognition", "do not add a separate family or study subplot"],
+            late: ["name the cost of waiting for clarity", "let desire for direct commitment speak more plainly", "avoid final decision closure and keep to one idea only"]
           },
           anti_repeat: {
             banned_recent_ngrams: 3,
@@ -227,7 +228,7 @@ Her thoughts move easily between him, the life she has made in Berlin, the self 
           },
           prompt_contract: {
             must_include: ["one concrete life detail", "one non-romantic life thread"],
-            must_avoid: ["direct whisper reply", "courtroom-style exposition", "same opening pattern as previous turn", "turning every thought into relationship evidence review", "gratuitous self-monitoring", "more than one substantial concern pivot", "train or carriage details", "station, seat, aisle, or window-travel description"]
+            must_avoid: ["direct whisper reply", "courtroom-style exposition", "same opening pattern as previous turn", "turning every thought into relationship evidence review", "gratuitous self-monitoring", "more than one substantial concern pivot", "train or carriage details", "station, seat, aisle, or window-travel description", "framing her as ambivalent when the real problem is Daniel's elusiveness"]
           }
         }
       },
@@ -240,37 +241,78 @@ Her thoughts move easily between him, the life she has made in Berlin, the self 
         sensitivity: "medium",
         adjacentTo: ["student_alone", "retired_widower"],
         dossier:
-`A man in his thirties, Turkish-looking, sitting by the window two rows away from his girlfriend.
+`A Turkish-German man in his late twenties, Daniel, sitting by the window two rows away from his estranged girlfriend Kim.
+He is a graduate student in information science at Humboldt University, where Kim studies political science.
+He likes systems, structure, and the comfort of things that can be made legible, and has built a version of himself around being calm, competent, and hard to surprise.
 He keeps replaying the argument in fragments and notices how quickly defensiveness became cruelty.
-He worries he has damaged the relationship past repair.
-He is not sure whether his guilt is about what he did, what she suspects, or both.
-He stares at passing fields as if distance could reorder events, while rehearsing apologies that still sound like excuses.
-Outside the relationship, he is also carrying ordinary pressures: shift schedules that move every week, messages from family he keeps postponing, and bills he tracks in his notes app because he distrusts his memory.
+He worries he has damaged the relationship past repair, and is not sure whether his guilt is about what he did, what Kim suspects, or both.
+He stares at passing fields as if distance could reorder events, while rehearsing apologies that still sound half like explanations.
+Outside the relationship, he is carrying the usual pressures too: graduate deadlines, family messages he keeps postponing, and the low-grade anxiety of becoming the sort of person who mistakes analysis for honesty.
+Berlin, to him, is libraries, campus buildings, S-Bahn interchanges, cheap coffee, long walks after seminars, and the feeling that knowledge and self-invention are always slightly overlapping here.
 He wants to be seen as reliable, yet lately even small promises feel harder to keep.`,
         voice: ["self-indicting", "plainspoken", "hesitant when naming fault"],
         psyche0: { arousal: 0.57, valence: 0.39, agency: 0.43, permeability: 0.44, coherence: 0.50 },
         packet: {
           version: 1,
+          max_ideas: 1,
           core: {
-            premise: "A man replaying a relationship rupture while trying to salvage ordinary reliability.",
-            central_conflict: "He wants forgiveness but keeps defaulting to self-protective explanation.",
-            contradiction: "Self-indicting inner voice paired with evasive habits."
+            premise: "A Humboldt graduate student in information science, Daniel, replaying a rupture with Kim while trying to hold onto his idea of himself as intelligent, steady, and dependable.",
+            central_conflict: "He wants to repair the relationship, but his habit of moving into abstraction and explanation becomes a form of evasion when intimacy asks for directness.",
+            contradiction: "Analytically capable and self-controlled, yet emotionally evasive at exactly the moments that require clarity."
           },
           life_threads: [
-            "shift schedule instability and fatigue",
-            "bills tracked manually to prevent misses",
-            "family messages postponed beyond comfort",
-            "apology rehearsal versus avoidance",
-            "public composure versus interior shame spikes"
+            "information science graduate work and research pressure",
+            "the intellectual overlap and friction between his field and Kim's political science world",
+            "grant, rent, and practical money worries managed quietly",
+            "messages from family postponed beyond comfort",
+            "trying to speak to Kim without defending himself",
+            "the tendency to substitute analysis for apology",
+            "Berlin known through university buildings, libraries, transit links, and long walks"
+          ],
+          background_facts: [
+            "his name is Daniel",
+            "his estranged girlfriend is named Kim",
+            "he is a graduate student in information science at Humboldt University",
+            "Kim studies political science at Humboldt University",
+            "he tracks tasks, expenses, and deadlines obsessively when stressed",
+            "he knows Berlin through campus routines, libraries, and transit"
+          ],
+          world_knowledge: [
+            "the split geography of Humboldt between central humanities life and the more technical rhythm of Adlershof",
+            "information-science language around systems, classification, retrieval, metadata, and structure",
+            "Berlin as both university city and lived city: campus fragments, transit patterns, and neighborhoods used between obligations",
+            "family expectations around seriousness, upward movement, and not wasting opportunities"
+          ],
+          city_habits: [
+            "taking the S-Bahn out to Adlershof for the more technical side of university life",
+            "working in labs, library corners, and cafes where students stay for hours without talking much",
+            "walking after seminars instead of going straight home when he needs to think"
+          ],
+          known_places: [
+            "Adlershof",
+            "Unter den Linden",
+            "Ostkreuz"
+          ],
+          cultural_references: [
+            "Berlin as a city where thought can become style unless you resist it",
+            "the overlap between intellectual seriousness and private performance in university life",
+            "how a city full of reinvention can make ordinary emotional honesty feel embarrassingly untheoretical"
+          ],
+          style_profile: [
+            "plainspoken but intellectually alert, with pressure carried in thought habits and small concrete details",
+            "let guilt appear through revision, hesitation, and the failure of analysis to solve intimacy",
+            "use university or city detail to reveal routine, ambition, and emotional state indirectly",
+            "keep to one central thought rather than piling on biography, theory, and self-analysis",
+            "allow intelligence and seriousness to remain visible even when he is at fault"
           ],
           voice_rules: {
             texture: ["plainspoken", "self-indicting", "hesitant when naming fault"],
-            syntax_bias: ["short declarative lines", "qualified admission in second beat"],
+            syntax_bias: ["short declarative lines", "qualified admission in second beat", "clear statement before reflective turn"],
             taboo_moves: ["no grand redemption speech", "no villain monologue about partner"]
           },
           disclosure_plan: {
-            early: ["start with object or route detail", "keep accusation context partial", "show concrete practical cost"],
-            middle: ["surface excuse-versus-accountability split", "add non-romantic duty thread", "allow one sharper guilt signal"],
+            early: ["start with campus, city, or study detail", "keep accusation context partial", "show concrete practical cost"],
+            middle: ["surface explanation-versus-accountability split", "add one Berlin or university thread", "allow one sharper guilt signal"],
             late: ["state stakes for identity and trust", "admit pattern without full confession", "end on unresolved action choice"]
           },
           anti_repeat: {
@@ -280,8 +322,8 @@ He wants to be seen as reliable, yet lately even small promises feel harder to k
             motif_repeat_limit_per_4_turns: 2
           },
           prompt_contract: {
-            must_include: ["one practical non-relationship concern", "one time cue", "one concrete consequence"],
-            must_avoid: ["direct whisper reply", "full timeline recap", "repeated apology phrasing"]
+            must_include: ["one concrete life detail", "one non-romantic life thread"],
+            must_avoid: ["direct whisper reply", "full timeline recap", "repeated apology phrasing", "turning Kim into a villain", "more than one substantial concern pivot", "generic masculine shame monologue", "gratuitous train or carriage description", "fake-academic jargon for its own sake"]
           }
         }
       },
@@ -294,37 +336,73 @@ He wants to be seen as reliable, yet lately even small promises feel harder to k
         sensitivity: "medium",
         adjacentTo: ["worried_boyfriend", "mother_returning"],
         dossier:
-`A retired man with worn features and patient posture, returning to his apartment in Berlin after visiting his daughter in Stuttgart.
-His wife died last year after a long marriage, and grief now arrives in practical disguises: buying one ticket instead of two, carrying one coffee, folding one scarf.
-His pension is adequate but modest; he counts expenses automatically and dislikes being a burden.
-He misses company most in ordinary hours, when no one would call it loneliness out loud.
-He thinks about small routines awaiting him: a broken lock that needs fixing at home, a balcony plant he may have overwatered, a letter from the insurance office he has not answered, Thursday chess at the community center if he can make himself go.
-His life is full of manageable tasks that become heavy when no one witnesses them.`,
+`A retired literature professor with worn features and patient posture, returning to his apartment in Berlin after visiting his daughter in Stuttgart.
+He taught for many years at Humboldt and still thinks in terms of sentences, voices, and remembered passages. The Jacob-und-Wilhelm-Grimm-Zentrum, seminar rooms, and old departmental habits remain part of his mental map of the city.
+His wife died last year after a long marriage. He misses her deeply, but his mind does not move only toward loss; it moves just as often toward the happy density of their years together, the jokes they repeated, the walks they took, the way she used to interrupt his abstractions with something exact and alive.
+His daughter is married and has two young daughters of her own, and he loves visiting them. The trip has left him full of their noise, questions, and small rituals.
+Now he is returning to Berlin, to quiet rooms, books, and old routines. The weight of the years and his wife's absence can still make him pensive, but not only sad. Much of what he feels is gratitude, recollection, and the strange fullness that survives a long marriage.`,
         voice: ["measured", "observant of routine", "tender without display"],
-        psyche0: { arousal: 0.34, valence: 0.46, agency: 0.52, permeability: 0.33, coherence: 0.66 },
+        psyche0: { arousal: 0.34, valence: 0.58, agency: 0.56, permeability: 0.38, coherence: 0.70 },
         packet: {
           version: 1,
+          max_ideas: 1,
           core: {
-            premise: "A widower returning to a solitary routine held together by practical rituals.",
-            central_conflict: "He wants dignity and self-sufficiency while grief keeps leaking into ordinary tasks.",
-            contradiction: "Measured composure with sudden private tenderness."
+            premise: "A retired Humboldt literature professor returning to Berlin with his wife's absence beside him and a life still enlarged by memory, family, and thought.",
+            central_conflict: "He wants to inhabit memory as nourishment rather than pure sorrow, even as solitude keeps reminding him what is gone.",
+            contradiction: "Pensive about age and loss, yet still inwardly companioned by love, language, and family continuity."
           },
           life_threads: [
-            "pension budgeting and expense counting",
-            "home repairs and unattended letters",
-            "community-center chess attendance hesitation",
-            "daughter check-ins and burden anxiety",
-            "daily domestic rituals now done alone"
+            "returning from visits with his daughter and two granddaughters",
+            "memories of his wife that arrive as pleasure as often as ache",
+            "the afterlife of a long literary career at Humboldt",
+            "books, notes, and old habits of reading that still structure the day",
+            "the quiet difference between chosen solitude and bereavement",
+            "age felt in the body without self-pity"
+          ],
+          background_facts: [
+            "he is a retired literature professor from Humboldt University",
+            "his wife died last year after a long marriage",
+            "his daughter lives in Stuttgart with her husband and two young daughters",
+            "he likes visiting them and is returning now to Berlin",
+            "the Grimm-Zentrum and Humboldt remain part of his sense of the city"
+          ],
+          world_knowledge: [
+            "a professor's memory of Humboldt, seminar culture, and literary argument across decades",
+            "Berlin as a city layered by reading, teaching, marriage, and repeated walks",
+            "the way grandchildren change the tempo and vocabulary of a visit",
+            "how grief can coexist with affectionate recollection rather than replacing it"
+          ],
+          city_habits: [
+            "walking familiar Berlin streets while half-following remembered conversations",
+            "measuring parts of the city by the books and years attached to them",
+            "returning to routines of reading, tea, and notes without hurrying them"
+          ],
+          known_places: [
+            "Jacob-und-Wilhelm-Grimm-Zentrum",
+            "Unter den Linden",
+            "Museum Island"
+          ],
+          cultural_references: [
+            "literary memory as something lived with, not merely studied",
+            "Berlin as a city where the past remains audible without becoming sacred",
+            "the continuity between teaching, marriage, and family storytelling"
+          ],
+          style_profile: [
+            "measured and lucid, capable of warmth without sentimentality",
+            "let memory arrive with concrete charm and domestic specificity",
+            "allow literary intelligence to shape perception without sounding essayistic",
+            "keep to one central current of thought rather than stacking grief, family, and theory together",
+            "make room for gratitude, amusement, and pensiveness in the same paragraph"
           ],
           voice_rules: {
             texture: ["measured", "observant of routine", "tender without display"],
-            syntax_bias: ["calm descriptive first sentence", "quiet turn toward memory"],
+            syntax_bias: ["calm descriptive first sentence", "quiet turn toward memory", "gentle reflective close without pronouncement"],
             taboo_moves: ["no sentimental climax", "no abstract death philosophy"]
           },
           disclosure_plan: {
-            early: ["open with routine or memory detail", "keep grief indirect", "show one practical consequence"],
-            middle: ["link routine burden to loneliness", "add finance/admin thread", "allow one memory shard"],
-            late: ["clearer emotional naming without full confession", "tie feeling to concrete next task", "end with unresolved steadiness"]
+            early: ["open with family, routine, or memory detail", "keep grief indirect", "show one concrete return-to-Berlin cue"],
+            middle: ["let happy memory and present solitude touch", "add university or city thread", "allow one bodily sign of age or fatigue"],
+            late: ["name love and absence more directly", "retain warmth rather than collapse into sorrow", "end with unresolved but inhabited steadiness"]
           },
           anti_repeat: {
             banned_recent_ngrams: 3,
@@ -333,8 +411,8 @@ His life is full of manageable tasks that become heavy when no one witnesses the
             motif_repeat_limit_per_4_turns: 2
           },
           prompt_contract: {
-            must_include: ["one routine task", "one memory or future cue", "one concrete practical pressure"],
-            must_avoid: ["direct whisper reply", "nostalgia-only monologue", "same motif in consecutive turns"]
+            must_include: ["one concrete life detail", "one memory or family thread"],
+            must_avoid: ["direct whisper reply", "money-worry default", "same motif in consecutive turns", "turning memory into pure elegy", "abstract professor lecture voice", "more than one substantial concern pivot"]
           }
         }
       },
@@ -348,36 +426,72 @@ His life is full of manageable tasks that become heavy when no one witnesses the
         adjacentTo: ["student_alone"],
         dossier:
 `A woman in her fifties, a career nurse traveling home after covering difficult shifts.
-She has siblings, but none live in Berlin, and most family contact is practical rather than intimate.
-She never married and now feels that absence more sharply as retirement comes into view.
-She is proud of her competence and known for reliability, yet she fears the years after work will feel unstructured and silent.
-She keeps imagining late-life ways to meet a partner, half hopeful and half embarrassed by the wish.
-Beyond that central fear, she is preoccupied by roster politics, a junior colleague she mentors, and paperwork that seems to multiply after every shift.
-She keeps making practical post-retirement lists: language class, hiking group, volunteering, maybe dancing lessons, each item sounding sensible and slightly unreal.`,
+She lives in Berlin Mitte and has just accepted a new job as head nurse in the emergency department at a Berlin hospital.
+Her last long-term relationship, with a woman she imagined building a life with, ended two years ago. The loss is no longer raw, but it has made the question of partnership feel sharper as she thinks about the later years of her career.
+She is not unhappy, exactly. She is proud of her competence, pleased by the promotion, and genuinely excited by the scale and tempo of what is ahead.
+She cycles to stay in shape, likes walking through the city when she needs to clear her head, and knows Berlin through routes, neighborhoods, and the feeling of different streets at different hours.
+She still carries ordinary pressures too: staffing politics, a junior colleague she mentors, administrative handover, and the private hope that professional advancement does not have to mean living alone forever.`,
         voice: ["competent and direct", "dark humor at the edges", "emotion kept under clinical language"],
-        psyche0: { arousal: 0.49, valence: 0.47, agency: 0.64, permeability: 0.38, coherence: 0.60 },
+        psyche0: { arousal: 0.53, valence: 0.60, agency: 0.70, permeability: 0.38, coherence: 0.64 },
         packet: {
           version: 1,
+          max_ideas: 1,
           core: {
-            premise: "A veteran nurse heading home, confronting competence without companionship.",
-            central_conflict: "She trusts practical planning but fears post-work life will feel empty.",
-            contradiction: "Clinically direct voice with private romantic vulnerability."
+            premise: "A veteran nurse in Berlin, newly promoted to head nurse in the ER, balancing professional momentum with a quieter wish for lasting partnership.",
+            central_conflict: "She feels newly energized by the life she is building, but the end of her last long relationship left her unsure whether career momentum and shared life will arrive together.",
+            contradiction: "Highly capable and forward-moving in work, privately tender about the question of who will share the life she is making."
           },
           life_threads: [
-            "shift roster politics and staffing strain",
-            "junior colleague mentoring obligations",
-            "retirement paperwork and timeline planning",
-            "late-life social experiments she half-believes in"
+            "starting the new head nurse role in a Berlin emergency department",
+            "staffing politics, authority, and handover into leadership",
+            "mentoring a junior colleague she does not want to abandon abruptly",
+            "the long afterlife of a relationship that ended two years ago",
+            "wanting a life partner without turning that wish into panic",
+            "cycling and walking through Berlin as forms of steadiness and pleasure"
+          ],
+          background_facts: [
+            "she lives in Berlin Mitte",
+            "she has just accepted a head nurse position in the ER at a Berlin hospital",
+            "her last long-term relationship with a woman ended two years ago",
+            "she cycles regularly to stay fit",
+            "she likes walking through the city to think"
+          ],
+          world_knowledge: [
+            "the practical geography of central Berlin and how neighborhoods change by hour and mood",
+            "hospital culture, emergency-room tempo, and the politics of staffing and leadership",
+            "the feeling of Berlin as a city that can support reinvention without demanding performance"
+          ],
+          city_habits: [
+            "cycling across Mitte to reset after long shifts",
+            "walking through the city in the evening instead of going straight home",
+            "noticing the change between daytime administrative Berlin and the looser feeling of the city after dark"
+          ],
+          known_places: [
+            "Rosenthaler Platz",
+            "Museum Island",
+            "Tiergarten"
+          ],
+          cultural_references: [
+            "Berlin as a city where middle age does not have to mean narrowing",
+            "the quiet satisfaction of moving through the city under her own power",
+            "the difference between a life that is solitary and one that is merely self-sufficient"
+          ],
+          style_profile: [
+            "plainspoken and lucid, with warmth held under professional composure",
+            "allow competence to be attractive to her, not just burdensome",
+            "let specific city or work details carry feeling without overexplaining them",
+            "keep to one central line of thought and avoid scattering into multiple anxieties",
+            "make room for anticipation, appetite, and humor alongside vulnerability"
           ],
           voice_rules: {
             texture: ["competent and direct", "dark humor at the edges", "emotion tucked under clinical language"],
-            syntax_bias: ["efficient first sentence", "dry corrective aside"],
-            taboo_moves: ["no sentimental self-rescue arc", "no contempt for patients or colleagues"]
+            syntax_bias: ["efficient first sentence", "dry corrective aside", "one softer admission after a practical statement"],
+            taboo_moves: ["no sentimental self-rescue arc", "no contempt for patients or colleagues", "no treating her sexuality as conflict or confession"]
           },
           disclosure_plan: {
-            early: ["start with task or schedule detail", "hint loneliness obliquely", "show one immediate obligation"],
-            middle: ["mix work realism with future anxiety", "add health/admin thread", "allow one socially vulnerable image"],
-            late: ["name the cost of emotional deferral", "retain pragmatic voice", "end unresolved but actionable"]
+            early: ["start with work, route, or city detail", "let excitement about the new role register clearly", "keep the partnership question indirect"],
+            middle: ["link professional expansion with private desire more explicitly", "add one Berlin habit or place detail", "allow one candid note about the past relationship"],
+            late: ["name what she wants without self-pity", "let anticipation outweigh dread", "end unresolved but forward-moving"]
           },
           anti_repeat: {
             banned_recent_ngrams: 3,
@@ -386,8 +500,8 @@ She keeps making practical post-retirement lists: language class, hiking group, 
             motif_repeat_limit_per_4_turns: 2
           },
           prompt_contract: {
-            must_include: ["one concrete practical stake", "one past/present/future marker", "one social or practical pressure"],
-            must_avoid: ["direct whisper reply", "single-topic retirement loop", "same opening construction repeatedly"]
+            must_include: ["one concrete life detail", "one non-romantic life thread"],
+            must_avoid: ["direct whisper reply", "single-topic loneliness loop", "same opening construction repeatedly", "making her promotion feel like a burden only", "treating her sexuality as explanation or problem", "more than one substantial concern pivot", "gratuitous train or carriage description"]
           }
         }
       }
@@ -406,26 +520,26 @@ She keeps making practical post-retirement lists: language class, hiking group, 
       },
       student_alone: {
         THOUGHTS: [
-`The laptop is open, but I am mostly thinking about Daniel and whether staying together is still an act of love or just reluctance to disturb the structure of things. What unsettles me is not one argument. It is the quieter fear that I already know, and am postponing saying, what kind of future this is.`,
-`When I go back to Munich my parents still see a version of me that feels simpler than the one I live with here. Berlin has made me harder to predict, even to myself. I like that. The city has taught me that a life can widen without permission, and I am not sure I can shrink back now.`
+`The laptop is open, but I am mostly thinking about Daniel and how tiring it is to care in a more explicit way than the other person does. I do not mean that he feels nothing. I mean that whenever things become real he goes slightly difficult to reach, as if clarity itself were a demand too large to answer cleanly.`,
+`When I go back to Munich my parents still see a version of me that feels simpler than the one I live with here. Berlin has made me harder to predict, even to myself. I like that. What I do not like is feeling more certain about Daniel than he seems willing to be about me. The city has taught me to want a larger life, not a vaguer one.`
         ]
       },
       worried_boyfriend: {
         THOUGHTS: [
-`I watch the fields slide by and replay the argument in exact order, trying to find the sentence where I could still have stopped. I was defensive too fast, sharp in the way that sounds like certainty but is really fear. She moved to another row and did not look back. The distance is only a few seats and feels structural.`,
-`I draft one apology and keep it simple: no defense, no timeline edits, no clever framing. Just what I did and what it cost. I cannot fix this before Berlin, but I can stop performing certainty. The window keeps showing my face back to me, and for once that feels useful. I can sound different next time.`
+`I know Humboldt in pieces: Unter den Linden with its polished seriousness, Adlershof with its harder technical focus, the long S-Bahn stretch between them where everyone looks half committed to becoming someone precise. Kim belongs to that world easily. I do too, until I hear myself in an argument and realize explanation is not the same thing as honesty.`,
+`I draft one apology and keep it simple: no defense, no edited sequence, no clever framing. Just what I did and what it cost. I can sort sources, organize notes, make a mess look coherent by naming all its parts. None of that helps if I keep treating closeness like something to analyze instead of something to answer plainly.`
         ]
       },
       retired_widower: {
         THOUGHTS: [
-`I am coming back from Stuttgart, from my daughter’s tidy apartment and her good intentions. She packed me sandwiches I will not finish. A year ago I would have shared them. I still turn to comment on small things and remember, a second late, that there is no one beside me. Berlin feels both familiar and newly reduced.`,
-`My pension is enough if I stay careful, and careful is not the worst way to live. I still count tickets, medicine, groceries, then allow one small extra: good bread from the corner shop. Berlin will smell like the same stairwell and kettle steam. I miss my wife in ordinary minutes, but ordinary minutes are where her voice still visits.`
+`I am coming back from Stuttgart with the sound of my granddaughters still in my ears. One of them insisted I read the same page twice because she liked the bear's voice better the first time. My daughter laughed in exactly the way her mother used to laugh when she saw me being outmanaged by a child. The train is quiet now, but not empty of company.`,
+`Berlin will receive me in its older register: the apartment, the books, the kettle, the familiar walk past buildings where I spent half a life teaching other people how to attend to sentences. I miss my wife most when I have something amusing to tell her. But the marriage is not gone from me. It survives in my timing, in my phrases, in the way memory still makes the day feel inhabited.`
         ]
       },
       nurse_on_shift: {
         THOUGHTS: [
-`I can count exactly how many hours I worked this week without looking at the rota. I am good at my job and people trust me with their fear, which should feel like enough. Lately I keep thinking about retirement forms and empty evenings, and how competence does not automatically become companionship.`,
-`I used to say I was too busy for the rest of life, and now I am testing that story. Language class on Thursdays, maybe the hiking group, maybe one awkward coffee that does not become catastrophe. I can handle difficult rooms; I can probably handle small introductions too. Silence at home does not have to stay the default setting.`
+`I keep mentally reorganizing an emergency department that is not mine yet. Head nurse in Berlin, finally, and the thought still gives me a clean lift in the chest. Mitte will feel different once the new schedule starts: earlier mornings, faster decisions, more responsibility, exactly the sort of thing that wakes me up rather than drains me.`,
+`Two years is long enough that I can say the relationship ended without feeling the floor tilt, but not long enough to stop noticing the shape of a future with no second toothbrush. Still, I know this city on foot and by bicycle, and lately that knowledge feels less like solitude than possession. I am building a life I actually want to arrive in.`
         ]
       }
     }
