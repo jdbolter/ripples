@@ -85,8 +85,9 @@
   ]);
   const AUTO_THOUGHT = {
     enabled: true,
-    intervalMs: 30_000,
-    retryWhileBusyMs: 1_200
+    intervalMs: 20_000,
+    retryWhileBusyMs: 1_200,
+    passiveCyclesBeforeAdvance: 2
   };
 
   // Single switch for system dynamics:
@@ -240,6 +241,12 @@
   let isGenerating = false;
   const apiNarrativeState = {};
   let autoThoughtTimer = null;
+  const autoAdvanceState = {
+    activeCharacterId: null,
+    previousCharacterId: null,
+    passiveListenCount: 0,
+    adjacencyCursorByCharacter: Object.create(null)
+  };
 
   let isApiKeyChecking = false;
 
@@ -268,6 +275,67 @@
     }
   }
 
+  function resetAutoAdvanceState() {
+    autoAdvanceState.activeCharacterId = null;
+    autoAdvanceState.previousCharacterId = null;
+    autoAdvanceState.passiveListenCount = 0;
+    autoAdvanceState.adjacencyCursorByCharacter = Object.create(null);
+  }
+
+  function noteUserFocusInteraction(characterId) {
+    autoAdvanceState.activeCharacterId = characterId || null;
+    autoAdvanceState.previousCharacterId = null;
+    autoAdvanceState.passiveListenCount = 0;
+  }
+
+  function noteAutoFocusSwitch({ fromCharacterId, toCharacterId }) {
+    autoAdvanceState.activeCharacterId = toCharacterId || null;
+    autoAdvanceState.previousCharacterId = fromCharacterId || null;
+    autoAdvanceState.passiveListenCount = 0;
+  }
+
+  function notePassiveListen(characterId) {
+    const id = String(characterId || "").trim();
+    if (!id) return 0;
+    if (autoAdvanceState.activeCharacterId !== id) {
+      autoAdvanceState.activeCharacterId = id;
+      autoAdvanceState.passiveListenCount = 0;
+    }
+    autoAdvanceState.passiveListenCount += 1;
+    return autoAdvanceState.passiveListenCount;
+  }
+
+  function getCharacterById(characterId) {
+    const sc = engine.getScene();
+    return (sc.characters || []).find((ch) => ch.id === characterId) || null;
+  }
+
+  function pickNextAutoCharacterId(currentCharacterId) {
+    const sc = engine.getScene();
+    const characters = Array.isArray(sc.characters) ? sc.characters : [];
+    const current = characters.find((ch) => ch.id === currentCharacterId);
+    if (!current) return null;
+
+    const validAdjacentIds = (current.adjacentTo || [])
+      .filter((id) => characters.some((ch) => ch.id === id));
+    if (!validAdjacentIds.length) return null;
+
+    const cursor = autoAdvanceState.adjacencyCursorByCharacter[currentCharacterId] || 0;
+    const orderedIds = validAdjacentIds.map((_, i) => validAdjacentIds[(cursor + i) % validAdjacentIds.length]);
+    let nextId = orderedIds[0];
+
+    if (orderedIds.length > 1 && autoAdvanceState.previousCharacterId) {
+      const nonBacktrackingId = orderedIds.find((id) => id !== autoAdvanceState.previousCharacterId);
+      if (nonBacktrackingId) nextId = nonBacktrackingId;
+    }
+
+    const chosenIndex = validAdjacentIds.indexOf(nextId);
+    autoAdvanceState.adjacencyCursorByCharacter[currentCharacterId] =
+      (chosenIndex + 1) % validAdjacentIds.length;
+
+    return nextId;
+  }
+
   function scheduleAutoThought(delayMs = AUTO_THOUGHT.intervalMs) {
     clearAutoThoughtTimer();
     if (!AUTO_THOUGHT.enabled) return;
@@ -288,7 +356,8 @@
         characterId: activeId,
         channel: DEFAULT_CHANNEL,
         kind: EVENT_KIND.LISTEN,
-        whisperText: null
+        whisperText: null,
+        trigger: "auto-listen"
       });
     }, Math.max(250, Number(delayMs) || AUTO_THOUGHT.intervalMs));
   }
@@ -308,6 +377,7 @@
     ui.render(snap, { forceWorldtext: snap.uiText.worldtext, mode: snap.uiText.mode });
     showSelectPromptIfNeeded();
     clearAutoThoughtTimer();
+    resetAutoAdvanceState();
 
     const runtimeConfig = await detectRuntimeConfig();
     apiAccessMode = runtimeConfig.useServerProxy ? API_ACCESS_MODE.PROXY : API_ACCESS_MODE.MANUAL;
@@ -326,6 +396,7 @@
     ui.bindUI({
       onScenarioChange: (sceneId) => {
         clearAutoThoughtTimer();
+        resetAutoAdvanceState();
         ui.closeFocus();
         const snap = engine.loadScene(sceneId);
         ui.preloadSceneImages(engine.getScene());
@@ -367,11 +438,17 @@
   // -----------------------------
   // Actions
   // -----------------------------
-  function onSelectCharacter(id) {
+  async function focusCharacter(id, { source = "manual", closeCurrentFocus = false } = {}) {
     clearAutoThoughtTimer();
+    const previousSelectedId = engine.getSelectedId();
     engine.selectCharacter(id);
-    const sc = engine.getScene();
-    const ch = sc.characters.find((c) => c.id === id);
+    const ch = getCharacterById(id);
+
+    if (source === "auto") {
+      noteAutoFocusSwitch({ fromCharacterId: previousSelectedId, toCharacterId: id });
+    } else {
+      noteUserFocusInteraction(id);
+    }
 
     ui.setSelectedPillText(
       ch?.label
@@ -379,7 +456,7 @@
         : (id ? String(id).toUpperCase() : ui.getDefaultSelectedPillText())
     );
 
-    if (ui.getFocusMode() === "prompt") ui.closeFocus();
+    if (ui.getFocusMode() === "prompt" || closeCurrentFocus) ui.closeFocus();
 
     // Open photo slightly delayed (aesthetic)
     if (ch?.image) {
@@ -388,12 +465,17 @@
       ui.closeFocus();
     }
 
-    void requestMonologue({
+    await requestMonologue({
       characterId: id,
       channel: DEFAULT_CHANNEL,
       kind: EVENT_KIND.LISTEN,
-      whisperText: null
+      whisperText: null,
+      trigger: source === "auto" ? "auto-switch" : "manual-select"
     });
+  }
+
+  function onSelectCharacter(id) {
+    void focusCharacter(id, { source: "manual" });
   }
 
   function onWhisperSend() {
@@ -406,15 +488,17 @@
     const whisper = String(ui.getWhisperValue() || "").trim();
     if (!whisper) return;
 
-    engine.recordWhisper(selectedId, whisper);
     clearAutoThoughtTimer();
+    noteUserFocusInteraction(selectedId);
+    engine.recordWhisper(selectedId, whisper);
 
     // Begin generating new monologue (API or local)
     void requestMonologue({
       characterId: selectedId,
       channel: DEFAULT_CHANNEL,
       kind: EVENT_KIND.WHISPER,
-      whisperText: whisper
+      whisperText: whisper,
+      trigger: "whisper"
     });
 
     // TEMPORARILY HIDE PHOTO → SHOW RIPPLE → RESTORE (slow cinematic cycle)
@@ -438,7 +522,23 @@
     ui.clearWhisperValue();
   }
 
-  async function requestMonologue({ characterId, channel, kind, whisperText }) {
+  async function advanceFocusToAdjacentCharacter(currentCharacterId) {
+    const selectedId = engine.getSelectedId();
+    if (!selectedId || selectedId !== currentCharacterId) {
+      scheduleAutoThought(AUTO_THOUGHT.intervalMs);
+      return;
+    }
+
+    const nextCharacterId = pickNextAutoCharacterId(currentCharacterId);
+    if (!nextCharacterId) {
+      scheduleAutoThought(AUTO_THOUGHT.intervalMs);
+      return;
+    }
+
+    await focusCharacter(nextCharacterId, { source: "auto", closeCurrentFocus: true });
+  }
+
+  async function requestMonologue({ characterId, channel, kind, whisperText, trigger = "unknown" }) {
     if (isGenerating) return;
     isGenerating = true;
 
@@ -538,11 +638,21 @@
     ui.renderReplay(snap);
     ui.renderGrid(snap);
     ui.renderLinks(snap);
+
+    if (trigger === "auto-listen") {
+      const passiveCount = notePassiveListen(characterId);
+      if (passiveCount >= AUTO_THOUGHT.passiveCyclesBeforeAdvance) {
+        await advanceFocusToAdjacentCharacter(characterId);
+        return;
+      }
+    }
+
     scheduleAutoThought(AUTO_THOUGHT.intervalMs);
   }
 
   function cycleScene(dir) {
     clearAutoThoughtTimer();
+    resetAutoAdvanceState();
     const scenes = engine.listScenes();
     const cur = ui.getScenarioValue();
     const idx = scenes.findIndex(s => s.id === cur);
