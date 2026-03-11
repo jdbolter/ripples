@@ -5,10 +5,9 @@ It stages interior monologues as dynamic, interdependent events within a shared 
 
 Characters (human or post-human) inhabit a scene.  
 When one character thinks—or when a user “whispers” to them—their internal state shifts.  
-That shift diffuses outward to adjacent entities as a measurable psychic ripple.
+That shift diffuses outward to other characters as a  psychic ripple.
 
-The result is not dialogue but atmosphere:  
-a cumulative field of interior modulation.
+The result is not dialogue but a cumulative confluence of voices and concerns.
 
 ---
 
@@ -20,7 +19,7 @@ Ripples is built around three principles:
 2. **Psychic state as measurable vector**
 3. **Adjacency as diffusion network**
 
-Each character has a bounded internal state:
+Each character has an internal state:
 
 - `arousal`
 - `valence`
