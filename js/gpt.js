@@ -842,7 +842,7 @@
       cooldown: packet.antiRepeat.topicCooldownTurns
     });
     const ambientThread = pickAmbientThread({ scene, state, turnNumber });
-    const shouldSurfaceLongTermThread = pressureProfile === "focused" || (turnNumber % 3 === 0);
+    const shouldSurfaceLongTermThread = pressureProfile === "focused" || (turnNumber % 4 === 0);
 
     const phase = disclosurePhase || (
       priorMonologueCount <= 3 ? "early" :
@@ -851,8 +851,7 @@
     const phaseDirectives = packet.disclosurePlan[phase] || [];
     const includeSecondaryThread = (
       packet.maxIdeas > 1 &&
-      pressureProfile === "focused" &&
-      shouldIncludeSecondaryThread(phase, state.turnIndex)
+      shouldIncludeSecondaryThread(phase, state.turnIndex, pressureProfile)
     );
     const secondaryThread = includeSecondaryThread
       ? pickLifeThread({
@@ -879,11 +878,12 @@
           `- Primary life thread (required, concrete): ${activeThread}.`
         ]
       : [
-          `- Long-term life thread to keep in background: ${activeThread}.`,
+          `- Long-term life pressure available in the background when natural: ${activeThread}.`,
           shouldSurfaceLongTermThread
-            ? "- Mention the long-term thread in at most one short clause this turn."
-            : "- Keep the long-term thread implicit this turn unless naturally needed.",
-          `- Primary thread this turn (required, ordinary/everyday): ${ambientThread}.`
+            ? "- If the long-term pressure appears, keep it brief and woven into ordinary thought rather than making it the whole subject."
+            : "- Let the long-term pressure stay dormant unless the thought naturally brushes against it.",
+          `- Ordinary thought field available this turn: ${ambientThread}.`,
+          "- The thought may stay with ordinary noticing, small routines, social inference, study texture, city life, or passing memory without forcing a major concern."
         ];
 
     const mustIncludeLine = pressureProfile === "focused"
@@ -892,7 +892,11 @@
             ? `- Must include this turn: ${packet.promptContract.mustInclude.join("; ")}.`
             : "- Must include this turn: one practical stake, one time cue, one concrete anchor."
         )
-      : "- Must include this turn: one ordinary concrete detail and one small agency, ease, or pleasant cue.";
+      : (
+          packet.promptContract.mustInclude.length
+            ? `- Soft preference this turn: ${packet.promptContract.mustInclude.join("; ")}.`
+            : "- Soft preference this turn: include at least one ordinary concrete detail, but let the thought find its own subject."
+        );
 
     const mustAvoidLine = pressureProfile === "focused"
       ? (
@@ -900,7 +904,11 @@
             ? `- Must avoid this turn: ${packet.promptContract.mustAvoid.join("; ")}.`
             : "- Must avoid this turn: direct whisper reply; life-summary exposition."
         )
-      : "- Must avoid this turn: direct whisper reply; problem-only monologue; life-summary exposition.";
+      : (
+          packet.promptContract.mustAvoid.length
+            ? `- Core taboos only: ${packet.promptContract.mustAvoid.join("; ")}.`
+            : "- Core taboos only: direct whisper reply; life-summary exposition."
+        );
 
     const backgroundFactsLine = packet.backgroundFacts.length
       ? `- Background facts available without explanation: ${packet.backgroundFacts.join("; ")}.`
@@ -941,19 +949,25 @@
       packet.maxIdeas <= 1
         ? "- No secondary thread allowed this turn; keep the entire thought on a single idea."
         : secondaryThread
-        ? `- Optional secondary thread (at most one brief clause): ${secondaryThread}.`
-        : "- No secondary thread this turn; stay with the primary thread.",
+        ? pressureProfile === "focused"
+          ? `- Optional secondary thread (at most one brief clause): ${secondaryThread}.`
+          : `- Optional side-current if it arises naturally: ${secondaryThread}.`
+        : pressureProfile === "focused"
+          ? "- No secondary thread this turn; stay with the primary thread."
+          : "- No second thread is required; a passing side association is fine if it remains brief.",
       packet.maxIdeas <= 1
         ? "- Hard cap: this monologue must contain exactly one substantial idea or concern thread."
         : pressureProfile === "focused"
         ? "- Hard cap: keep this thought to one dominant concern, with at most one brief secondary pivot."
-        : "- Hard cap: keep this thought to one dominant thread; if long-term pressure appears, keep it brief and non-dominant.",
+        : "- Let the thought have one center of gravity, but allow adjacent ordinary associations to drift through without turning into a checklist of topics.",
       packet.maxIdeas <= 1
         ? "- Do not introduce any second major topic, pivot, memory line, or practical side-thread."
-        : "- Do not introduce a third concern thread in this thought.",
+        : pressureProfile === "focused"
+          ? "- Do not introduce a third concern thread in this thought."
+          : "- Avoid stacking multiple unrelated concerns; one main current plus one or two nearby associations is enough.",
       pressureProfile === "focused"
         ? "- Associative range: stay grounded in immediate detail while tension remains plausible."
-        : "- Associative range: allow mild randomness and everyday drift (travel, landscape, ordinary life observations).",
+        : "- Associative range: allow wider everyday drift across city life, study, bodies, strangers, weather, memory fragments, errands, habits, and social perception as long as the thought still feels like one person's attention.",
       `- Voice texture: ${packet.voiceRules.texture.join(", ")}.`,
       `- Syntax bias: ${packet.voiceRules.syntaxBias.join(", ")}.`,
       `- Taboo stylistic moves: ${packet.voiceRules.tabooMoves.join("; ")}.`,
@@ -966,8 +980,12 @@
         ? `- Opening cooldown: do not reuse these recent openings: ${openingAvoid.join(" || ")}.`
         : "- Opening cooldown: use a fresh opening shape.",
       topicAvoid.length
-        ? `- Topic cooldown: avoid centering these recently used topics: ${topicAvoid.join(", ")}.`
-        : "- Topic cooldown: rotate primary concern across turns, not multiple concerns within one thought.",
+        ? pressureProfile === "focused"
+          ? `- Topic cooldown: avoid centering these recently used topics: ${topicAvoid.join(", ")}.`
+          : `- Topic cooldown: do not let these recently used pressures dominate again unless the thought truly returns to them: ${topicAvoid.join(", ")}.`
+        : pressureProfile === "focused"
+          ? "- Topic cooldown: rotate primary concern across turns, not multiple concerns within one thought."
+          : "- Topic cooldown: vary recurring pressures so ordinary life can re-enter between them.",
       phraseAvoid.length
         ? `- Phrase suppression: avoid close variants of these recent fragments: ${phraseAvoid.join(" || ")}.`
         : "- Phrase suppression: keep noun/imagery set fresh."
@@ -1082,9 +1100,17 @@
     return pool[idx];
   }
 
-  function shouldIncludeSecondaryThread(phase, turnIndex) {
+  function shouldIncludeSecondaryThread(phase, turnIndex, pressureProfile = "focused") {
     const p = String(phase || "").toLowerCase();
     const t = Math.max(0, Number(turnIndex) || 0);
+    const profile = String(pressureProfile || "focused").toLowerCase();
+
+    if (profile !== "focused") {
+      if (p === "early") return t % 3 === 2;
+      if (p === "middle") return t % 2 === 0;
+      if (p === "late") return t % 2 === 1;
+      return false;
+    }
 
     if (p === "middle") return t % 2 === 0; // about half of turns
     if (p === "late") return t % 3 === 1;   // occasional late-stage pivot

@@ -149,7 +149,8 @@ She does not want freedom from him so much as clarity from him. Her thoughts mov
         psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 },
         packet: {
           version: 1,
-          max_ideas: 1,
+          pressure_profile: "open",
+          max_ideas: 2,
           core: {
             premise: "A political science student who moved from Munich to Berlin for independence and now finds herself more emotionally committed to Daniel than he seems willing to be to her.",
             central_conflict: "She still wants the relationship, but she is beginning to understand that wanting it clearly may not be enough if Daniel keeps turning elusive at the point of real commitment.",
@@ -199,17 +200,17 @@ She does not want freedom from him so much as clarity from him. Her thoughts mov
             "time may feel layered: present thought touched by memory or imagined future",
             "use light rhythmic recurrence rather than blunt repetition",
             "remain restrained and contemporary; avoid ornate imitation or period mannerisms",
-            "keep to one central idea even when the sentence movement is wave-like"
+            "allow a thought to wander through adjacent ordinary associations without losing its center"
           ],
           voice_rules: {
             texture: ["precise and clipped", "self-protective", "lucid with sudden inward softness"],
-            syntax_bias: ["clean statements", "abrupt corrective second clause", "hold to one line of thought before shifting"],
+            syntax_bias: ["clean statements", "abrupt corrective second clause", "allow one natural associative drift before settling"],
             taboo_moves: ["no melodramatic accusation monologue", "no tidy life lesson", "no generic ambitious-student stereotype"]
           },
           disclosure_plan: {
-            early: ["open with a city, study, or memory surface", "keep Daniel's evasiveness indirect at first", "stay with one thread only"],
-            middle: ["make the imbalance of commitment clearer", "allow one sharper self-recognition", "do not add a separate family or study subplot"],
-            late: ["name the cost of waiting for clarity", "let desire for direct commitment speak more plainly", "avoid final decision closure and keep to one idea only"]
+            early: ["open from whatever detail or association feels native to her attention", "keep Daniel's evasiveness indirect at first", "let ordinary city or study life carry as much weight as relationship pressure"],
+            middle: ["make the imbalance of commitment clearer when it surfaces", "allow one sharper self-recognition", "let non-romantic life continue to exist rather than disappearing around the relationship"],
+            late: ["name the cost of waiting for clarity more plainly when relevant", "let desire for direct commitment speak more plainly if the thought moves there", "avoid final decision closure"]
           },
           anti_repeat: {
             banned_recent_ngrams: 3,
@@ -218,8 +219,8 @@ She does not want freedom from him so much as clarity from him. Her thoughts mov
             motif_repeat_limit_per_4_turns: 2
           },
           prompt_contract: {
-            must_include: ["one concrete life detail", "one non-romantic life thread"],
-            must_avoid: ["direct whisper reply", "courtroom-style exposition", "same opening pattern as previous turn", "turning every thought into relationship evidence review", "gratuitous self-monitoring", "more than one substantial concern pivot", "train or carriage details", "station, seat, aisle, or window-travel description", "framing her as ambivalent when the real problem is Daniel's elusiveness"]
+            must_include: [],
+            must_avoid: ["direct whisper reply", "courtroom-style exposition", "no generic ambitious-student stereotype"]
           }
         }
       },

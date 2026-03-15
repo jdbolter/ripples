@@ -135,15 +135,6 @@
       "- Prefer implication, fragments, and oblique references over explicit explanation."
     ].join("\n");
 
-    const lifeThreadBlock = [
-      "Life-thread breadth constraints:",
-      "- Keep each monologue focused on one dominant thread.",
-      "- The dominant thread can be ordinary/everyday observation or a life-pressure thread, depending on turn context.",
-      "- At most one secondary thread is allowed, and only as a brief pivot.",
-      "- Hard cap: no more than two concern threads in a single thought.",
-      "- Rotate additional concerns across later thoughts (progressive disclosure), not within the same thought."
-    ].join("\n");
-
     const packetContext = buildPacketPromptContext({
       sceneId,
       scene: sc,
@@ -153,6 +144,22 @@
       disclosurePhase
     });
     const pressureProfile = String(packetContext?.selection?.packet?.pressureProfile || "open").toLowerCase();
+    const lifeThreadBlock = pressureProfile === "focused"
+      ? [
+          "Life-thread breadth constraints:",
+          "- Keep each monologue focused on one dominant thread.",
+          "- The dominant thread can be ordinary/everyday observation or a life-pressure thread, depending on turn context.",
+          "- At most one secondary thread is allowed, and only as a brief pivot.",
+          "- Hard cap: no more than two concern threads in a single thought.",
+          "- Rotate additional concerns across later thoughts (progressive disclosure), not within the same thought."
+        ].join("\n")
+      : [
+          "Life-thread breadth guidance:",
+          "- Let the thought have one center of gravity, but it can move through nearby ordinary associations on the way.",
+          "- A recurring life pressure may surface, but it does not need to dominate every turn.",
+          "- Everyday attention is enough: objects, errands, study texture, social reading, weather, appetite, city habits, memory fragments.",
+          "- Keep the thought legible rather than tightly single-topic."
+        ].join("\n");
 
     const openingLeadClean = normalizeWhitespace(openingLead);
     const openingContinuityBlock = openingLeadClean
