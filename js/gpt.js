@@ -542,8 +542,11 @@
     if (isGenerating) return;
     isGenerating = true;
 
-    const openingLead = "";
-    const openingLeadSource = "none";
+    const { openingLead, openingLeadSource } = buildOpeningLeadPlan({
+      characterId,
+      kind,
+      whisperText
+    });
 
     const priorMonologueCount = engine.getMonologueCount(characterId);
     const toneSteering = buildToneSteering({
@@ -625,6 +628,16 @@
       maxWords: THOUGHT_WORD_MAX,
       maxClauses: IDEA_LIMITER.maxClauses
     });
+    text = applyContinuityPostprocess(text, {
+      openingLead,
+      openingLeadSource,
+      minWords: THOUGHT_WORD_MIN,
+      maxWords: THOUGHT_WORD_MAX,
+      maxClauses: IDEA_LIMITER.maxClauses
+    });
+
+    const carryoverSource = sanitizeThoughtForCarryover(text, engine.getScene()) || text;
+    engine.setOpeningBufferFromThought(characterId, carryoverSource);
 
     engine.newTrace({
       kind,
@@ -705,6 +718,57 @@
   // -----------------------------
   // Utilities
   // -----------------------------
+  function buildOpeningLeadPlan({ characterId, kind, whisperText }) {
+    const scene = engine.getScene();
+    const priorLead = sanitizeCarryoverLead(engine.getOpeningBuffer(characterId), scene);
+
+    if (kind === EVENT_KIND.WHISPER) {
+      const whisperLead = normalizeWhitespace(
+        extractFirstSentenceOrFragment(whisperText, Math.min(8, CONTINUITY_LEAD_MAX_WORDS))
+      );
+      if (whisperLead) {
+        return {
+          openingLead: whisperLead,
+          openingLeadSource: "whisper"
+        };
+      }
+    }
+
+    if (priorLead) {
+      return {
+        openingLead: priorLead,
+        openingLeadSource: "carryover"
+      };
+    }
+
+    return {
+      openingLead: "",
+      openingLeadSource: "none"
+    };
+  }
+
+  function applyContinuityPostprocess(text, { openingLead, openingLeadSource, minWords, maxWords, maxClauses }) {
+    const lead = normalizeWhitespace(openingLead);
+    if (!lead) return text;
+
+    let out = finalizeWithContinuityLead(text, lead, {
+      minWords,
+      maxWords,
+      mode: "riff"
+    });
+
+    if (openingLeadSource === "whisper") {
+      out = dedupeWhisperLeadRepetition(out, lead, { minWords, maxWords });
+      return out;
+    }
+
+    if (splitClauses(out).length < Math.max(1, Number(maxClauses) || IDEA_LIMITER.maxClauses)) {
+      out = enforceCarryoverRiffPersistence(out, lead, { minWords, maxWords });
+    }
+
+    return out;
+  }
+
   function escapeRegExp(str) {
     return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
