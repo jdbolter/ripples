@@ -64,6 +64,8 @@
   const THOUGHT_WORD_MAX = 60;
   const CONTINUITY_LEAD_MAX_WORDS = 16;
   const FIRST_PERSON_MAX_RATIO = 0.20;
+  // Set to false to run dossier-only prompting while keeping packet data in scenes.js.
+  const PACKET_STEERING_ENABLED = false;
   const CONTINUITY_STOPWORDS = new Set([
     "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "from", "if", "in", "into",
     "is", "it", "its", "of", "on", "or", "so", "than", "that", "the", "their", "there", "they",
@@ -824,6 +826,13 @@
   }
 
   function buildPacketPromptContext({ sceneId, scene, character, whisperText, priorMonologueCount, disclosurePhase }) {
+    if (!PACKET_STEERING_ENABLED) {
+      return {
+        promptBlock: "- Packet steering disabled for this run. Use the dossier, scene framing, continuity, psyche, and whisper guidance only.",
+        selection: null
+      };
+    }
+
     const packet = normalizeCharacterPacket(character);
     const state = getApiCharacterState(sceneId, character?.id);
     const turnNumber = state.turnIndex + 1;

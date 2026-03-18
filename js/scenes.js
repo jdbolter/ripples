@@ -37,6 +37,9 @@ Core constraint: the monologue is not a reply to the user. A whisper should alte
 Avoid direct second-person address and avoid question/answer dialogue.
 Shared immediate pressure for this carriage: each passenger is managing private concerns in transit.
 Let timing and logistics feel present where relevant, but do not introduce a single shared transport incident.
+The train is a container, not the main subject.
+Do not let carriage sounds, seat details, window views, station announcements, or passing landscape become the default content of a thought.
+At most one brief transit cue may appear when genuinely useful, then move outward into the character's wider mental life.
 
 Backstory priority:
 - Make each monologue resonate with the character dossier's lived situation (family, relationship status, work, age, obligations, losses, pending decisions).
@@ -44,11 +47,15 @@ Backstory priority:
 - Characters do not always report their thoughts directly. Often they just associate freely around a feeling, a sensory impression, or a fragment of thought that they do not fully understand or control. Let the monologue be a mix of direct thought and associative drift, as long as the direct thought is not just a summary of the dossier and the drift does not contradict it.
 - Keep continuity with what the character has already implied or admitted; do not contradict established facts.
 - Thoughts drift. They are not always operate, not always about doing something.
+- Let attention travel far beyond the carriage: domestic objects, work tasks, family routines, remembered conversations, media, overheard remarks, recent public events, or things the character has heard about lately.
+- Off-scene associations are welcome if they feel native to the character's mind and remain more important than the transit frame.
 
 
 Associative breadth:
 - At most one primary life thread per thought.
 - Often characters just associate freely around a feeling, a sensory impression, or a fragment of thought.
+- The opening does not need to begin with anything physically present in the train.
+- Avoid defaulting to train ambience as the concrete anchor when a life object, remembered object, document, message, rumor, or recent event would be more revealing.
 
 Style:
 - English.
@@ -63,9 +70,10 @@ Output: plain text only.`,
 
       scene:
 `Setting: an iC train carriage in second class, en route to Berlin.
-Ambient: rail vibration through seat frames, quiet HVAC, occasional announcements of station names, blurred fields at the window.
+Ambient: the carriage exists mainly as a loose holding environment, not as a descriptive subject.
 Passengers start emotionally separate but gradually come to share the ripples, as a sort of collective conversation.
-The space encourages private inventory: what was said, what is unsaid, what waits on arrival.`,
+The space encourages private inventory: what was said, what is unsaid, what waits on arrival, what has been heard recently, what objects and obligations are waiting elsewhere.
+Use transit details sparingly and only as brief pivots into broader association.`,
 
       whisperRule:
 `If a whisper is present, treat it as atmospheric pressure, not dialogue.
@@ -74,7 +82,7 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
 Let the semantic content of the whisper enter the monologue indirectly, without quoting it as dialogue.`,
 
       structureHint:
-`Move through various observations, memories of the day.`
+`Move through memories, obligations, heard-about events, stray objects, and wider personal associations; do not default to describing the train.`
     },
 
     characters: [
@@ -141,10 +149,9 @@ Her mind jumps between medical vocabulary and domestic minutiae, as if both belo
         dossier:
 `A university student in her early twenties, outwardly composed, used to looking more certain than she feels.
 She grew up in Munich, where her parents still live, and moved to Berlin to study political science at Humboldt partly for the subject and partly for the freedom of not being watched so closely.
-She likes the city more than she admits at home: late films, odd conversations after midnight, the feeling that a life can widen unexpectedly there.
+She loves the city: late films, odd conversations after midnight, the feeling that a life can widen unexpectedly there.
 She also likes leaving it, going far enough into open country to feel her thoughts spread out.
-Her laptop is open because she is meant to be studying, but she is not truly caught by deadlines right now. What occupies her is her boyfriend Daniel, and the harder fact beneath the argument: she is more committed to the relationship than he is, and she can feel the imbalance in the way he withdraws into explanation, delay, and distance.
-She does not want freedom from him so much as clarity from him. Her thoughts move easily between Daniel, the life she has made in Berlin, the self she was in Munich, and the person she may still be becoming.`,
+Her laptop is open, but she is not truly immersed in her work. What occupies her is her boyfriend Daniel, and the harder fact beneath the argument: she is more committed to the relationship than he is. Her thoughts move rapidly between Daniel, the life she has made in Berlin, the self she was in Munich.`,
         voice: ["precise and clipped", "self-protective", "quick shifts between logic and hurt"],
         psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 },
         packet: {
@@ -174,12 +181,13 @@ She does not want freedom from him so much as clarity from him. Her thoughts mov
           ],
           world_knowledge: [
             "basic fluency in Berlin neighborhood differences and the emotional pace of the city",
-            "political vocabulary around institutions, protests, coalition drift, and public life",
+            "wide knowledge of German history of the 20th century and its political movements, as part of her studies",
             "the social feeling of moving between Munich family order and Berlin improvisation"
           ],
           city_habits: [
             "going to late screenings and then walking home still half inside the film",
             "meeting friends in cafes or bars without fixing the whole evening in advance",
+            "going to concerts, lectures, exhibitions on a variety of topics and themes",
             "taking the S-Bahn or regional trains out toward lakes, fields, and paths at the edge of the city"
           ],
           known_places: [
@@ -329,11 +337,11 @@ He wants to be seen as reliable, yet lately even small promises feel harder to k
         adjacentTo: ["worried_boyfriend", "mother_returning"],
         dossier:
 `A retired literature professor with worn features and patient posture, returning to his apartment in Berlin after visiting his daughter in Stuttgart.
-He taught for many years at Humboldt and still thinks in terms of sentences, voices, and remembered passages. The Jacob-und-Wilhelm-Grimm-Zentrum, seminar rooms, and old departmental habits remain part of his mental map of the city.
-His wife died last year after a long marriage. He misses her deeply, but his mind does not move only toward loss; it moves just as often toward the happy density of their years together, the jokes they repeated, the walks they took, the way she used to interrupt his abstractions with something exact and alive.
-His daughter is married and has two young daughters of her own, and he loves visiting them. The trip has left him full of their noise, questions, and small rituals.
-Now he is returning to Berlin, to quiet rooms, books, and old routines. The weight of the years and his wife's absence can still make him pensive, but not only sad. Much of what he feels is gratitude, recollection, and the strange fullness that survives a long marriage.`,
-        voice: ["measured", "observant of routine", "tender without display"],
+He taught for many years at Humboldt. The university still sits in his mind as rooms, coats on chair backs, seminar tables, the Grimm-Zentrum, and the walk home afterward.
+His wife died last year after a long marriage. He misses her deeply. But he does not think only about loss. He thinks too about their jokes, their walks, the meals they repeated without getting tired of them, the way she would cut through his fussing with one exact remark.
+His daughter is married and has two young daughters of her own, and he loves visiting them. The trip has left him full of their noise, questions, crumbs, games, and bedtime habits.
+Now he is returning to Berlin, to quiet rooms, books, tea, and old routines. He feels his age in his body without much drama. His wife's absence is there. So is gratitude for the life they had and the family that still goes on around him.`,
+        voice: ["grounded in daily sensorium and routine", "short paratactic sentences", "plain tender noticing without metaphor or allusion"],
         psyche0: { arousal: 0.34, valence: 0.58, agency: 0.56, permeability: 0.38, coherence: 0.70 },
         packet: {
           version: 1,
