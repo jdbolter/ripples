@@ -64,16 +64,12 @@
   const THOUGHT_WORD_MAX = 60;
   const CONTINUITY_LEAD_MAX_WORDS = 16;
   const FIRST_PERSON_MAX_RATIO = 0.20;
-  // Set to false to run dossier-only prompting while keeping packet data in scenes.js.
+  // Global fallback stays off unless a scene/character policy opts in.
   const PACKET_STEERING_ENABLED = false;
   const CONTINUITY_STOPWORDS = new Set([
     "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "from", "if", "in", "into",
     "is", "it", "its", "of", "on", "or", "so", "than", "that", "the", "their", "there", "they",
     "this", "to", "up", "was", "were", "with", "you", "your"
-  ]);
-  const FOCUSED_PRESSURE_CHARACTER_IDS = new Set([
-    "mother_returning",
-    "student_alone"
   ]);
   const OPEN_PROFILE_AMBIENT_THREADS = Object.freeze([
     "passing landscape details and weather changes",
@@ -543,6 +539,8 @@
   async function requestMonologue({ characterId, channel, kind, whisperText, trigger = "unknown" }) {
     if (isGenerating) return;
     isGenerating = true;
+    const scene = engine.getScene();
+    const character = scene?.characters?.find((c) => c.id === characterId) || null;
 
     const { openingLead, openingLeadSource } = buildOpeningLeadPlan({
       characterId,
@@ -553,16 +551,18 @@
     const priorMonologueCount = engine.getMonologueCount(characterId);
     const toneSteering = buildToneSteering({
       characterId,
+      character,
       kind,
       whisperText,
       priorMonologueCount
     });
     const focusSteering = buildFocusSteering({
       characterId,
+      character,
       kind,
       whisperText,
       priorMonologueCount,
-      scene: engine.getScene()
+      scene
     });
     let text = "";
     let usedLocalPool = false;
@@ -782,15 +782,35 @@
     return `${oneLine.slice(0, max - 3)}...`;
   }
 
-  function isFocusedPressureCharacter(characterId) {
-    const id = String(characterId || "").trim();
-    return !!id && FOCUSED_PRESSURE_CHARACTER_IDS.has(id);
+  function getCharacterPromptPolicy(scene, character) {
+    const defaults = (scene && typeof scene.promptDefaults === "object" && scene.promptDefaults) ? scene.promptDefaults : {};
+    const raw = (character && typeof character.prompt_policy === "object" && character.prompt_policy) ? character.prompt_policy : {};
+    const maxFirstPersonRatio = Number.isFinite(Number(raw.max_first_person_ratio))
+      ? Math.max(0.02, Math.min(0.30, Number(raw.max_first_person_ratio)))
+      : (
+          Number.isFinite(Number(defaults.max_first_person_ratio))
+            ? Math.max(0.02, Math.min(0.30, Number(defaults.max_first_person_ratio)))
+            : null
+        );
+
+    return {
+      usePacketSteering: Boolean(raw.use_packet_steering ?? defaults.use_packet_steering ?? PACKET_STEERING_ENABLED),
+      focusMode: String(raw.focus_mode || defaults.focus_mode || "balanced").trim().toLowerCase(),
+      maxFirstPersonRatio,
+      ambientThreadPool: uniqList(
+        []
+          .concat(Array.isArray(defaults.ambient_thread_pool) ? defaults.ambient_thread_pool : [])
+          .concat(Array.isArray(raw.ambient_thread_pool) ? raw.ambient_thread_pool : [])
+      ).filter(Boolean)
+    };
   }
 
-  function getCharacterPressureProfile(characterId, packetProfile = "") {
+  function getCharacterPressureProfile(character, packetProfile = "") {
     const explicit = String(packetProfile || "").trim().toLowerCase();
     if (explicit === "focused" || explicit === "open") return explicit;
-    return isFocusedPressureCharacter(characterId) ? "focused" : "open";
+    const fallback = String(character?.packet?.pressure_profile || "").trim().toLowerCase();
+    if (fallback === "focused" || fallback === "open") return fallback;
+    return "open";
   }
 
   function resetApiNarrativeState(sceneId) {
@@ -826,7 +846,8 @@
   }
 
   function buildPacketPromptContext({ sceneId, scene, character, whisperText, priorMonologueCount, disclosurePhase }) {
-    if (!PACKET_STEERING_ENABLED) {
+    const promptPolicy = getCharacterPromptPolicy(scene, character);
+    if (!promptPolicy.usePacketSteering) {
       return {
         promptBlock: "- Packet steering disabled for this run. Use the dossier, scene framing, continuity, psyche, and whisper guidance only.",
         selection: null
@@ -850,7 +871,7 @@
       state,
       cooldown: packet.antiRepeat.topicCooldownTurns
     });
-    const ambientThread = pickAmbientThread({ scene, state, turnNumber });
+    const ambientThread = pickAmbientThread({ scene, state, turnNumber, character, promptPolicy });
     const shouldSurfaceLongTermThread = pressureProfile === "focused" || (turnNumber % 4 === 0);
 
     const phase = disclosurePhase || (
@@ -1030,7 +1051,7 @@
         ];
 
     const profileHint = String(packet.pressure_profile || packet.tone_profile || "").toLowerCase();
-    const pressureProfile = getCharacterPressureProfile(character?.id, profileHint);
+    const pressureProfile = getCharacterPressureProfile(character, profileHint);
 
     return {
       core: {
@@ -1087,7 +1108,13 @@
     return scored[0].thread;
   }
 
-  function pickAmbientThread({ scene, state, turnNumber }) {
+  function pickAmbientThread({ scene, state, turnNumber, character = null, promptPolicy = null }) {
+    const policy = promptPolicy || getCharacterPromptPolicy(scene, character);
+    if (policy.ambientThreadPool.length) {
+      const idx = (Math.max(1, Number(turnNumber) || 1) + Math.max(0, Number(state?.turnIndex) || 0)) % policy.ambientThreadPool.length;
+      return policy.ambientThreadPool[idx];
+    }
+
     const sceneLabel = normalizeWhitespace(String(scene?.meta?.label || "")).toLowerCase();
     const sceneSpecific = sceneLabel.includes("train")
       ? [
@@ -1302,6 +1329,7 @@
     const priorMonologueCount = engine.getMonologueCount(characterId);
     const steering = toneSteering || buildToneSteering({
       characterId,
+      character: ch,
       kind,
       whisperText: whisperClean,
       priorMonologueCount
@@ -1309,6 +1337,7 @@
     const toneSteeringBlock = buildToneSteeringBlock(steering);
     const focusPlan = focusSteering || buildFocusSteering({
       characterId,
+      character: ch,
       kind,
       whisperText: whisperClean,
       priorMonologueCount,
@@ -1976,13 +2005,13 @@
     return list[idx];
   }
 
-  function buildToneSteering({ characterId, kind, whisperText, priorMonologueCount }) {
+  function buildToneSteering({ characterId, character = null, kind, whisperText, priorMonologueCount }) {
     const turnIndex = Math.max(1, (Number(priorMonologueCount) || 0) + 1);
     const recent = engine.getRecentMonologues(characterId, Math.max(1, TONE_BALANCER.windowSize - 1));
     const tones = recent.map((entry) => classifyThoughtTone(entry.text));
     const darkCount = tones.filter((t) => t === "dark").length;
     const nonDarkCount = tones.length - darkCount;
-    const pressureProfile = getCharacterPressureProfile(characterId);
+    const pressureProfile = getCharacterPressureProfile(character);
     const projectedCount = Math.min(TONE_BALANCER.windowSize, tones.length + 1);
     const minNonDarkRatio = pressureProfile === "focused"
       ? TONE_BALANCER.minNonDarkRatio
@@ -2119,11 +2148,13 @@
     return ATTENTION_BALANCER.sceneFallbackAnchors.generic.slice();
   }
 
-  function buildFocusSteering({ characterId, kind, whisperText, priorMonologueCount, scene }) {
+  function buildFocusSteering({ characterId, character = null, kind, whisperText, priorMonologueCount, scene }) {
     const turnIndex = Math.max(1, (Number(priorMonologueCount) || 0) + 1);
     const recent = engine.getRecentMonologues(characterId, Math.max(1, ATTENTION_BALANCER.windowSize - 1));
     const focusMix = recent.map((entry) => classifyAttentionFocus(entry.text));
     const selfCount = focusMix.filter((f) => f === "self").length;
+    const promptPolicy = getCharacterPromptPolicy(scene, character);
+    const preferOutwardFocus = promptPolicy.focusMode === "outward_social";
     const requireWorld = selfCount >= ATTENTION_BALANCER.maxSelfFocusedInWindow || (turnIndex % 2 === 0);
     const anchors = sceneAnchors(scene);
     const fallbackAnchors = ATTENTION_BALANCER.sceneFallbackAnchors.generic;
@@ -2135,9 +2166,11 @@
       requireWorld,
       keepSimple: true,
       maxIdeas: 2,
-      maxFirstPersonRatio: requireWorld ? 0.10 : 0.14,
+      maxFirstPersonRatio: promptPolicy.maxFirstPersonRatio ?? (preferOutwardFocus ? 0.08 : (requireWorld ? 0.10 : 0.14)),
       anchor,
       whisperTone,
+      focusMode: promptPolicy.focusMode,
+      preferOutwardFocus,
       selfCount,
       sampleCount: focusMix.length
     };
@@ -2146,12 +2179,17 @@
   function buildFocusSteeringBlock(plan) {
     if (!plan) return "- Focus steering unavailable.";
 
-    const worldLine = plan.requireWorld
-      ? "- Let the thought notice one outside object, sound, or person before drifting inward, but do not force a stock scene-opening line."
-      : "- A concrete outside detail is welcome, but do not force scene-setting if the thought wants to start elsewhere.";
+    const worldLine = plan.preferOutwardFocus
+      ? "- Start from off-train life: another person she knows, a remembered conversation, a friend-group detail, a seminar, a film, a city plan, or some other external association."
+      : plan.requireWorld
+        ? "- Let the thought notice one outside object, sound, or person before drifting inward, but do not force a stock scene-opening line."
+        : "- A concrete outside detail is welcome, but do not force scene-setting if the thought wants to start elsewhere.";
 
     return [
       worldLine,
+      plan.preferOutwardFocus
+        ? "- Favor other people, social texture, and off-train life over self-description. Do not let carriage sounds, seat details, window views, or announcements become the main subject."
+        : "- Keep the thought connected to the world outside the self rather than turning into pure self-report.",
       "- Keep language plain and simple. Prefer short sentences over layered abstraction.",
       `- Keep to one dominant idea, with at most one brief secondary pivot (max ${plan.maxIdeas} ideas total).`,
       "- Do not introduce a third task, memory line, or concern.",

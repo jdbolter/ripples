@@ -85,6 +85,11 @@ Let the semantic content of the whisper enter the monologue indirectly, without 
 `Move through memories, obligations, heard-about events, stray objects, and wider personal associations; do not default to describing the train.`
     },
 
+    promptDefaults: {
+      use_packet_steering: false,
+      focus_mode: "balanced"
+    },
+
     characters: [
       {
         id: "mother_returning",
@@ -104,6 +109,7 @@ Her mind jumps between medical vocabulary and domestic minutiae, as if both belo
         psyche0: { arousal: 0.62, valence: 0.42, agency: 0.67, permeability: 0.48, coherence: 0.55 },
         packet: {
           version: 1,
+          pressure_profile: "focused",
           core: {
             premise: "A mother returning to Berlin, using logistics to survive medical uncertainty.",
             central_conflict: "She wants control to function, but the situation cannot be fully controlled.",
@@ -155,6 +161,18 @@ Her laptop is open, but she is not truly immersed in her work. Her attention mov
 Daniel remains in the background as a real emotional pressure, but not the only subject in her mind. Her thoughts move rapidly between study, city life, memory, self-invention, and the relationship she cannot quite stop measuring.`,
         voice: ["precise and clipped", "self-protective", "restlessly associative"],
         psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 },
+        prompt_policy: {
+          use_packet_steering: true,
+          focus_mode: "outward_social",
+          max_first_person_ratio: 0.08,
+          ambient_thread_pool: [
+            "friends, classmates, and remembered conversations outside the train",
+            "Berlin plans, screenings, seminars, and off-train city life",
+            "family calls, messages, and the social feeling of moving between Munich and Berlin",
+            "lectures, exhibitions, bars, parks, and other people she knows",
+            "random heard-about events, public talk, and ordinary life elsewhere in the city"
+          ]
+        },
         packet: {
           version: 1,
           pressure_profile: "open",
@@ -165,12 +183,12 @@ Daniel remains in the background as a real emotional pressure, but not the only 
             contradiction: "Self-possessed and observant, yet porous enough that films, streets, seminar fragments, and small social details keep entering the same mental field as her private hurt."
           },
           life_threads: [
-            "small Berlin observations that open into self-reading",
-            "political science studies as one strand of a larger emerging identity",
+            "friends, classmates, and remembered conversations that linger after the fact",
+            "political science studies as lived social and intellectual life, not just private self-definition",
             "films, exhibitions, lectures, and late city wanderings that linger in her mind afterward",
             "the social feeling of moving between Munich family order and Berlin improvisation",
             "the relief of open country, lakes, paths, and outskirts where thought loosens",
-            "uncertainty about what sort of adult self she is making",
+            "other people's habits, remarks, and social signals as material for thought",
             "the unequal emotional commitment between her and Daniel",
             "wanting directness from Daniel rather than vague reassurance",
             "family calls shaped by affection, distance, and the need for independence",
@@ -180,7 +198,7 @@ Daniel remains in the background as a real emotional pressure, but not the only 
             "she grew up in Munich and her parents still live there",
             "she moved to Berlin to study political science at Humboldt and gain independence",
             "her boyfriend is named Daniel",
-            "she likes films, late screenings, and unplanned city evenings",
+            "she likes films and unplanned city evenings",
             "she likes getting out of Berlin to walk in open country"
           ],
           world_knowledge: [
@@ -226,12 +244,14 @@ Daniel remains in the background as a real emotional pressure, but not the only 
             "let perception and thought blur into one another",
             "sentences may lengthen and fold back, but the thought must still remain readable",
             "small social details should carry emotional meaning indirectly",
+            "let other people enter as remembered presences, remarks, plans, or habits rather than keeping the thought alone with itself",
             "time may feel layered: present thought touched by memory or imagined future",
             "use light rhythmic recurrence rather than blunt repetition",
             "remain restrained and contemporary; avoid ornate imitation or period mannerisms",
             "sparing use of metaphors",
             "allow a thought to wander through adjacent ordinary associations",
-            "let non-problem material carry real weight rather than functioning only as setup for relationship anxiety"
+            "let non-problem material carry real weight rather than functioning only as setup for relationship anxiety",
+            "off-train life should outweigh carriage sensation, travel noise, or passing scenery"
           ],
           voice_rules: {
             texture: ["precise and clipped", "self-protective", "lucid with sudden inward softness"],
@@ -239,9 +259,9 @@ Daniel remains in the background as a real emotional pressure, but not the only 
             taboo_moves: ["no melodramatic accusation monologue", "no tidy life lesson", "no generic ambitious-student stereotype", "no making Daniel the compulsory center of every thought"]
           },
           disclosure_plan: {
-            early: ["open from whatever detail or association feels native to her attention", "let city, study, or memory material stand on its own rather than serving only as prelude to Daniel", "keep relationship pressure indirect unless the thought truly moves there"],
-            middle: ["make the imbalance of commitment clearer only when it naturally surfaces", "allow one sharper self-recognition", "keep non-romantic life fully alive around and beyond the relationship"],
-            late: ["name the cost of waiting for clarity more plainly when relevant", "let desire for direct commitment speak more plainly only if the thought moves there", "avoid final decision closure"]
+            early: ["open from off-train life, social memory, study life, city life, or some other external association rather than carriage sensation", "let city, study, friends, family, or remembered conversation stand on its own rather than serving only as prelude to Daniel", "keep relationship pressure indirect unless the thought truly moves there"],
+            middle: ["make the imbalance of commitment clearer only when it naturally surfaces", "allow one sharper self-recognition without turning the whole thought into self-analysis", "keep non-romantic life, other people, and the wider city fully alive around and beyond the relationship"],
+            late: ["name the cost of waiting for clarity more plainly when relevant", "let desire for direct commitment speak more plainly only if the thought moves there", "avoid final decision closure and avoid narrowing the thought to pure carriage atmosphere or self-summary"]
           },
           anti_repeat: {
             banned_recent_ngrams: 3,
@@ -250,8 +270,8 @@ Daniel remains in the background as a real emotional pressure, but not the only 
             motif_repeat_limit_per_4_turns: 2
           },
           prompt_contract: {
-            must_include: ["one concrete non-romantic anchor"],
-            must_avoid: ["direct whisper reply", "courtroom-style exposition", "generic ambitious-student stereotype", "treating Daniel as the automatic topic every turn", "flattening the thought into problem-summary"]
+            must_include: ["one concrete non-romantic anchor", "one off-train person, remembered conversation, or social reference"],
+            must_avoid: ["direct whisper reply", "courtroom-style exposition", "generic ambitious-student stereotype", "treating Daniel as the automatic topic every turn", "flattening the thought into problem-summary", "carriage sounds, seat details, window views, or announcements as the main subject", "self-diagnosis loop"]
           }
         }
       },
@@ -277,6 +297,7 @@ He wants to be seen as reliable, yet lately even small promises feel harder to k
         psyche0: { arousal: 0.57, valence: 0.39, agency: 0.43, permeability: 0.44, coherence: 0.50 },
         packet: {
           version: 1,
+          pressure_profile: "open",
           max_ideas: 1,
           core: {
             premise: "A Humboldt graduate student in information science, Daniel, replaying a rupture with Kim while trying to hold onto his idea of himself as intelligent, steady, and dependable.",
@@ -368,6 +389,7 @@ Now he is returning to Berlin, to quiet rooms, books, tea, and old routines. He 
         psyche0: { arousal: 0.34, valence: 0.58, agency: 0.56, permeability: 0.38, coherence: 0.70 },
         packet: {
           version: 1,
+          pressure_profile: "open",
           max_ideas: 1,
           core: {
             premise: "A retired Humboldt literature professor returning to Berlin with his wife's absence beside him and a life still enlarged by memory, family, and thought.",
@@ -458,6 +480,7 @@ She still carries ordinary pressures too: staffing politics, a junior colleague 
         psyche0: { arousal: 0.53, valence: 0.60, agency: 0.70, permeability: 0.38, coherence: 0.64 },
         packet: {
           version: 1,
+          pressure_profile: "open",
           max_ideas: 1,
           core: {
             premise: "A veteran nurse in Berlin, newly promoted to head nurse in the ER, balancing professional momentum with a quieter wish for lasting partnership.",
@@ -634,6 +657,11 @@ No direct address to the whisperer.`,
 `A good monologue often begins with a sensory observation, drifts into memory or self-assessment, and ends with a softened unresolved turn (not a punchline).`
     },
 
+    promptDefaults: {
+      use_packet_steering: false,
+      focus_mode: "balanced"
+    },
+
     /* =========================================================
        Characters (authorable + backward-compatible fields)
        ========================================================= */
@@ -657,6 +685,7 @@ He is attentive to margins, to the evidence of other readers, to time passing th
         psyche0: { arousal: 0.35, valence: 0.61, agency: 0.60, permeability: 0.30, coherence: 0.57 },
         packet: {
           version: 1,
+          pressure_profile: "open",
           core: {
             premise: "An older reader maintaining dignity through attention and ritual.",
             central_conflict: "He wants quiet continuity while aging keeps interrupting precision.",
@@ -709,6 +738,7 @@ She registers the room as a kind of mirror she tries not to look into.`,
         psyche0: { arousal: 0.45, valence: 0.58, agency: 0.61, permeability: 0.55, coherence: 0.60 },
         packet: {
           version: 1,
+          pressure_profile: "open",
           core: {
             premise: "A young reader balancing ambition, fatigue, and self-surveillance.",
             central_conflict: "She wants decisive forward motion but keeps splitting into observer and actor.",
@@ -761,6 +791,7 @@ He rehearses competence internally while feeling watched by the silence.`,
         psyche0: { arousal: 0.55, valence: 0.49, agency: 0.48, permeability: 0.35, coherence: 0.52 },
         packet: {
           version: 1,
+          pressure_profile: "open",
           core: {
             premise: "A student hungry for mastery but uneasy about belonging.",
             central_conflict: "He seeks competence while feeling like an impostor in formal spaces.",
@@ -813,6 +844,7 @@ She protects the room’s silence but wonders what it costs.`,
         psyche0: { arousal: 0.40, valence: 0.65, agency: 0.66, permeability: 0.25, coherence: 0.68 },
         packet: {
           version: 1,
+          pressure_profile: "open",
           core: {
             premise: "A librarian holding institutional order while quietly questioning its personal cost.",
             central_conflict: "She maintains calm structure yet feels unaddressed unease beneath routine.",
@@ -865,6 +897,7 @@ The reading room feels like permission and danger at once.`,
         psyche0: { arousal: 0.50, valence: 0.51, agency: 0.53, permeability: 0.30, coherence: 0.52 },
         packet: {
           version: 1,
+          pressure_profile: "open",
           core: {
             premise: "A man arriving mid-hesitation, using public quiet as temporary shelter.",
             central_conflict: "He wants change but keeps mistaking postponement for control.",
@@ -1058,6 +1091,10 @@ Use 40-60 words; sentence fragments are allowed.`,
       structureHint:
 `Begin concrete, drift inward, end unresolved.`
     },
+    promptDefaults: {
+      use_packet_steering: false,
+      focus_mode: "balanced"
+    },
     characters: [
       {
         id: "character_a",
@@ -1070,7 +1107,48 @@ Use 40-60 words; sentence fragments are allowed.`,
         dossier:
 `A concise character dossier with embodied concerns.`,
         voice: ["plainspoken", "grounded"],
-        psyche0: { arousal: 0.45, valence: 0.55, agency: 0.50, permeability: 0.40, coherence: 0.55 }
+        psyche0: { arousal: 0.45, valence: 0.55, agency: 0.50, permeability: 0.40, coherence: 0.55 },
+        prompt_policy: {
+          use_packet_steering: false,
+          focus_mode: "balanced",
+          max_first_person_ratio: 0.12,
+          ambient_thread_pool: [
+            "optional character-specific ambient threads"
+          ]
+        },
+        packet: {
+          version: 1,
+          pressure_profile: "open",
+          core: {
+            premise: "One-line premise.",
+            central_conflict: "Primary tension.",
+            contradiction: "Key contradiction."
+          },
+          life_threads: [
+            "first recurring life thread",
+            "second recurring life thread"
+          ],
+          voice_rules: {
+            texture: ["plainspoken", "grounded"],
+            syntax_bias: ["short first clause", "clear second beat"],
+            taboo_moves: ["one move to avoid"]
+          },
+          disclosure_plan: {
+            early: ["one early-turn rule"],
+            middle: ["one middle-turn rule"],
+            late: ["one late-turn rule"]
+          },
+          anti_repeat: {
+            banned_recent_ngrams: 3,
+            topic_cooldown_turns: 2,
+            opening_cooldown_turns: 3,
+            motif_repeat_limit_per_4_turns: 2
+          },
+          prompt_contract: {
+            must_include: ["one concrete anchor"],
+            must_avoid: ["one taboo move"]
+          }
+        }
       },
       {
         id: "character_b",
@@ -1083,7 +1161,11 @@ Use 40-60 words; sentence fragments are allowed.`,
         dossier:
 `A second dossier with different concerns and attention style.`,
         voice: ["measured", "concrete"],
-        psyche0: { arousal: 0.40, valence: 0.60, agency: 0.55, permeability: 0.35, coherence: 0.60 }
+        psyche0: { arousal: 0.40, valence: 0.60, agency: 0.55, permeability: 0.35, coherence: 0.60 },
+        packet: {
+          version: 1,
+          pressure_profile: "open"
+        }
       }
     ],
     seeds: {
