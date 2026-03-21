@@ -70,24 +70,56 @@
       priorMonologueCount <= 3 ? "early" :
       priorMonologueCount <= 7 ? "middle" :
       "late";
-    const disclosureGuidance = disclosurePhase === "early"
-      ? [
-          "- Vary openings unpredictably (object detail, admin/money task, stray memory, social observation, abstract unease).",
-          "- Keep core conflict mostly indirect; at most one brief allusive signal.",
-          "- Stay with one dominant concern; avoid piling multiple concern threads.",
-          "- Do not name the character's deepest fear or full backstory directly yet."
-        ]
-      : disclosurePhase === "middle"
-        ? [
-            "- Keep one dominant concern in view; a second concern can appear briefly if it returns to the core thread.",
-            "- Allow at most one modestly clearer backstory signal, still indirect and understated.",
-            "- Avoid full explanations, timelines, or confessional summaries."
-          ]
-        : [
-            "- Deepen emotional clarity, but remain allusive rather than fully explanatory.",
-            "- Leave some core material implied; avoid exhaustive disclosure.",
-            "- Keep the thought centered; avoid introducing extra side-concerns."
-          ];
+    const packetContext = buildPacketPromptContext({
+      sceneId,
+      scene: sc,
+      character: ch,
+      whisperText: whisperClean,
+      priorMonologueCount,
+      disclosurePhase
+    });
+    const pressureProfile = String(packetContext?.selection?.packet?.pressureProfile || "open").toLowerCase();
+    const disclosureGuidance = pressureProfile === "focused"
+      ? (
+          disclosurePhase === "early"
+            ? [
+                "- Vary openings unpredictably (object detail, admin/money task, stray memory, social observation, abstract unease).",
+                "- Keep core conflict mostly indirect; at most one brief allusive signal.",
+                "- Stay with one dominant concern; avoid piling multiple concern threads.",
+                "- Do not name the character's deepest fear or full backstory directly yet."
+              ]
+            : disclosurePhase === "middle"
+              ? [
+                  "- Keep one dominant concern in view; a second concern can appear briefly if it returns to the core thread.",
+                  "- Allow at most one modestly clearer backstory signal, still indirect and understated.",
+                  "- Avoid full explanations, timelines, or confessional summaries."
+                ]
+              : [
+                  "- Deepen emotional clarity, but remain allusive rather than fully explanatory.",
+                  "- Leave some core material implied; avoid exhaustive disclosure.",
+                  "- Keep the thought centered; avoid introducing extra side-concerns."
+                ]
+        )
+      : (
+          disclosurePhase === "early"
+            ? [
+                "- Vary openings unpredictably (object detail, stray memory, social observation, study fragment, city impression, abstract unease).",
+                "- Keep core conflict mostly indirect; it may not appear at all if another strand of life holds the attention.",
+                "- Let nearby associations gather naturally without turning into a list.",
+                "- Do not name the character's deepest fear or full backstory directly yet."
+              ]
+            : disclosurePhase === "middle"
+              ? [
+                  "- Keep one center of gravity, but let adjacent associations, memories, or ordinary perceptions move through it.",
+                  "- Allow at most one modestly clearer backstory signal, still indirect and understated.",
+                  "- Avoid full explanations, timelines, or confessional summaries."
+                ]
+              : [
+                  "- Deepen emotional clarity, but remain allusive rather than fully explanatory.",
+                  "- Leave some core material implied; avoid exhaustive disclosure.",
+                  "- Let the thought widen through ordinary associations instead of narrowing automatically into problem-summary."
+                ]
+        );
     const continuityBlock = recentThoughts.length
       ? [
           "Continuity context (same character, oldest to newest):",
@@ -98,26 +130,41 @@
           "Disclosure pacing rules:",
           ...disclosureGuidance,
           "Associative movement rules:",
-          "- Keep one dominant concern thread; optional secondary pivot is brief.",
-          "- If a secondary pivot appears, return quickly to the primary concern."
+          pressureProfile === "focused"
+            ? "- Keep one dominant concern thread; optional secondary pivot is brief."
+            : "- Keep one center of gravity, but allow nearby ordinary associations, memory fragments, or social observations to drift through.",
+          pressureProfile === "focused"
+            ? "- If a secondary pivot appears, return quickly to the primary concern."
+            : "- If the thought pivots, let it feel natural and local rather than like a new problem track."
         ].join("\n")
       : [
           "Continuity context: none yet for this character.",
           "Disclosure phase: EARLY (first thought).",
           "Disclosure pacing rules:",
           "- Start with a surprising angle; do not default to biography summary.",
-          "- Keep first thought focused on one concern thread.",
+          pressureProfile === "focused"
+            ? "- Keep first thought focused on one concern thread."
+            : "- Let first thought begin from whatever concrete or associative material feels alive, not necessarily a problem.",
           "- Hint at deeper history indirectly; avoid explicit backstory exposition.",
           "Associative movement rules:",
-          "- Optional brief side association is allowed, but keep a single dominant concern."
+          pressureProfile === "focused"
+            ? "- Optional brief side association is allowed, but keep a single dominant concern."
+            : "- A few nearby associations are welcome if they still feel like one person's continuous attention."
         ].join("\n");
 
-    const openingModes = [
-      "begin with a concrete object and stay with one concern",
-      "begin vague and atmospheric, then snap to one practical detail",
-      "begin practical and precise, then deepen the same concern",
-      "begin mid-thought as a fragment, no setup sentence"
-    ];
+    const openingModes = pressureProfile === "focused"
+      ? [
+          "begin with a concrete object and stay with one concern",
+          "begin vague and atmospheric, then snap to one practical detail",
+          "begin practical and precise, then deepen the same concern",
+          "begin mid-thought as a fragment, no setup sentence"
+        ]
+      : [
+          "begin with a concrete object and let it open into association",
+          "begin with a stray memory or social detail, then let the present catch up",
+          "begin practical and precise, then drift into a nearby ordinary association",
+          "begin mid-thought as a fragment, no setup sentence"
+        ];
     const openingMode = openingModes[Math.floor(Math.random() * openingModes.length)];
     const earlyRandomnessBlock = priorMonologueCount <= 1
       ? [
@@ -135,15 +182,6 @@
       "- Prefer implication, fragments, and oblique references over explicit explanation."
     ].join("\n");
 
-    const packetContext = buildPacketPromptContext({
-      sceneId,
-      scene: sc,
-      character: ch,
-      whisperText: whisperClean,
-      priorMonologueCount,
-      disclosurePhase
-    });
-    const pressureProfile = String(packetContext?.selection?.packet?.pressureProfile || "open").toLowerCase();
     const lifeThreadBlock = pressureProfile === "focused"
       ? [
           "Life-thread breadth constraints:",

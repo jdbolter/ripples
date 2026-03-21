@@ -151,26 +151,30 @@ Her mind jumps between medical vocabulary and domestic minutiae, as if both belo
 She grew up in Munich, where her parents still live, and moved to Berlin to study political science at Humboldt partly for the subject and partly for the freedom of not being watched so closely.
 She loves the city: late films, odd conversations after midnight, the feeling that a life can widen unexpectedly there.
 She also likes leaving it, going far enough into open country to feel her thoughts spread out.
-Her laptop is open, but she is not truly immersed in her work. What occupies her is her boyfriend Daniel, and the harder fact beneath the argument: she is more committed to the relationship than he is. Her thoughts move rapidly between Daniel, the life she has made in Berlin, the self she was in Munich.`,
-        voice: ["precise and clipped", "self-protective", "quick shifts between logic and hurt"],
+Her laptop is open, but she is not truly immersed in her work. Her attention moves associatively: from seminar language to a remembered film shot, from a stranger's coat to her mother's kitchen, from Berlin's improvised freedoms to the version of herself still preserved in Munich.
+Daniel remains in the background as a real emotional pressure, but not the only subject in her mind. Her thoughts move rapidly between study, city life, memory, self-invention, and the relationship she cannot quite stop measuring.`,
+        voice: ["precise and clipped", "self-protective", "restlessly associative"],
         psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 },
         packet: {
           version: 1,
           pressure_profile: "open",
           max_ideas: 2,
           core: {
-            premise: "A political science student who moved from Munich to Berlin for independence and now finds herself more emotionally committed to Daniel than he seems willing to be to her.",
-            central_conflict: "She still wants the relationship, but she is beginning to understand that wanting it clearly may not be enough if Daniel keeps turning elusive at the point of real commitment.",
-            contradiction: "Self-possessed and observant, yet still hopeful enough in love to wait longer than her pride approves."
+            premise: "A political science student who moved from Munich to Berlin for independence and whose mind moves quickly between study, city life, memory, and the unresolved pressure of Daniel.",
+            central_conflict: "She wants an adult life that feels expansive and self-authored, but the uncertainty with Daniel keeps trying to narrow her attention back to one unresolved question.",
+            contradiction: "Self-possessed and observant, yet porous enough that films, streets, seminar fragments, and small social details keep entering the same mental field as her private hurt."
           },
           life_threads: [
+            "small Berlin observations that open into self-reading",
+            "political science studies as one strand of a larger emerging identity",
+            "films, exhibitions, lectures, and late city wanderings that linger in her mind afterward",
+            "the social feeling of moving between Munich family order and Berlin improvisation",
+            "the relief of open country, lakes, paths, and outskirts where thought loosens",
+            "uncertainty about what sort of adult self she is making",
             "the unequal emotional commitment between her and Daniel",
             "wanting directness from Daniel rather than vague reassurance",
-            "political science studies as one strand of a larger emerging identity",
             "family calls shaped by affection, distance, and the need for independence",
-            "Berlin as a life of movies, wandering, and new possibility",
-            "the relief she feels outside the city in fields, paths, and open air",
-            "uncertainty about what sort of adult self she is making if she keeps waiting on someone else"
+            "Berlin as a life of movies, wandering, and new possibility"
           ],
           background_facts: [
             "she grew up in Munich and her parents still live there",
@@ -193,7 +197,24 @@ Her laptop is open, but she is not truly immersed in her work. What occupies her
           known_places: [
             "Yorck Kino",
             "delphi LUX",
-            "Tempelhofer Feld"
+            "Tempelhofer Feld",
+            "Babylon Kino",
+            "Kino International",
+            "Filmtheater am Friedrichshain",
+            "Zoo Palast",
+            "Arsenal – Institut für Film und Videokunst",
+            "Tiergarten",
+            "Volkspark Friedrichshain",
+            "Treptower Park",
+            "Mauerpark",
+            "Hamburger Bahnhof",
+            "Pergamon Museum",
+            "Neue Nationalgalerie",
+            "KW Institute for Contemporary Art",
+            "Martin-Gropius-Bau",
+            "Alexanderplatz",
+            "Potsdamer Platz",
+            "East Side Gallery"
           ],
           cultural_references: [
             "political documentaries and European art-house films",
@@ -201,24 +222,26 @@ Her laptop is open, but she is not truly immersed in her work. What occupies her
             "the odd intimacy of leaving a cinema late and walking through the city afterward"
           ],
           style_profile: [
-            "interior, fluid, and lucidly associative rather than clipped argument",
-            "let perception and thought blur into one another without losing clarity",
+            "interior, fluid, and lucidly associative",
+            "let perception and thought blur into one another",
             "sentences may lengthen and fold back, but the thought must still remain readable",
             "small social details should carry emotional meaning indirectly",
             "time may feel layered: present thought touched by memory or imagined future",
             "use light rhythmic recurrence rather than blunt repetition",
             "remain restrained and contemporary; avoid ornate imitation or period mannerisms",
-            "allow a thought to wander through adjacent ordinary associations without losing its center"
+            "sparing use of metaphors",
+            "allow a thought to wander through adjacent ordinary associations",
+            "let non-problem material carry real weight rather than functioning only as setup for relationship anxiety"
           ],
           voice_rules: {
             texture: ["precise and clipped", "self-protective", "lucid with sudden inward softness"],
             syntax_bias: ["clean statements", "abrupt corrective second clause", "allow one natural associative drift before settling"],
-            taboo_moves: ["no melodramatic accusation monologue", "no tidy life lesson", "no generic ambitious-student stereotype"]
+            taboo_moves: ["no melodramatic accusation monologue", "no tidy life lesson", "no generic ambitious-student stereotype", "no making Daniel the compulsory center of every thought"]
           },
           disclosure_plan: {
-            early: ["open from whatever detail or association feels native to her attention", "keep Daniel's evasiveness indirect at first", "let ordinary city or study life carry as much weight as relationship pressure"],
-            middle: ["make the imbalance of commitment clearer when it surfaces", "allow one sharper self-recognition", "let non-romantic life continue to exist rather than disappearing around the relationship"],
-            late: ["name the cost of waiting for clarity more plainly when relevant", "let desire for direct commitment speak more plainly if the thought moves there", "avoid final decision closure"]
+            early: ["open from whatever detail or association feels native to her attention", "let city, study, or memory material stand on its own rather than serving only as prelude to Daniel", "keep relationship pressure indirect unless the thought truly moves there"],
+            middle: ["make the imbalance of commitment clearer only when it naturally surfaces", "allow one sharper self-recognition", "keep non-romantic life fully alive around and beyond the relationship"],
+            late: ["name the cost of waiting for clarity more plainly when relevant", "let desire for direct commitment speak more plainly only if the thought moves there", "avoid final decision closure"]
           },
           anti_repeat: {
             banned_recent_ngrams: 3,
@@ -227,8 +250,8 @@ Her laptop is open, but she is not truly immersed in her work. What occupies her
             motif_repeat_limit_per_4_turns: 2
           },
           prompt_contract: {
-            must_include: [],
-            must_avoid: ["direct whisper reply", "courtroom-style exposition", "no generic ambitious-student stereotype"]
+            must_include: ["one concrete non-romantic anchor"],
+            must_avoid: ["direct whisper reply", "courtroom-style exposition", "generic ambitious-student stereotype", "treating Daniel as the automatic topic every turn", "flattening the thought into problem-summary"]
           }
         }
       },
@@ -520,8 +543,8 @@ She still carries ordinary pressures too: staffing politics, a junior colleague 
       },
       student_alone: {
         THOUGHTS: [
-`The laptop is open, but I am mostly thinking about Daniel and how tiring it is to care in a more explicit way than the other person does. I do not mean that he feels nothing. I mean that whenever things become real he goes slightly difficult to reach, as if clarity itself were a demand too large to answer cleanly.`,
-`When I go back to Munich my parents still see a version of me that feels simpler than the one I live with here. Berlin has made me harder to predict, even to myself. I like that. What I do not like is feeling more certain about Daniel than he seems willing to be about me. The city has taught me to want a larger life, not a vaguer one.`
+`The laptop is open to seminar notes, but what I keep noticing is how certain phrases detach from the page and drift somewhere else. Representation, institutions, legitimacy, then suddenly the green exit sign in Yorck Kino last week, then my mother's voice asking whether I am eating properly, then the flat bright edge of fields outside Berlin where thinking stops feeling supervised.`,
+`Munich still lives in me as cupboards, tram timetables, the feeling that adults always knew what the evening was supposed to be. Berlin is looser and stranger and much more mine. Daniel belongs somewhere in that sentence, probably, but not at the center of it every time. I did not come here only to wait for another person's clarity.`
         ]
       },
       worried_boyfriend: {
