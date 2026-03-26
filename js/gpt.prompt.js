@@ -4,356 +4,83 @@
   function buildOpenAIUserPrompt(opts = {}) {
     const sc = opts.sc || {};
     const ch = opts.ch || {};
-    const sceneId = String(opts.sceneId || "");
-    const whisperText = String(opts.whisperText || "");
-    const openingLead = String(opts.openingLead || "");
-    const openingLeadSource = String(opts.openingLeadSource || "none");
+    const whisperText = String(opts.whisperText || "").trim();
     const recentThoughts = Array.isArray(opts.recentThoughts) ? opts.recentThoughts : [];
-    const priorMonologueCount = Math.max(0, Number(opts.priorMonologueCount) || 0);
-    const toneSteeringBlock = String(opts.toneSteeringBlock || "");
-    const focusSteeringBlock = String(opts.focusSteeringBlock || "");
-    const thoughtWordMin = Math.max(1, Number(opts.thoughtWordMin) || 20);
-    const thoughtWordMax = Math.max(thoughtWordMin, Number(opts.thoughtWordMax) || 40);
-    const dynamicsPromptLine = String(opts.dynamicsPromptLine || "");
+    const thoughtWordMin = Math.max(1, Number(opts.thoughtWordMin) || 40);
+    const thoughtWordMax = Math.max(thoughtWordMin, Number(opts.thoughtWordMax) || 60);
     const dynamicsDeltaGuidance = String(opts.dynamicsDeltaGuidance || "");
     const psyche = (opts.psyche && typeof opts.psyche === "object") ? opts.psyche : {
       arousal: 0.5, valence: 0.5, agency: 0.5, permeability: 0.5, coherence: 0.5
     };
 
-    const classifyWhisperTone = opts.classifyWhisperTone;
-    const trimForPrompt = opts.trimForPrompt;
-    const buildPacketPromptContext = opts.buildPacketPromptContext;
-    const normalizeWhitespace = opts.normalizeWhitespace;
-    const uniqList = opts.uniqList;
-    if (typeof classifyWhisperTone !== "function") throw new Error("buildOpenAIUserPrompt: missing classifyWhisperTone()");
-    if (typeof trimForPrompt !== "function") throw new Error("buildOpenAIUserPrompt: missing trimForPrompt()");
-    if (typeof buildPacketPromptContext !== "function") throw new Error("buildOpenAIUserPrompt: missing buildPacketPromptContext()");
-    if (typeof normalizeWhitespace !== "function") throw new Error("buildOpenAIUserPrompt: missing normalizeWhitespace()");
-    if (typeof uniqList !== "function") throw new Error("buildOpenAIUserPrompt: missing uniqList()");
+    const sys = (sc.prompts && sc.prompts.system)
+      ? sc.prompts.system
+      : "You write short interior monologues. Plain text, no metaphors, no poetry.";
 
-    const sceneLabel = String(sc?.meta?.label || "");
-    const isPosthuman = /forest|post[- ]?human/i.test(sceneLabel);
+    const sceneFrame = (sc.prompts && sc.prompts.scene)
+      ? sc.prompts.scene
+      : (sc.meta && sc.meta.baseline) || "";
 
-    const sys = (sc.prompts && sc.prompts.system) ? sc.prompts.system :
-      "You write short interior monologues.";
+    const whisperRule = (sc.prompts && sc.prompts.whisperRule)
+      ? sc.prompts.whisperRule
+      : "If a whisper is present, let it alter the thought immediately and indirectly. Do not answer it directly.";
 
-    const sceneFrame = (sc.prompts && sc.prompts.scene) ? sc.prompts.scene : (sc.meta?.baseline || "");
-    const whisperRule = (sc.prompts && sc.prompts.whisperRule) ? sc.prompts.whisperRule :
-      "If a whisper is present, it bends mood indirectly; do not answer it directly.";
+    const dossier = String(ch.dossier || "");
+    const style = String(ch.style || "");
+    const samples = Array.isArray(ch.samples) && ch.samples.length ? ch.samples : [];
 
-    const dossier = (ch && ch.dossier) ? ch.dossier : "";
-    const voice = uniqList(ch?.voice || []);
+    // Samples block
+    const samplesBlock = samples.length
+      ? [
+          "Example monologues for this character — match their rhythm, vocabulary, and how thought moves:",
+          ...samples.map((s, i) => `${i + 1}. ${s}`)
+        ].join("\n")
+      : "";
 
-    const psycheBlock = [
-      "Current psychic state (0–1):",
-      `- arousal: ${Number(psyche.arousal || 0).toFixed(2)}`,
-      `- valence: ${Number(psyche.valence || 0).toFixed(2)}`,
-      `- agency: ${Number(psyche.agency || 0).toFixed(2)}`,
-      `- permeability: ${Number(psyche.permeability || 0).toFixed(2)}`,
-      `- coherence: ${Number(psyche.coherence || 0).toFixed(2)}`
-    ].join("\n");
-
-    const stateStyleMap = [
-      "State-to-style mapping (follow):",
-      "- Higher arousal => more immediate pressure, urgency, and sharper cuts between images.",
-      "- Lower valence => heavier interpretations, but retain one neutral or constructive anchor.",
-      "- Higher agency => firmer verbs, self-directed intention, less passivity.",
-      "- Higher permeability => stronger influence from surrounding atmosphere and others.",
-      "- Lower coherence => fragmented transitions, associative leaps, and unresolved turns.",
-      dynamicsPromptLine,
-      "Do not mention these numbers explicitly."
-    ].join("\n");
-
-    const whisperClean = String(whisperText || "").trim();
-    const whisperTone = classifyWhisperTone(whisperClean);
-    const disclosurePhase =
-      priorMonologueCount <= 3 ? "early" :
-      priorMonologueCount <= 7 ? "middle" :
-      "late";
-    const packetContext = buildPacketPromptContext({
-      sceneId,
-      scene: sc,
-      character: ch,
-      whisperText: whisperClean,
-      priorMonologueCount,
-      disclosurePhase
-    });
-    const pressureProfile = String(packetContext?.selection?.packet?.pressureProfile || "open").toLowerCase();
-    const disclosureGuidance = pressureProfile === "focused"
-      ? (
-          disclosurePhase === "early"
-            ? [
-                "- Vary openings unpredictably (object detail, admin/money task, stray memory, social observation, abstract unease).",
-                "- Keep core conflict mostly indirect; at most one brief allusive signal.",
-                "- Stay with one dominant concern; avoid piling multiple concern threads.",
-                "- Do not name the character's deepest fear or full backstory directly yet."
-              ]
-            : disclosurePhase === "middle"
-              ? [
-                  "- Keep one dominant concern in view; a second concern can appear briefly if it returns to the core thread.",
-                  "- Allow at most one modestly clearer backstory signal, still indirect and understated.",
-                  "- Avoid full explanations, timelines, or confessional summaries."
-                ]
-              : [
-                  "- Deepen emotional clarity, but remain allusive rather than fully explanatory.",
-                  "- Leave some core material implied; avoid exhaustive disclosure.",
-                  "- Keep the thought centered; avoid introducing extra side-concerns."
-                ]
-        )
-      : (
-          disclosurePhase === "early"
-            ? [
-                "- Vary openings unpredictably (object detail, stray memory, social observation, study fragment, city impression, abstract unease).",
-                "- Keep core conflict mostly indirect; it may not appear at all if another strand of life holds the attention.",
-                "- Let nearby associations gather naturally without turning into a list.",
-                "- Do not name the character's deepest fear or full backstory directly yet."
-              ]
-            : disclosurePhase === "middle"
-              ? [
-                  "- Keep one center of gravity, but let adjacent associations, memories, or ordinary perceptions move through it.",
-                  "- Allow at most one modestly clearer backstory signal, still indirect and understated.",
-                  "- Avoid full explanations, timelines, or confessional summaries."
-                ]
-              : [
-                  "- Deepen emotional clarity, but remain allusive rather than fully explanatory.",
-                  "- Leave some core material implied; avoid exhaustive disclosure.",
-                  "- Let the thought widen through ordinary associations instead of narrowing automatically into problem-summary."
-                ]
-        );
+    // Continuity
     const continuityBlock = recentThoughts.length
       ? [
-          "Continuity context (same character, oldest to newest):",
-          ...recentThoughts.map((entry, i) =>
-            `${i + 1}. ${entry.kind}: ${trimForPrompt(entry.text, 240)}`
-          ),
-          `Disclosure phase: ${disclosurePhase.toUpperCase()} (prior thoughts: ${priorMonologueCount}).`,
-          "Disclosure pacing rules:",
-          ...disclosureGuidance,
-          "Associative movement rules:",
-          pressureProfile === "focused"
-            ? "- Keep one dominant concern thread; optional secondary pivot is brief."
-            : "- Keep one center of gravity, but allow nearby ordinary associations, memory fragments, or social observations to drift through.",
-          pressureProfile === "focused"
-            ? "- If a secondary pivot appears, return quickly to the primary concern."
-            : "- If the thought pivots, let it feel natural and local rather than like a new problem track."
+          "Recent thoughts by this character (avoid repeating the same images or topics):",
+          ...recentThoughts.map((entry, i) => `${i + 1}. ${entry.text || entry}`)
         ].join("\n")
-      : [
-          "Continuity context: none yet for this character.",
-          "Disclosure phase: EARLY (first thought).",
-          "Disclosure pacing rules:",
-          "- Start with a surprising angle; do not default to biography summary.",
-          pressureProfile === "focused"
-            ? "- Keep first thought focused on one concern thread."
-            : "- Let first thought begin from whatever concrete or associative material feels alive, not necessarily a problem.",
-          "- Hint at deeper history indirectly; avoid explicit backstory exposition.",
-          "Associative movement rules:",
-          pressureProfile === "focused"
-            ? "- Optional brief side association is allowed, but keep a single dominant concern."
-            : "- A few nearby associations are welcome if they still feel like one person's continuous attention."
-        ].join("\n");
+      : "";
 
-    const openingModes = pressureProfile === "focused"
-      ? [
-          "begin with a concrete object and stay with one concern",
-          "begin vague and atmospheric, then snap to one practical detail",
-          "begin practical and precise, then deepen the same concern",
-          "begin mid-thought as a fragment, no setup sentence"
-        ]
-      : [
-          "begin with a concrete object and let it open into association",
-          "begin with a stray memory or social detail, then let the present catch up",
-          "begin practical and precise, then drift into a nearby ordinary association",
-          "begin mid-thought as a fragment, no setup sentence"
-        ];
-    const openingMode = openingModes[Math.floor(Math.random() * openingModes.length)];
-    const earlyRandomnessBlock = priorMonologueCount <= 1
-      ? [
-          "Early-thought variability (priority):",
-          `- Opening mode for this thought: ${openingMode}.`,
-          "- Sentence fragments are welcome.",
-          "- Coherence can be loose as long as tone and stakes remain human."
-        ].join("\n")
-      : "Variability: keep images and topics fresh; avoid repeating your last opening move.";
+    // Whisper
+    const whisperBlock = whisperText
+      ? `A whisper has reached this character: "${whisperText}"\n${whisperRule}`
+      : "(No whisper present.)";
 
-    const antiExpositionBlock = [
-      "Anti-exposition constraints:",
-      "- Do not front-load biography.",
-      "- Do not summarize the character's life or dossier.",
-      "- Prefer implication, fragments, and oblique references over explicit explanation."
+    // Psyche — intensity modulation only
+    const psycheBlock = [
+      "Internal state (use only to modulate tone and intensity, not as subject matter):",
+      `arousal ${Number(psyche.arousal || 0).toFixed(2)}, valence ${Number(psyche.valence || 0).toFixed(2)}, agency ${Number(psyche.agency || 0).toFixed(2)}, permeability ${Number(psyche.permeability || 0).toFixed(2)}, coherence ${Number(psyche.coherence || 0).toFixed(2)}`
     ].join("\n");
 
-    const lifeThreadBlock = pressureProfile === "focused"
-      ? [
-          "Life-thread breadth constraints:",
-          "- Keep each monologue focused on one dominant thread.",
-          "- The dominant thread can be ordinary/everyday observation or a life-pressure thread, depending on turn context.",
-          "- At most one secondary thread is allowed, and only as a brief pivot.",
-          "- Hard cap: no more than two concern threads in a single thought.",
-          "- Rotate additional concerns across later thoughts (progressive disclosure), not within the same thought."
-        ].join("\n")
-      : [
-          "Life-thread breadth guidance:",
-          "- Let the thought have one center of gravity, but it can move through nearby ordinary associations on the way.",
-          "- A recurring life pressure may surface, but it does not need to dominate every turn.",
-          "- Everyday attention is enough: objects, errands, study texture, social reading, weather, appetite, city habits, memory fragments.",
-          "- Keep the thought legible rather than tightly single-topic."
-        ].join("\n");
-
-    const openingLeadClean = normalizeWhitespace(openingLead);
-    const openingContinuityBlock = openingLeadClean
-      ? [
-          "Opening continuity (MANDATORY):",
-          openingLeadSource === "whisper"
-            ? `- Echo 2-5 distinctive words from this whisper-derived phrase in the opening, then riff forward: ${openingLeadClean}`
-            : `- Riff on this carried-over phrase from the previous thought: ${openingLeadClean}`,
-          openingLeadSource === "whisper"
-            ? "- Keep the emotional direction, but do NOT repeat the full phrase verbatim."
-            : "- Reuse 2-5 distinctive words, but do NOT repeat the full phrase verbatim.",
-          openingLeadSource === "whisper"
-            ? "- This opening rule overrides default opening randomness."
-            : "- Keep the emotional direction, but vary syntax and imagery."
-        ].join("\n")
-      : "Opening continuity: none.";
-    const carryoverRiffBlock = (openingLeadClean && openingLeadSource !== "whisper")
-      ? [
-          "Carry-over riff persistence (MANDATORY):",
-          "- Let carried-over anchor words recur beyond the opening.",
-          "- Reintroduce at least one carried-over anchor in the middle of the thought.",
-          "- End with at least one carried-over anchor still present (not necessarily the same anchor)."
-        ].join("\n")
-      : "Carry-over riff persistence: n/a.";
-
-    const whisperImpact = whisperClean
-      ? [
-          "WHISPER IMPACT (MANDATORY):",
-          openingLeadSource === "whisper"
-            ? "- Start from a partial echo of the whisper-derived opening phrase, then continue as interior thought; do not address the whisperer."
-            : "- Do NOT quote the whisper and do NOT address the whisperer.",
-          "- Do not repeat the same whisper phrase twice in one monologue.",
-          "- Let the whisper clearly and immediately alter the next thought.",
-          "- The effect must be visible in the opening clause and still present at the end.",
-          "- The semantic content of the whisper should enter the monologue, not just a vague atmosphere around it.",
-          "- Include one concrete shift in attention, interpretation, memory, or social perception caused by the whisper.",
-          "- If the whisper implies rest, fear, haste, permission, doubt, or longing, let that implication become active in the thought right away.",
-          "- Incorporate ONE concrete image implied by the whisper (object/place/sound/memory fragment/social detail).",
-          "- If the whisper is repetitive, echo a sense of repetition rhythm without quoting it.",
-          "- Keep it human and plausible, but not faint or delayed.",
-          ""
-        ].join("\n")
-      : [
-          "(No whisper present.)",
-          ""
-        ].join("\n");
-
-    const whisperSpecificBlock = whisperClean
-      ? whisperTone.tone === "calm"
-        ? [
-            "Whisper-specific rule:",
-            "- Because this whisper is calming, include a concrete softening, slowing, permission to stop, or desire to rest in the very first sentence.",
-            "- If calming fails, show the failure in thought, memory, or mood rather than physical reaction."
-          ].join("\n")
-        : whisperTone.tone === "urgent"
-          ? [
-              "Whisper-specific rule:",
-              "- Because this whisper is urgent, show immediate compression of timing and decisions in the first sentence.",
-              "- Include one mental or practical signal of urgency (narrowed attention, abrupt reprioritizing, or decision pressure)."
-            ].join("\n")
-          : whisperTone.tone === "threat"
-            ? [
-                "Whisper-specific rule:",
-                "- Because this whisper is threatening, show vigilance, suspicion, or risk-scanning in concrete terms immediately.",
-                "- Include one protective or avoidant micro-action."
-              ].join("\n")
-            : whisperTone.tone === "tender"
-              ? [
-                  "Whisper-specific rule:",
-                  "- Because this whisper is tender, show softening without sentimentality immediately.",
-                  "- Include one concrete memory, reinterpretation, or social softening tied to that tenderness."
-                ].join("\n")
-              : [
-                  "Whisper-specific rule:",
-                  "- Show a concrete cognitive, tonal, or motivational aftereffect of the whisper in the first sentence."
-                ].join("\n")
-      : "No whisper-specific rule.";
-
-    const concernConstraint = isPosthuman
-        ? "- Include one immediate survival concern (shelter, weather, territory, energy, predation, mating pressure, seasonal pressure)."
-      : pressureProfile === "focused"
-        ? "- Include one immediate personal concern (status, work, money, family, aging, regret, belonging, obligation, reputation, deadline, emotional discomfort)."
-        : "- Include one concrete present-moment observation; concern can be background rather than the center.";
-
-    const userPrompt = [
-      "Generate an interior monologue.",
-      `Length: ${thoughtWordMin}-${thoughtWordMax} words.`,
-      "Tense may be present, past, or near-future depending on pressure and anticipation.",
-      "Grounded and immediate with a light allusive layer.",
-      "Explicit first-person references should stay sparse (target <=20% of words using I/me/my/mine/myself).",
-      "Prioritize concrete stakes over decorative abstraction.",
-      "Allow ordinary, neutral, or gently pleasant observations when natural; not every thought should center on a problem.",
-      "Sentence fragments are allowed.",
-      "At most ONE clause may lean strongly lyrical/metaphoric.",
-      "Do not rely on dust, light, shadow, air, or silence as primary imagery.",
-      "Introduce at least one concrete anchor (object, admin task, sound, memory shard, or social detail).",
-      concernConstraint,
-      "Output must be JSON only (no markdown, no extra text).",
-      "Avoid repeating imagery or nouns from recent monologues, except deliberate carried-over riff anchors.",
+    const parts = [
+      `Generate an interior monologue. Length: ${thoughtWordMin}–${thoughtWordMax} words. Sentence fragments allowed.`,
+      style ? `Style: ${style}` : "",
+      samplesBlock,
+      "Character (background only — do not summarize this directly):",
+      dossier,
+      sceneFrame,
+      whisperBlock,
+      continuityBlock,
+      psycheBlock,
+      dynamicsDeltaGuidance,
       "Hard constraints:",
       "- No direct second-person reply to a whisper.",
-      "- No meta-talk (no mention of prompts, models, AI, system).",
-      "- No dialogue formatting; this is interior thought.",
-      "- Keep backstory allusive, not explanatory.",
-      "- Across successive turns for a character, maintain at least a 50/50 balance of neutral-or-gently-hopeful thoughts versus darker thoughts.",
+      "- No meta-commentary (no mention of prompts, models, AI, system).",
+      "- No metaphors or poetic analogies.",
+      "- No biography summaries or exposition.",
+      "- Plain interior thought only — not dialogue.",
       "",
-      "Tone steering for this turn (hard constraints):",
-      toneSteeringBlock,
-      "",
-      "Attention steering for this turn (hard constraints):",
-      focusSteeringBlock,
-      "",
-      openingContinuityBlock,
-      carryoverRiffBlock,
-      "",
-      "Scene:",
-      sceneFrame,
-      "",
-      "Character:",
-      dossier,
-      voice.length ? `Voice tags: ${voice.join(", ")}.` : "Voice tags: (none).",
-      "",
-      "Packet steering (apply exactly as constraints):",
-      packetContext.promptBlock,
-      "",
-      continuityBlock,
-      "",
-      whisperSpecificBlock,
-      "",
-      earlyRandomnessBlock,
-      "",
-      antiExpositionBlock,
-      "",
-      lifeThreadBlock,
-      "",
-      psycheBlock,
-      "",
-      stateStyleMap,
-      "",
-      whisperRule,
-      "",
-      whisperImpact,
-      `Whisper input: ${whisperClean || "(none)"}`,
-      "",
-      "Return JSON with:",
-      `- monologue: string (${thoughtWordMin}-${thoughtWordMax} words)`,
-      "- delta: object with numeric fields arousal, valence, agency, permeability, coherence",
-      "Delta semantics:",
-      "- Interpret the whisper holistically (meaning, tone, implication), not keywords.",
-      "- The delta represents how the whisper alters the character’s internal state.",
-      "- Range guidance: arousal/permeability in [-0.15,0.15], valence in [-0.12,0.12], agency/coherence in [-0.10,0.10].",
-      dynamicsDeltaGuidance,
-      "- If whisper is empty/none, delta should be near 0."
-    ].join("\n");
+      'Return JSON only: { "monologue": "...", "delta": { "arousal": 0, "valence": 0, "agency": 0, "permeability": 0, "coherence": 0 } }',
+      "Delta represents how this moment alters the character's internal state.",
+      "Range: arousal/permeability in [-0.15,0.15], valence in [-0.12,0.12], agency/coherence in [-0.10,0.10].",
+      "If no whisper, delta should be near 0."
+    ].filter(Boolean).join("\n\n");
 
-    return { sys, userPrompt, packetContext };
+    return { sys, userPrompt: parts, packetContext: { promptBlock: "" } };
   }
 
   window.RipplesPromptBuilder = Object.freeze({

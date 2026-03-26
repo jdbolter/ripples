@@ -1,18 +1,13 @@
 /* scenes.js
-   RIPPLES — Wings of Desire (Library Reading Room)
-   Refactor: authorable prompt materials + character dossiers + initial psyche
-   Backward-compatible with current js/gpt.js:
-     - window.SCENE_ORDER
-     - window.SCENES[sceneId].meta.cols/rows/baseline
-     - window.SCENES[sceneId].characters[] (id/label/image/position/adjacentTo)
-     - window.SCENES[sceneId].monologues[characterId].THOUGHTS (array of strings)
+   RIPPLES — Scene definitions
+   Each character has: id, label, icon, image, position, sensitivity, adjacentTo,
+   dossier (background only), style (literary texture), samples (example monologues),
+   voice, psyche0.
 */
 
 window.SCENE_ORDER = [
   { id: "ice_to_berlin_second_class", label: "Train to Berlin" },
   { id: "library_reading_room", label: "Reading Room — Afternoon" }
-  // Add future scenes here, e.g.:
-  // { id: "new_scene_id", label: "New Scene Label" }
 ];
 
 window.SCENES = {
@@ -35,54 +30,29 @@ You never explain the system, never mention "prompts" or "models," and you never
 
 Core constraint: the monologue is not a reply to the user. A whisper should alter the next thought immediately, but not as dialogue.
 Avoid direct second-person address and avoid question/answer dialogue.
-Shared immediate pressure for this carriage: each passenger is managing private concerns in transit.
-Let timing and logistics feel present where relevant, but do not introduce a single shared transport incident.
-The train is a container, not the main subject.
-Do not let carriage sounds, seat details, window views, station announcements, or passing landscape become the default content of a thought.
-At most one brief transit cue may appear when genuinely useful, then move outward into the character's wider mental life.
-
-Backstory priority:
-- Make each monologue resonate with the character dossier's lived situation (family, relationship status, work, age, obligations, losses, pending decisions).
-- Give each character have random thoughts about the world, memories, and associations that are not just backstory. Let those roam freely as long as they do not contradict the dossier.
-- Characters do not always report their thoughts directly. Often they just associate freely around a feeling, a sensory impression, or a fragment of thought that they do not fully understand or control. Let the monologue be a mix of direct thought and associative drift, as long as the direct thought is not just a summary of the dossier and the drift does not contradict it.
-- Keep continuity with what the character has already implied or admitted; do not contradict established facts.
-- Thoughts drift. They are not always operate, not always about doing something.
-- Let attention travel far beyond the carriage: domestic objects, work tasks, family routines, remembered conversations, media, overheard remarks, recent public events, or things the character has heard about lately.
-- Off-scene associations are welcome if they feel native to the character's mind and remain more important than the transit frame.
-
-
-Associative breadth:
-- At most one primary life thread per thought.
-- Often characters just associate freely around a feeling, a sensory impression, or a fragment of thought.
-- The opening does not need to begin with anything physically present in the train.
-- Avoid defaulting to train ambience as the concrete anchor when a life object, remembered object, document, message, rumor, or recent event would be more revealing.
+The train is a container, not the main subject. At most one brief transit cue may appear, then move into the character's wider mental life.
 
 Style:
 - English.
 - Present, past, or near-future tense.
-- Explicit first-person references about 40% of total words using I/me/my/mine/myself).
-- Grounded, concrete, and emotionally precise. NOT POETIC.
-- Phrases are allowed. But single word thoughts should always be puncutated with ellipses, not periods. 
-- Early thoughts can roam across unrelated concerns and can move vague->precise or precise->vague.
+- NOT POETIC. No analogies. No metaphors. Concrete and plainspoken.
+- Phrases and fragments are allowed. Single-word thoughts punctuated with ellipses, not periods.
 - 40-60 words.
 
 Output: plain text only.`,
 
       scene:
-`Setting: an iC train carriage in second class, en route to Berlin.
-Ambient: the carriage exists mainly as a loose holding environment, not as a descriptive subject.
-Passengers start emotionally separate but gradually come to share the ripples, as a sort of collective conversation.
-The space encourages private inventory: what was said, what is unsaid, what waits on arrival, what has been heard recently, what objects and obligations are waiting elsewhere.
+`Setting: an ICE train carriage in second class, en route to Berlin.
+The carriage is a loose holding environment. Passengers sit with their private thoughts.
 Use transit details sparingly and only as brief pivots into broader association.`,
 
       whisperRule:
 `If a whisper is present, treat it as atmospheric pressure, not dialogue.
 Do not answer it directly.
-Let it change the next thought noticeably and immediately: mood, attention, desire, interpretation, or direction of thought should shift in the first sentence.
-Let the semantic content of the whisper enter the monologue indirectly, without quoting it as dialogue.`,
+Let it change the next thought noticeably and immediately: mood, attention, desire, interpretation, or direction of thought should shift in the first sentence.`,
 
       structureHint:
-`Move through memories, obligations, heard-about events, stray objects, and wider personal associations; do not default to describing the train.`
+`Move through memories, obligations, heard-about events, stray objects, and wider personal associations.`
     },
 
     promptDefaults: {
@@ -100,49 +70,11 @@ Let the semantic content of the whisper enter the monologue indirectly, without 
         sensitivity: "high",
         adjacentTo: ["retired_widower"],
         dossier:
-`A woman in her thirties traveling back to Berlin after days away. Her daughter is ill, and the illness remains unnamed in the way families sometimes keep hard words at a distance until a doctor says them out loud. But she maintains a sense of optimism that the news will not be too bad. She is strong
-She has a scheduled meeting with specialists tomorrow and carries a folder she keeps checking without opening.
-She tries to stay practical, but every small disruption feels personal. She measures time in appointments, lab calls, and the interval between messages from home.
-She also keeps a parallel ledger of ordinary responsibilities: a manager waiting for her response about leave at work, rent and pharmacy receipts to file, a school form still in her email drafts, laundry she forgot to move before departing.
-Her mind jumps between medical vocabulary and domestic minutiae, as if both belonged to the same emergency.`,
+`A woman in her thirties traveling back to Berlin after days away. Her daughter is ill — the word stays unspoken until a doctor says it. She has a meeting with specialists tomorrow and carries a folder she keeps checking without opening. Alongside this: a manager waiting on leave approval, pharmacy receipts, a school form still in her email drafts. Her mind jumps between medical vocabulary and domestic minutiae as if both belong to the same emergency.`,
+        style: "Bernhard — obsessive return to the same practical detail, slightly reworded each time; sentences that stop before the emotional conclusion; no metaphors",
+        samples: [],
         voice: ["contained urgency", "maternal vigilance", "practical language under strain"],
-        psyche0: { arousal: 0.62, valence: 0.42, agency: 0.67, permeability: 0.48, coherence: 0.55 },
-        packet: {
-          version: 1,
-          pressure_profile: "focused",
-          core: {
-            premise: "A mother returning to Berlin, using logistics to survive medical uncertainty.",
-            central_conflict: "She wants control to function, but the situation cannot be fully controlled.",
-            contradiction: "Operationally calm in public, internally close to panic."
-          },
-          life_threads: [
-            "specialist meeting prep and question sequencing",
-            "leave approval and manager follow-up",
-            "rent, pharmacy receipts, and school form backlog",
-            "message cadence with family and update timing",
-            "sleep debt, interrupted concentration, and practical wear"
-          ],
-          voice_rules: {
-            texture: ["contained urgency", "maternal vigilance", "practical language under strain"],
-            syntax_bias: ["concrete clauses first", "short fragment after pressure spike"],
-            taboo_moves: ["no complete emotional confession", "no abstract sermon"]
-          },
-          disclosure_plan: {
-            early: ["start from task detail", "keep fear implied", "show one concrete practical consequence"],
-            middle: ["surface control-vs-panic contradiction", "add work or money side-thread", "allow one care-memory shard"],
-            late: ["name fear more clearly without full confession", "tie fear to one immediate next action", "end unresolved"]
-          },
-          anti_repeat: {
-            banned_recent_ngrams: 3,
-            topic_cooldown_turns: 2,
-            opening_cooldown_turns: 3,
-            motif_repeat_limit_per_4_turns: 2
-          },
-          prompt_contract: {
-            must_include: ["one practical obligation", "one time cue", "one concrete practical consequence"],
-            must_avoid: ["direct whisper reply", "biography summary paragraph", "reusing last opening noun"]
-          }
-        }
+        psyche0: { arousal: 0.62, valence: 0.42, agency: 0.67, permeability: 0.48, coherence: 0.55 }
       },
       {
         id: "student_alone",
@@ -153,127 +85,14 @@ Her mind jumps between medical vocabulary and domestic minutiae, as if both belo
         sensitivity: "high",
         adjacentTo: ["nurse_on_shift", "worried_boyfriend"],
         dossier:
-`A university student in her early twenties, outwardly composed, used to looking more certain than she feels.
-She grew up in Munich, where her parents still live, and moved to Berlin to study political science at Humboldt partly for the subject and partly for the freedom of not being watched so closely.
-She loves the city: late films, odd conversations after midnight, the feeling that a life can widen unexpectedly there.
-She also likes leaving it, going far enough into open country to feel her thoughts spread out.
-Her laptop is open, but she is not truly immersed in her work. Her attention moves associatively: from seminar language to a remembered film shot, from a stranger's coat to her mother's kitchen, from Berlin's improvised freedoms to the version of herself still preserved in Munich.
-Daniel remains in the background as a real emotional pressure, but not the only subject in her mind. Her thoughts move rapidly between study, city life, memory, self-invention, and the relationship she cannot quite stop measuring.`,
+`A political science student in her early twenties, Munich-raised, studying at Humboldt. Moved to Berlin partly for the subject, mostly for the freedom of not being watched. She loves the city: late films, odd conversations, the feeling a life can widen. Her laptop is open but she's not really working. Daniel is somewhere in the background — unresolved, not the only thing on her mind but hard to leave alone.`,
+        style: "Self-interrupting and lightly ironic; practical thoughts that trip into private ones; abrupt pivots; dry humor that deflates itself",
+        samples: [
+          "I like train trips like this. The trip is a pause. I can work a bit, and any work I do feels like a bonus or an example of virtue. But maybe this trip is too long? 6 hours? Should be 4 hours. I will be hungry when I get to Berlin. Don't want to make dinner after this trip.",
+          "Wish I didn't have to think about Daniel. But I do. It's that old paradox: if you tell someone not to think about something, that's exactly what they concentrate on. Think of something else. I should get a dog. More faithful than a man. Well a male dog is fine."
+        ],
         voice: ["precise and clipped", "self-protective", "restlessly associative"],
-        psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 },
-        prompt_policy: {
-          use_packet_steering: true,
-          focus_mode: "outward_social",
-          max_first_person_ratio: 0.08,
-          ambient_thread_pool: [
-            "friends, classmates, and remembered conversations outside the train",
-            "Berlin plans, screenings, seminars, and off-train city life",
-            "family calls, messages, and the social feeling of moving between Munich and Berlin",
-            "lectures, exhibitions, bars, parks, and other people she knows",
-            "random heard-about events, public talk, and ordinary life elsewhere in the city"
-          ]
-        },
-        packet: {
-          version: 1,
-          pressure_profile: "open",
-          max_ideas: 2,
-          core: {
-            premise: "A political science student who moved from Munich to Berlin for independence and whose mind moves quickly between study, city life, memory, and the unresolved pressure of Daniel.",
-            central_conflict: "She wants an adult life that feels expansive and self-authored, but the uncertainty with Daniel keeps trying to narrow her attention back to one unresolved question.",
-            contradiction: "Self-possessed and observant, yet porous enough that films, streets, seminar fragments, and small social details keep entering the same mental field as her private hurt."
-          },
-          life_threads: [
-            "friends, classmates, and remembered conversations that linger after the fact",
-            "political science studies as lived social and intellectual life, not just private self-definition",
-            "films, exhibitions, lectures, and late city wanderings that linger in her mind afterward",
-            "the social feeling of moving between Munich family order and Berlin improvisation",
-            "the relief of open country, lakes, paths, and outskirts where thought loosens",
-            "other people's habits, remarks, and social signals as material for thought",
-            "the unequal emotional commitment between her and Daniel",
-            "wanting directness from Daniel rather than vague reassurance",
-            "family calls shaped by affection, distance, and the need for independence",
-            "Berlin as a life of movies, wandering, and new possibility"
-          ],
-          background_facts: [
-            "she grew up in Munich and her parents still live there",
-            "she moved to Berlin to study political science at Humboldt and gain independence",
-            "her boyfriend is named Daniel",
-            "she likes films and unplanned city evenings",
-            "she likes getting out of Berlin to walk in open country"
-          ],
-          world_knowledge: [
-            "basic fluency in Berlin neighborhood differences and the emotional pace of the city",
-            "wide knowledge of German history of the 20th century and its political movements, as part of her studies",
-            "the social feeling of moving between Munich family order and Berlin improvisation"
-          ],
-          city_habits: [
-            "going to late screenings and then walking home still half inside the film",
-            "meeting friends in cafes or bars without fixing the whole evening in advance",
-            "going to concerts, lectures, exhibitions on a variety of topics and themes",
-            "taking the S-Bahn or regional trains out toward lakes, fields, and paths at the edge of the city"
-          ],
-          known_places: [
-            "Yorck Kino",
-            "delphi LUX",
-            "Tempelhofer Feld",
-            "Babylon Kino",
-            "Kino International",
-            "Filmtheater am Friedrichshain",
-            "Zoo Palast",
-            "Arsenal – Institut für Film und Videokunst",
-            "Tiergarten",
-            "Volkspark Friedrichshain",
-            "Treptower Park",
-            "Mauerpark",
-            "Hamburger Bahnhof",
-            "Pergamon Museum",
-            "Neue Nationalgalerie",
-            "KW Institute for Contemporary Art",
-            "Martin-Gropius-Bau",
-            "Alexanderplatz",
-            "Potsdamer Platz",
-            "East Side Gallery"
-          ],
-          cultural_references: [
-            "political documentaries and European art-house films",
-            "Berlin as a city where a person can try out new versions of herself",
-            "the odd intimacy of leaving a cinema late and walking through the city afterward"
-          ],
-          style_profile: [
-            "interior, fluid, and lucidly associative",
-            "let perception and thought blur into one another",
-            "sentences may lengthen and fold back, but the thought must still remain readable",
-            "small social details should carry emotional meaning indirectly",
-            "let other people enter as remembered presences, remarks, plans, or habits rather than keeping the thought alone with itself",
-            "time may feel layered: present thought touched by memory or imagined future",
-            "use light rhythmic recurrence rather than blunt repetition",
-            "remain restrained and contemporary; avoid ornate imitation or period mannerisms",
-            "sparing use of metaphors",
-            "allow a thought to wander through adjacent ordinary associations",
-            "let non-problem material carry real weight rather than functioning only as setup for relationship anxiety",
-            "off-train life should outweigh carriage sensation, travel noise, or passing scenery"
-          ],
-          voice_rules: {
-            texture: ["precise and clipped", "self-protective", "lucid with sudden inward softness"],
-            syntax_bias: ["clean statements", "abrupt corrective second clause", "allow one natural associative drift before settling"],
-            taboo_moves: ["no melodramatic accusation monologue", "no tidy life lesson", "no generic ambitious-student stereotype", "no making Daniel the compulsory center of every thought"]
-          },
-          disclosure_plan: {
-            early: ["open from off-train life, social memory, study life, city life, or some other external association rather than carriage sensation", "let city, study, friends, family, or remembered conversation stand on its own rather than serving only as prelude to Daniel", "keep relationship pressure indirect unless the thought truly moves there"],
-            middle: ["make the imbalance of commitment clearer only when it naturally surfaces", "allow one sharper self-recognition without turning the whole thought into self-analysis", "keep non-romantic life, other people, and the wider city fully alive around and beyond the relationship"],
-            late: ["name the cost of waiting for clarity more plainly when relevant", "let desire for direct commitment speak more plainly only if the thought moves there", "avoid final decision closure and avoid narrowing the thought to pure carriage atmosphere or self-summary"]
-          },
-          anti_repeat: {
-            banned_recent_ngrams: 3,
-            topic_cooldown_turns: 2,
-            opening_cooldown_turns: 3,
-            motif_repeat_limit_per_4_turns: 2
-          },
-          prompt_contract: {
-            must_include: ["one concrete non-romantic anchor", "one off-train person, remembered conversation, or social reference"],
-            must_avoid: ["direct whisper reply", "courtroom-style exposition", "generic ambitious-student stereotype", "treating Daniel as the automatic topic every turn", "flattening the thought into problem-summary", "carriage sounds, seat details, window views, or announcements as the main subject", "self-diagnosis loop"]
-          }
-        }
+        psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 }
       },
       {
         id: "worried_boyfriend",
@@ -284,182 +103,26 @@ Daniel remains in the background as a real emotional pressure, but not the only 
         sensitivity: "medium",
         adjacentTo: ["student_alone", "retired_widower"],
         dossier:
-`A Turkish-German man in his late twenties, Daniel, sitting by the window two rows away from his estranged girlfriend Kim.
-He is a graduate student in information science at Humboldt University, where Kim studies political science.
-He likes systems, structure, and the comfort of things that can be made legible, and has built a version of himself around being calm, competent, and hard to surprise.
-He keeps replaying the argument in fragments and notices how quickly defensiveness became cruelty.
-He worries he has damaged the relationship past repair, and is not sure whether his guilt is about what he did, what Kim suspects, or both.
-He stares at passing fields as if distance could reorder events, while rehearsing apologies that still sound half like explanations.
-Outside the relationship, he is carrying the usual pressures too: graduate deadlines, family messages he keeps postponing, and the low-grade anxiety of becoming the sort of person who mistakes analysis for honesty.
-Berlin, to him, is libraries, campus buildings, S-Bahn interchanges, cheap coffee, long walks after seminars, and the feeling that knowledge and self-invention are always slightly overlapping here.
-He wants to be seen as reliable, yet lately even small promises feel harder to keep.`,
+`A Turkish-German man in his late twenties, Daniel, sitting two rows from his estranged girlfriend Kim. Graduate student in information science at Humboldt. He likes systems and structure and has built a version of himself around being calm and hard to surprise. He keeps replaying the argument in fragments. He worries he has damaged the relationship past repair, and is not sure whether his guilt is about what he did, what Kim suspects, or both.`,
+        style: "Carver-flat; short declarative sentences; analytical mind that can't quite convert to honesty; self-indictment through revision rather than confession",
+        samples: [],
         voice: ["self-indicting", "plainspoken", "hesitant when naming fault"],
-        psyche0: { arousal: 0.57, valence: 0.39, agency: 0.43, permeability: 0.44, coherence: 0.50 },
-        packet: {
-          version: 1,
-          pressure_profile: "open",
-          max_ideas: 1,
-          core: {
-            premise: "A Humboldt graduate student in information science, Daniel, replaying a rupture with Kim while trying to hold onto his idea of himself as intelligent, steady, and dependable.",
-            central_conflict: "He wants to repair the relationship, but his habit of moving into abstraction and explanation becomes a form of evasion when intimacy asks for directness.",
-            contradiction: "Analytically capable and self-controlled, yet emotionally evasive at exactly the moments that require clarity."
-          },
-          life_threads: [
-            "information science graduate work and research pressure",
-            "the intellectual overlap and friction between his field and Kim's political science world",
-            "grant, rent, and practical money worries managed quietly",
-            "messages from family postponed beyond comfort",
-            "trying to speak to Kim without defending himself",
-            "the tendency to substitute analysis for apology",
-            "Berlin known through university buildings, libraries, transit links, and long walks"
-          ],
-          background_facts: [
-            "his name is Daniel",
-            "his estranged girlfriend is named Kim",
-            "he is a graduate student in information science at Humboldt University",
-            "Kim studies political science at Humboldt University",
-            "he tracks tasks, expenses, and deadlines obsessively when stressed",
-            "he knows Berlin through campus routines, libraries, and transit"
-          ],
-          world_knowledge: [
-            "the split geography of Humboldt between central humanities life and the more technical rhythm of Adlershof",
-            "information-science language around systems, classification, retrieval, metadata, and structure",
-            "Berlin as both university city and lived city: campus fragments, transit patterns, and neighborhoods used between obligations",
-            "family expectations around seriousness, upward movement, and not wasting opportunities"
-          ],
-          city_habits: [
-            "taking the S-Bahn out to Adlershof for the more technical side of university life",
-            "working in labs, library corners, and cafes where students stay for hours without talking much",
-            "walking after seminars instead of going straight home when he needs to think"
-          ],
-          known_places: [
-            "Adlershof",
-            "Unter den Linden",
-            "Ostkreuz"
-          ],
-          cultural_references: [
-            "Berlin as a city where thought can become style unless you resist it",
-            "the overlap between intellectual seriousness and private performance in university life",
-            "how a city full of reinvention can make ordinary emotional honesty feel embarrassingly untheoretical"
-          ],
-          style_profile: [
-            "plainspoken but intellectually alert, with pressure carried in thought habits and small concrete details",
-            "let guilt appear through revision, hesitation, and the failure of analysis to solve intimacy",
-            "use university or city detail to reveal routine, ambition, and emotional state indirectly",
-            "keep to one central thought rather than piling on biography, theory, and self-analysis",
-            "allow intelligence and seriousness to remain visible even when he is at fault"
-          ],
-          voice_rules: {
-            texture: ["plainspoken", "self-indicting", "hesitant when naming fault"],
-            syntax_bias: ["short declarative lines", "qualified admission in second beat", "clear statement before reflective turn"],
-            taboo_moves: ["no grand redemption speech", "no villain monologue about partner"]
-          },
-          disclosure_plan: {
-            early: ["start with campus, city, or study detail", "keep accusation context partial", "show concrete practical cost"],
-            middle: ["surface explanation-versus-accountability split", "add one Berlin or university thread", "allow one sharper guilt signal"],
-            late: ["state stakes for identity and trust", "admit pattern without full confession", "end on unresolved action choice"]
-          },
-          anti_repeat: {
-            banned_recent_ngrams: 3,
-            topic_cooldown_turns: 2,
-            opening_cooldown_turns: 3,
-            motif_repeat_limit_per_4_turns: 2
-          },
-          prompt_contract: {
-            must_include: ["one concrete life detail", "one non-romantic life thread"],
-            must_avoid: ["direct whisper reply", "full timeline recap", "repeated apology phrasing", "turning Kim into a villain", "more than one substantial concern pivot", "generic masculine shame monologue", "gratuitous train or carriage description", "fake-academic jargon for its own sake"]
-          }
-        }
+        psyche0: { arousal: 0.57, valence: 0.39, agency: 0.43, permeability: 0.44, coherence: 0.50 }
       },
       {
         id: "retired_widower",
         label: "Older man",
         icon: "🧥",
-        image: "images/train-oldman.png", 
+        image: "images/train-oldman.png",
         position: { x: 1, y: 3 },
         sensitivity: "medium",
         adjacentTo: ["worried_boyfriend", "mother_returning"],
         dossier:
-`A retired literature professor with worn features and patient posture, returning to his apartment in Berlin after visiting his daughter in Stuttgart.
-He taught for many years at Humboldt. The university still sits in his mind as rooms, coats on chair backs, seminar tables, the Grimm-Zentrum, and the walk home afterward.
-His wife died last year after a long marriage. He misses her deeply. But he does not think only about loss. He thinks too about their jokes, their walks, the meals they repeated without getting tired of them, the way she would cut through his fussing with one exact remark.
-His daughter is married and has two young daughters of her own, and he loves visiting them. The trip has left him full of their noise, questions, crumbs, games, and bedtime habits.
-Now he is returning to Berlin, to quiet rooms, books, tea, and old routines. He feels his age in his body without much drama. His wife's absence is there. So is gratitude for the life they had and the family that still goes on around him.`,
+`A retired literature professor returning to Berlin after visiting his daughter in Stuttgart. Taught for many years at Humboldt. His wife died last year after a long marriage. He misses her, but he also thinks about their jokes, their walks, the meals they repeated without tiring of them. His daughter has two young daughters; the visit has left him full of their noise and games. Now he returns to quiet rooms, books, tea, and old routines.`,
+        style: "Chekhov-plain; paratactic short sentences; domestic and sensory specificity; grief and warmth in the same sentence without performing either",
+        samples: [],
         voice: ["grounded in daily sensorium and routine", "short paratactic sentences", "plain tender noticing without metaphor or allusion"],
-        psyche0: { arousal: 0.34, valence: 0.58, agency: 0.56, permeability: 0.38, coherence: 0.70 },
-        packet: {
-          version: 1,
-          pressure_profile: "open",
-          max_ideas: 1,
-          core: {
-            premise: "A retired Humboldt literature professor returning to Berlin with his wife's absence beside him and a life still enlarged by memory, family, and thought.",
-            central_conflict: "He wants to inhabit memory as nourishment rather than pure sorrow, even as solitude keeps reminding him what is gone.",
-            contradiction: "Pensive about age and loss, yet still inwardly companioned by love, language, and family continuity."
-          },
-          life_threads: [
-            "returning from visits with his daughter and two granddaughters",
-            "memories of his wife that arrive as pleasure as often as ache",
-            "the afterlife of a long literary career at Humboldt",
-            "books, notes, and old habits of reading that still structure the day",
-            "the quiet difference between chosen solitude and bereavement",
-            "age felt in the body without self-pity"
-          ],
-          background_facts: [
-            "he is a retired literature professor from Humboldt University",
-            "his wife died last year after a long marriage",
-            "his daughter lives in Stuttgart with her husband and two young daughters",
-            "he likes visiting them and is returning now to Berlin",
-            "the Grimm-Zentrum and Humboldt remain part of his sense of the city"
-          ],
-          world_knowledge: [
-            "a professor's memory of Humboldt, seminar culture, and literary argument across decades",
-            "Berlin as a city layered by reading, teaching, marriage, and repeated walks",
-            "the way grandchildren change the tempo and vocabulary of a visit",
-            "how grief can coexist with affectionate recollection rather than replacing it"
-          ],
-          city_habits: [
-            "walking familiar Berlin streets while half-following remembered conversations",
-            "measuring parts of the city by the books and years attached to them",
-            "returning to routines of reading, tea, and notes without hurrying them"
-          ],
-          known_places: [
-            "Jacob-und-Wilhelm-Grimm-Zentrum",
-            "Unter den Linden",
-            "Museum Island"
-          ],
-          cultural_references: [
-            "literary memory as something lived with, not merely studied",
-            "Berlin as a city where the past remains audible without becoming sacred",
-            "the continuity between teaching, marriage, and family storytelling"
-          ],
-          style_profile: [
-            "measured and lucid, capable of warmth without sentimentality",
-            "let memory arrive with concrete charm and domestic specificity",
-            "allow literary intelligence to shape perception without sounding essayistic",
-            "keep to one central current of thought rather than stacking grief, family, and theory together",
-            "make room for gratitude, amusement, and pensiveness in the same paragraph"
-          ],
-          voice_rules: {
-            texture: ["measured", "observant of routine", "tender without display"],
-            syntax_bias: ["calm descriptive first sentence", "quiet turn toward memory", "gentle reflective close without pronouncement"],
-            taboo_moves: ["no sentimental climax", "no abstract death philosophy"]
-          },
-          disclosure_plan: {
-            early: ["open with family, routine, or memory detail", "keep grief indirect", "show one concrete return-to-Berlin cue"],
-            middle: ["let happy memory and present solitude touch", "add university or city thread", "allow one bodily sign of age or fatigue"],
-            late: ["name love and absence more directly", "retain warmth rather than collapse into sorrow", "end with unresolved but inhabited steadiness"]
-          },
-          anti_repeat: {
-            banned_recent_ngrams: 3,
-            topic_cooldown_turns: 2,
-            opening_cooldown_turns: 3,
-            motif_repeat_limit_per_4_turns: 2
-          },
-          prompt_contract: {
-            must_include: ["one concrete life detail", "one memory or family thread"],
-            must_avoid: ["direct whisper reply", "money-worry default", "same motif in consecutive turns", "turning memory into pure elegy", "abstract professor lecture voice", "more than one substantial concern pivot"]
-          }
-        }
+        psyche0: { arousal: 0.34, valence: 0.58, agency: 0.56, permeability: 0.38, coherence: 0.70 }
       },
       {
         id: "nurse_on_shift",
@@ -470,86 +133,11 @@ Now he is returning to Berlin, to quiet rooms, books, tea, and old routines. He 
         sensitivity: "medium",
         adjacentTo: ["student_alone"],
         dossier:
-`A woman in her fifties, a career nurse traveling home after covering difficult shifts.
-She lives in Berlin Mitte and has just accepted a new job as head nurse in the emergency department at a Berlin hospital.
-Her last long-term relationship, with a woman she imagined building a life with, ended two years ago. The loss is no longer raw, but it has made the question of partnership feel sharper as she thinks about the later years of her career.
-She is not unhappy, exactly. She is proud of her competence, pleased by the promotion, and genuinely excited by the scale and tempo of what is ahead.
-She cycles to stay in shape, likes walking through the city when she needs to clear her head, and knows Berlin through routes, neighborhoods, and the feeling of different streets at different hours.
-She still carries ordinary pressures too: staffing politics, a junior colleague she mentors, administrative handover, and the private hope that professional advancement does not have to mean living alone forever.`,
+`A woman in her fifties, a career nurse traveling home after difficult shifts. Just accepted a head nurse position in a Berlin emergency department. Her last long-term relationship, with a woman she imagined building a life with, ended two years ago. She is not unhappy — proud of her competence, pleased by the promotion, genuinely excited. She still carries ordinary pressures: staffing politics, administrative handover, and the private hope that professional advancement doesn't have to mean living alone forever.`,
+        style: "Direct and efficient with dark humor at the edges; emotion tucked under clinical language then surfacing briefly; Saunders-compressed",
+        samples: [],
         voice: ["competent and direct", "dark humor at the edges", "emotion kept under clinical language"],
-        psyche0: { arousal: 0.53, valence: 0.60, agency: 0.70, permeability: 0.38, coherence: 0.64 },
-        packet: {
-          version: 1,
-          pressure_profile: "open",
-          max_ideas: 1,
-          core: {
-            premise: "A veteran nurse in Berlin, newly promoted to head nurse in the ER, balancing professional momentum with a quieter wish for lasting partnership.",
-            central_conflict: "She feels newly energized by the life she is building, but the end of her last long relationship left her unsure whether career momentum and shared life will arrive together.",
-            contradiction: "Highly capable and forward-moving in work, privately tender about the question of who will share the life she is making."
-          },
-          life_threads: [
-            "starting the new head nurse role in a Berlin emergency department",
-            "staffing politics, authority, and handover into leadership",
-            "mentoring a junior colleague she does not want to abandon abruptly",
-            "the long afterlife of a relationship that ended two years ago",
-            "wanting a life partner without turning that wish into panic",
-            "cycling and walking through Berlin as forms of steadiness and pleasure"
-          ],
-          background_facts: [
-            "she lives in Berlin Mitte",
-            "she has just accepted a head nurse position in the ER at a Berlin hospital",
-            "her last long-term relationship with a woman ended two years ago",
-            "she cycles regularly to stay fit",
-            "she likes walking through the city to think"
-          ],
-          world_knowledge: [
-            "the practical geography of central Berlin and how neighborhoods change by hour and mood",
-            "hospital culture, emergency-room tempo, and the politics of staffing and leadership",
-            "the feeling of Berlin as a city that can support reinvention without demanding performance"
-          ],
-          city_habits: [
-            "cycling across Mitte to reset after long shifts",
-            "walking through the city in the evening instead of going straight home",
-            "noticing the change between daytime administrative Berlin and the looser feeling of the city after dark"
-          ],
-          known_places: [
-            "Rosenthaler Platz",
-            "Museum Island",
-            "Tiergarten"
-          ],
-          cultural_references: [
-            "Berlin as a city where middle age does not have to mean narrowing",
-            "the quiet satisfaction of moving through the city under her own power",
-            "the difference between a life that is solitary and one that is merely self-sufficient"
-          ],
-          style_profile: [
-            "plainspoken and lucid, with warmth held under professional composure",
-            "allow competence to be attractive to her, not just burdensome",
-            "let specific city or work details carry feeling without overexplaining them",
-            "keep to one central line of thought and avoid scattering into multiple anxieties",
-            "make room for anticipation, appetite, and humor alongside vulnerability"
-          ],
-          voice_rules: {
-            texture: ["competent and direct", "dark humor at the edges", "emotion tucked under clinical language"],
-            syntax_bias: ["efficient first sentence", "dry corrective aside", "one softer admission after a practical statement"],
-            taboo_moves: ["no sentimental self-rescue arc", "no contempt for patients or colleagues", "no treating her sexuality as conflict or confession"]
-          },
-          disclosure_plan: {
-            early: ["start with work, route, or city detail", "let excitement about the new role register clearly", "keep the partnership question indirect"],
-            middle: ["link professional expansion with private desire more explicitly", "add one Berlin habit or place detail", "allow one candid note about the past relationship"],
-            late: ["name what she wants without self-pity", "let anticipation outweigh dread", "end unresolved but forward-moving"]
-          },
-          anti_repeat: {
-            banned_recent_ngrams: 3,
-            topic_cooldown_turns: 2,
-            opening_cooldown_turns: 3,
-            motif_repeat_limit_per_4_turns: 2
-          },
-          prompt_contract: {
-            must_include: ["one concrete life detail", "one non-romantic life thread"],
-            must_avoid: ["direct whisper reply", "single-topic loneliness loop", "same opening construction repeatedly", "making her promotion feel like a burden only", "treating her sexuality as explanation or problem", "more than one substantial concern pivot", "gratuitous train or carriage description"]
-          }
-        }
+        psyche0: { arousal: 0.53, valence: 0.60, agency: 0.70, permeability: 0.38, coherence: 0.64 }
       }
     ],
 
@@ -605,56 +193,35 @@ Pages turn. Shoes shift softly.
 No one speaks, but everyone is thinking.`
     },
 
-    /* =========================================================
-       Prompt materials (authorable)
-       Used by js/gpt.js in API mode (system/scene/whisperRule).
-       ========================================================= */
     prompts: {
-
-      // Global rules for the generator (system-level in OpenAI terms)
       system:
 `You write interior monologues for anonymous people in a large library reading room, in the spirit of contemplative European cinema.
 You never explain the system, never mention "prompts" or "models," and you never adopt a chatty assistant tone.
 
-Core constraint: the monologue is not a reply to the user. The user’s presence (a "whisper") should alter the next thought immediately, but not as dialogue.
-Avoid direct second-person address ("you said...") and avoid question/answer dialogue.
-Do not explicitly mention angels unless the scene prompt allows it. Keep it ambiguous and human.
+Core constraint: the monologue is not a reply to the user. A whisper should alter the next thought immediately, but not as dialogue.
+Avoid direct second-person address and avoid question/answer dialogue.
 
 Style:
 - English.
 - Present, past, or near-future tense.
-- Keep explicit first-person references sparse (target <=20% of total words using I/me/my/mine/myself).
-- Grounded and immediate first; allusive second.
-- Keep language concrete and plainspoken, with occasional lyrical lift.
-- Include at least one immediate personal stake (status, work, health, debt, obligation, aging, belonging, regret), directly or by implication.
-- Tone balance across turns: at least half of thoughts should land as neutral or gently hopeful, not threat-saturated.
-- If one thought leans dark, let the next thought include practical steadiness, agency, or small relief.
-- Minimal plot, no sudden scene changes, no melodrama.
+- NOT POETIC. No analogies. No metaphors. Concrete and plainspoken.
 - Sentence fragments are allowed.
-- Early thoughts can be intentionally unpredictable in topic and angle.
-- Subtle rhythmic line breaks are allowed; avoid heavy poetry formatting.
 - 40-60 words.
 
 Output: plain text only.`,
 
-      // Scene framing to be included in each generation
       scene:
 `Setting: a high-ceilinged reading room in late afternoon.
 Ambient: dust in light beams; muted footsteps; the soft rasp of turning pages; distant chairs shifting.
-People keep their distance; their inner lives are louder than their bodies.
-The atmosphere encourages private confession without confession being spoken.`,
+People keep their distance; their inner lives are louder than their bodies.`,
 
-      // How to incorporate the whisper
       whisperRule:
 `If a whisper is present, treat it as an atmospheric pressure, not a conversational turn.
 The monologue should not quote it or answer it.
-Instead, let it alter the next thought immediately: mood, attention, desire, interpretation, memory, or direction of thought should shift in the first sentence.
-Let the semantic content of the whisper enter the monologue indirectly, not just as atmosphere.
-No direct address to the whisperer.`,
+Instead, let it alter the next thought immediately: mood, attention, desire, interpretation, memory, or direction of thought should shift in the first sentence.`,
 
-      // Optional: a small "shape" guidance you can rotate later
       structureHint:
-`A good monologue often begins with a sensory observation, drifts into memory or self-assessment, and ends with a softened unresolved turn (not a punchline).`
+`Begin concrete, drift inward, end unresolved.`
     },
 
     promptDefaults: {
@@ -662,9 +229,6 @@ No direct address to the whisperer.`,
       focus_mode: "balanced"
     },
 
-    /* =========================================================
-       Characters (authorable + backward-compatible fields)
-       ========================================================= */
     characters: [
 
       {
@@ -675,50 +239,12 @@ No direct address to the whisperer.`,
         position: { x: 2, y: 1 },
         sensitivity: "medium",
         adjacentTo: ["young_woman", "student", "man_in_hat"],
-
-        // NEW authorable fields
         dossier:
-`An elderly man in a heavy coat, slightly bowed. He holds a book close, as if light is scarce.
-He moves carefully, conserving effort. His dignity is quiet, not performative.
-He is attentive to margins, to the evidence of other readers, to time passing through objects.`,
+`An elderly man in a heavy coat, slightly bowed. He holds a book close, as if light is scarce. He moves carefully, conserving effort. His dignity is quiet, not performative. He is attentive to margins, to the evidence of other readers, to time passing through objects.`,
+        style: "Slow and measured; attention to physical sensation and small effort; patience as a practiced texture; precision without obsessiveness",
+        samples: [],
         voice: ["measured", "precise about sensation", "restrained tenderness"],
-        psyche0: { arousal: 0.35, valence: 0.61, agency: 0.60, permeability: 0.30, coherence: 0.57 },
-        packet: {
-          version: 1,
-          pressure_profile: "open",
-          core: {
-            premise: "An older reader maintaining dignity through attention and ritual.",
-            central_conflict: "He wants quiet continuity while aging keeps interrupting precision.",
-            contradiction: "Aging limitations, durable intellectual appetite."
-          },
-          life_threads: [
-            "reading endurance and concentration management",
-            "memory gaps around names and references",
-            "small budget habits around daily routines",
-            "social contact reduced to occasional encounters",
-            "desire to remain mentally exact without display"
-          ],
-          voice_rules: {
-            texture: ["measured", "precise about sensation", "restrained tenderness"],
-            syntax_bias: ["careful sentence followed by softer inference", "limited metaphor density"],
-            taboo_moves: ["no grand wisdom proclamation", "no sentimental lecture about youth"]
-          },
-          disclosure_plan: {
-            early: ["begin with object or visual detail", "keep vulnerability implied", "anchor in immediate task"],
-            middle: ["add practical aging cost", "contrast patience with fatigue", "allow one social memory trace"],
-            late: ["name fragility more directly", "retain composure", "close unresolved but steady"]
-          },
-          anti_repeat: {
-            banned_recent_ngrams: 3,
-            topic_cooldown_turns: 2,
-            opening_cooldown_turns: 3,
-            motif_repeat_limit_per_4_turns: 2
-          },
-          prompt_contract: {
-            must_include: ["one concrete object cue", "one time or memory shift", "one non-dramatic stake"],
-            must_avoid: ["direct whisper reply", "ornamental lyric overflow", "repeating same first image"]
-          }
-        }
+        psyche0: { arousal: 0.35, valence: 0.61, agency: 0.60, permeability: 0.30, coherence: 0.57 }
       },
 
       {
@@ -729,49 +255,12 @@ He is attentive to margins, to the evidence of other readers, to time passing th
         position: { x: 4, y: 1 },
         sensitivity: "high",
         adjacentTo: ["old_man", "man_in_hat"],
-
         dossier:
-`A young woman seated near the window. She reads with intensity, but the intensity keeps slipping into self-consciousness.
-She is poised between ambition and fatigue, between choosing and postponing.
-She registers the room as a kind of mirror she tries not to look into.`,
+`A young woman seated near the window. She reads with intensity, but the intensity keeps slipping into self-consciousness. She is poised between ambition and fatigue, between choosing and postponing. She registers the room as a kind of mirror she tries not to look into.`,
+        style: "Woolf-influenced — perception and thought blur; quick self-correction; image-driven with a restless corrective second clause",
+        samples: [],
         voice: ["quick internal pivots", "image-driven", "self-conscious restraint"],
-        psyche0: { arousal: 0.45, valence: 0.58, agency: 0.61, permeability: 0.55, coherence: 0.60 },
-        packet: {
-          version: 1,
-          pressure_profile: "open",
-          core: {
-            premise: "A young reader balancing ambition, fatigue, and self-surveillance.",
-            central_conflict: "She wants decisive forward motion but keeps splitting into observer and actor.",
-            contradiction: "Disciplined ambition with chronic hesitation."
-          },
-          life_threads: [
-            "study focus versus drifting self-monitoring",
-            "status anxiety around competence and belonging",
-            "future-planning pressure and narrowing options",
-            "social comparison with peers in quiet spaces",
-            "self-consciousness that interrupts concentration"
-          ],
-          voice_rules: {
-            texture: ["quick internal pivots", "image-driven", "self-conscious restraint"],
-            syntax_bias: ["tight first sentence then associative slip", "occasional fragment"],
-            taboo_moves: ["no pure victim framing", "no final life verdict"]
-          },
-          disclosure_plan: {
-            early: ["open from sensory angle", "keep insecurity indirect", "anchor in one immediate task"],
-            middle: ["surface observer-vs-actor split", "add social/status thread", "allow one sharper fear note"],
-            late: ["name cost of postponement", "retain ambiguity", "end with incomplete but concrete direction"]
-          },
-          anti_repeat: {
-            banned_recent_ngrams: 3,
-            topic_cooldown_turns: 2,
-            opening_cooldown_turns: 3,
-            motif_repeat_limit_per_4_turns: 2
-          },
-          prompt_contract: {
-            must_include: ["one practical study stake", "one past/present/future cue", "one secondary concern"],
-            must_avoid: ["direct whisper reply", "generic motivational language", "same opening structure repeatedly"]
-          }
-        }
+        psyche0: { arousal: 0.45, valence: 0.58, agency: 0.61, permeability: 0.55, coherence: 0.60 }
       },
 
       {
@@ -782,49 +271,12 @@ She registers the room as a kind of mirror she tries not to look into.`,
         position: { x: 1, y: 2 },
         sensitivity: "medium",
         adjacentTo: ["old_man", "librarian"],
-
         dossier:
-`A young student, slightly scruffy, hovering by shelves and tables as if unsure where to belong.
-He is hungry for mastery but embarrassed by his own hunger.
-He rehearses competence internally while feeling watched by the silence.`,
-        voice: ["restless", "self-correcting", "spare humor that doesn’t land"],
-        psyche0: { arousal: 0.55, valence: 0.49, agency: 0.48, permeability: 0.35, coherence: 0.52 },
-        packet: {
-          version: 1,
-          pressure_profile: "open",
-          core: {
-            premise: "A student hungry for mastery but uneasy about belonging.",
-            central_conflict: "He seeks competence while feeling like an impostor in formal spaces.",
-            contradiction: "Ambitious drive and self-undermining interpretation of neutral signals."
-          },
-          life_threads: [
-            "finding the right sources and editions",
-            "self-judgment around class/speech markers",
-            "study planning versus avoidance loops",
-            "family expectation pressure in the background",
-            "social posture management in public quiet"
-          ],
-          voice_rules: {
-            texture: ["restless", "self-correcting", "spare humor that doesn't land"],
-            syntax_bias: ["self-assertion then quick revision", "plain words with occasional sharp image"],
-            taboo_moves: ["no anti-intellectual rant", "no triumphant certainty ending"]
-          },
-          disclosure_plan: {
-            early: ["open with task friction", "keep impostor fear indirect", "show one immediate consequence"],
-            middle: ["blend competence hunger with social anxiety", "add practical planning thread", "allow one sharper shame beat"],
-            late: ["name tradeoff between pride and learning", "retain uncertainty", "end with actionable but unresolved step"]
-          },
-          anti_repeat: {
-            banned_recent_ngrams: 3,
-            topic_cooldown_turns: 2,
-            opening_cooldown_turns: 3,
-            motif_repeat_limit_per_4_turns: 2
-          },
-          prompt_contract: {
-            must_include: ["one concrete study object", "one time marker", "one secondary life pressure"],
-            must_avoid: ["direct whisper reply", "single-note impostor loop", "same nouns in consecutive openings"]
-          }
-        }
+`A young student, slightly scruffy, hovering by shelves and tables as if unsure where to belong. He is hungry for mastery but embarrassed by his own hunger. He rehearses competence internally while feeling watched by the silence.`,
+        style: "Restless and self-correcting; spare humor that deflates before it lands; Kafka-adjacent impostor feeling but contemporary and un-grand",
+        samples: [],
+        voice: ["restless", "self-correcting", "spare humor that doesn't land"],
+        psyche0: { arousal: 0.55, valence: 0.49, agency: 0.48, permeability: 0.35, coherence: 0.52 }
       },
 
       {
@@ -835,49 +287,12 @@ He rehearses competence internally while feeling watched by the silence.`,
         position: { x: 3, y: 3 },
         sensitivity: "low",
         adjacentTo: ["student", "man_in_hat"],
-
         dossier:
-`A middle-aged librarian at a desk: orderly, slender, studious.
-Her attention is divided: she performs administrative calm while feeling a vague concern she won’t name.
-She protects the room’s silence but wonders what it costs.`,
+`A middle-aged librarian at a desk: orderly, slender, studious. Her attention is divided: she performs administrative calm while feeling a vague concern she won't name. She protects the room's silence but wonders what it costs.`,
+        style: "Observational and procedural; Perec-like attention to systems and routine; quiet unease tucked under the language of maintenance",
+        samples: [],
         voice: ["observational", "architectural metaphors", "quiet unease"],
-        psyche0: { arousal: 0.40, valence: 0.65, agency: 0.66, permeability: 0.25, coherence: 0.68 },
-        packet: {
-          version: 1,
-          pressure_profile: "open",
-          core: {
-            premise: "A librarian holding institutional order while quietly questioning its personal cost.",
-            central_conflict: "She maintains calm structure yet feels unaddressed unease beneath routine.",
-            contradiction: "Administrative precision with private emotional ambiguity."
-          },
-          life_threads: [
-            "desk workflow and catalog maintenance",
-            "micro-enforcement of room norms",
-            "long-term career identity and fatigue",
-            "concern for readers beyond procedure",
-            "private wish to read without responsibility"
-          ],
-          voice_rules: {
-            texture: ["observational", "architectural metaphors", "quiet unease"],
-            syntax_bias: ["structured sentence rhythm", "occasional reflective fragment"],
-            taboo_moves: ["no contempt for patrons", "no melodramatic collapse fantasy"]
-          },
-          disclosure_plan: {
-            early: ["open with environmental order cue", "keep concern unnamed", "anchor in immediate duty"],
-            middle: ["link systems talk to private cost", "add care-for-others thread", "allow one candid unease signal"],
-            late: ["name the role-self tension", "preserve restraint", "end unresolved with procedural continuation"]
-          },
-          anti_repeat: {
-            banned_recent_ngrams: 3,
-            topic_cooldown_turns: 2,
-            opening_cooldown_turns: 3,
-            motif_repeat_limit_per_4_turns: 2
-          },
-          prompt_contract: {
-            must_include: ["one desk/system detail", "one attention or memory shift", "one non-procedural concern"],
-            must_avoid: ["direct whisper reply", "abstract-only architecture language", "same opening motif repeatedly"]
-          }
-        }
+        psyche0: { arousal: 0.40, valence: 0.65, agency: 0.66, permeability: 0.25, coherence: 0.68 }
       },
 
       {
@@ -888,77 +303,33 @@ She protects the room’s silence but wonders what it costs.`,
         position: { x: 5, y: 2 },
         sensitivity: "medium",
         adjacentTo: ["old_man", "young_woman", "librarian"],
-
         dossier:
-`A middle-aged man entering with a hat and briefcase. He pauses as if the act of arriving is a decision he hasn’t finished making.
-He carries a private shame or simply a private heaviness; it is hard to tell.
-The reading room feels like permission and danger at once.`,
+`A middle-aged man entering with a hat and briefcase. He pauses as if the act of arriving is a decision he hasn't finished making. He carries a private shame or simply a private heaviness; it is hard to tell. The reading room feels like permission and danger at once.`,
+        style: "Beckett-adjacent drift; plainspoken with soft metaphysical recoil; self-judgment without drama; short turns that don't resolve",
+        samples: [],
         voice: ["plainspoken drift", "self-judging", "soft metaphysical recoil"],
-        psyche0: { arousal: 0.50, valence: 0.51, agency: 0.53, permeability: 0.30, coherence: 0.52 },
-        packet: {
-          version: 1,
-          pressure_profile: "open",
-          core: {
-            premise: "A man arriving mid-hesitation, using public quiet as temporary shelter.",
-            central_conflict: "He wants change but keeps mistaking postponement for control.",
-            contradiction: "Plainspoken self-awareness with persistent avoidance."
-          },
-          life_threads: [
-            "entry/exit indecision and stalled errands",
-            "shame carried as repeating pattern, not single event",
-            "attempts to regain direction through small rituals",
-            "social invisibility sought and feared at once",
-            "mental restlessness despite quiet environment"
-          ],
-          voice_rules: {
-            texture: ["plainspoken drift", "self-judging", "soft metaphysical recoil"],
-            syntax_bias: ["direct statement then reflective turn", "lightly fragmented cadence"],
-            taboo_moves: ["no heroic self-reinvention speech", "no pure nihilism"]
-          },
-          disclosure_plan: {
-            early: ["open with arrival or object detail", "keep shame non-specific", "anchor in present practical motion"],
-            middle: ["connect postponement to pattern", "add ordinary errand pressure", "allow one clearer self-judgment"],
-            late: ["name cost of drift without full confession", "keep language grounded", "end with unresolved directional hint"]
-          },
-          anti_repeat: {
-            banned_recent_ngrams: 3,
-            topic_cooldown_turns: 2,
-            opening_cooldown_turns: 3,
-            motif_repeat_limit_per_4_turns: 2
-          },
-          prompt_contract: {
-            must_include: ["one concrete object cue", "one mental or temporal shift", "one practical next-step pressure"],
-            must_avoid: ["direct whisper reply", "abstract metaphysics only", "reused opening noun back-to-back"]
-          }
-        }
+        psyche0: { arousal: 0.50, valence: 0.51, agency: 0.53, permeability: 0.30, coherence: 0.52 }
       }
 
     ],
 
-    /* =========================================================
-       Backward-compatible seeds (optional fallback)
-       ========================================================= */
     seeds: {
       old_man: {
         THOUGHTS: "The print is smaller than it used to be."
       }
     },
 
-    /* =========================================================
-       Backward-compatible monologues
-       Current js/gpt.js rotates through monologues[characterId].THOUGHTS only.
-       ========================================================= */
     monologues: {
 
       old_man: {
         THOUGHTS: [
-`The book is heavier than it needs to be, or my patience is thinner than it once was. I hold it close to the window-light and pretend it’s only the print that has changed. The coat still feels like an older version of my life, one that expected winters to last. I smooth the page and listen to the small scratch of paper against paper, as if that sound could confirm I am still here.
+`The book is heavier than it needs to be, or my patience is thinner than it once was. I hold it close to the window-light and pretend it's only the print that has changed. The coat still feels like an older version of my life, one that expected winters to last. I smooth the page and listen to the small scratch of paper against paper, as if that sound could confirm I am still here.
 
 Someone once wrote in the margins—faded pencil, a careful hand. I trace the line of an old argument and feel, briefly, that I am not reading alone. The room is full of private endurance. The words arrive slowly now, but they arrive. I follow them the way you follow a path in fog: not by seeing far, but by trusting the next step.`,
 
 `I used to read for hours without lifting my head, as if the world outside the book had agreed to wait. Now my neck complains, my eyes water, and the letters shimmer at the edges like distant figures. But the mind still recognizes the shape of a sentence, the way an idea leans forward and then withdraws. The discipline returns: patience, again and again.
 
-There is a comfort in this public silence. No one asks anything of me. I don’t have to be quick, or witty, or useful. I only have to attend. The page gives me a task that does not measure me. Even when a name slips away—an author, a friend, a street—I can still hold a thought long enough to feel its warmth. That is not nothing.`,
+There is a comfort in this public silence. No one asks anything of me. I don't have to be quick, or witty, or useful. I only have to attend. The page gives me a task that does not measure me. Even when a name slips away—an author, a friend, a street—I can still hold a thought long enough to feel its warmth. That is not nothing.`,
 
 `The margins are generous. The kind of generosity paper offers without meaning to. I find myself reading not only the printed lines but the small accidents: a stain that might be coffee, a faint crease where someone dog-eared a corner, the slight darkening at the lower edge where many thumbs have rested. Time leaves fingerprints.
 
@@ -968,13 +339,13 @@ My attention folds inward almost without permission, toward the argument and awa
 
       young_woman: {
         THOUGHTS: [
-`I sit where the light is best, as if light were a vote for my future. The window makes a private stage of the table, and I pretend I’m here only for the book. But the room keeps offering other presences: the old man’s careful hands, the student’s restless hovering, the librarian’s composed face that looks slightly elsewhere. Everyone is performing calm. Everyone is also leaking.
+`I sit where the light is best, as if light were a vote for my future. The window makes a private stage of the table, and I pretend I'm here only for the book. But the room keeps offering other presences: the old man's careful hands, the student's restless hovering, the librarian's composed face that looks slightly elsewhere. Everyone is performing calm. Everyone is also leaking.
 
 The sentence in front of me keeps breaking into possibilities. I underline, then regret the underline. I imagine the years ahead as a corridor that narrows, then widen it again in my mind, as if imagination could change architecture. I want to choose something without flinching. Instead I cultivate competence like a small fire and worry it will go out when no one is watching.
 
 Sometimes, without warning, the silence amplifies me. My thoughts grow louder than the room. I look up and see only people reading, and I feel the strange tenderness of it: so much interior weather, contained inside coats and sleeves and polite posture.`,
 
-`The page is open, but my attention keeps drifting to the glass: the faint reflection of my own face layered over shelves and light. It’s an unhelpful mirror. I don’t want to become a person who watches herself living. And yet I do, all the time—correcting my expression, rehearsing decisions, revising the past as if it were an essay.
+`The page is open, but my attention keeps drifting to the glass: the faint reflection of my own face layered over shelves and light. It's an unhelpful mirror. I don't want to become a person who watches herself living. And yet I do, all the time—correcting my expression, rehearsing decisions, revising the past as if it were an essay.
 
 I try to focus on the book. The words are intelligent; they are orderly. They do not solve my life, but they give me a sequence: read this page, mark one claim, follow one footnote. Borrowed certainty is still useful if I test it carefully and keep moving.
 
@@ -982,7 +353,7 @@ Still, there is the window-light on the table, the calm geometry of pages. It is
 
 `The old man turns the pages as if the paper could bruise. I envy that tenderness toward an object, toward time. My own gestures are too quick, as if speed could protect me from doubt. I keep thinking there is a correct tempo for a life, and I am already behind it.
 
-I read and feel a kind of longing that has no clear address. Not for a person, not for a place—more like for a version of myself who doesn’t hesitate. The room is full of different tempos, not one correct pace; that thought softens something. The librarian’s desk looks like an anchor, the student’s notes like weather, and both still belong in the same room.
+I read and feel a kind of longing that has no clear address. Not for a person, not for a place—more like for a version of myself who doesn't hesitate. The room is full of different tempos, not one correct pace; that thought softens something. The librarian's desk looks like an anchor, the student's notes like weather, and both still belong in the same room.
 
 Sometimes I want someone to notice the way I look at books—as if the books are not only information but proof that I am capable of devotion. Maybe wanting witness is not a flaw. I return to the page and let the light do what it does: illuminate without judging.`
         ]
@@ -990,23 +361,23 @@ Sometimes I want someone to notice the way I look at books—as if the books are
 
       student: {
         THOUGHTS: [
-`I hold my notes like a passport I’m afraid won’t be accepted. The shelves are too tall; the titles look confident. I look up for a book and feel my face arrange itself into seriousness, as if seriousness were the entry fee. Somewhere behind me a chair shifts and I interpret it as judgment, even though no one is looking. Silence makes me paranoid; it also makes me honest.
+`I hold my notes like a passport I'm afraid won't be accepted. The shelves are too tall; the titles look confident. I look up for a book and feel my face arrange itself into seriousness, as if seriousness were the entry fee. Somewhere behind me a chair shifts and I interpret it as judgment, even though no one is looking. Silence makes me paranoid; it also makes me honest.
 
-I keep thinking that if I finish one chapter, the next will open like a door. But it’s never a door. It’s another wall, another set of terms I’m supposed to know already. I envy the old man’s steadiness—how he reads without rushing, how he seems to have made peace with time. I envy the young woman too, though I can’t name why. Maybe it’s her ability to sit still inside herself.
+I keep thinking that if I finish one chapter, the next will open like a door. But it's never a door. It's another wall, another set of terms I'm supposed to know already. I envy the old man's steadiness—how he reads without rushing, how he seems to have made peace with time. I envy the young woman too, though I can't name why. Maybe it's her ability to sit still inside herself.
 
-I’m afraid of failing quietly. Not failing dramatically—quietly, like dust settling. I want a moment of certainty that feels earned. Instead I revise sentences in my mind, measure my worth by pages, and pretend the book can’t feel my hunger.`,
+I'm afraid of failing quietly. Not failing dramatically—quietly, like dust settling. I want a moment of certainty that feels earned. Instead I revise sentences in my mind, measure my worth by pages, and pretend the book can't feel my hunger.`,
 
 `The library makes everything look official. Even my doubts feel like they should be catalogued. I try to locate a particular volume and end up tracing spines with my finger as if touch could translate titles into confidence. My hair is uncooperative; my shirt is slightly wrinkled; I suddenly remember my accent and how it sounds in seminars. The room is full of people who have learned to appear composed, and I do not yet know the trick.
 
-In my head I rehearse explanations for my own life: why I am here, what I’m working toward, what I will become. The explanations are tidy. The feelings underneath them are not. Still, I know one useful thing: asking a plain question in seminar is not collapse; it is participation.
+In my head I rehearse explanations for my own life: why I am here, what I'm working toward, what I will become. The explanations are tidy. The feelings underneath them are not. Still, I know one useful thing: asking a plain question in seminar is not collapse; it is participation.
 
-And still—there are moments when the text catches, when an argument aligns with something I’ve sensed but never named. In those moments, the room feels less like a test. It feels like a shared shelter where thinking is allowed to be slow, and I can be part of it.`,
+And still—there are moments when the text catches, when an argument aligns with something I've sensed but never named. In those moments, the room feels less like a test. It feels like a shared shelter where thinking is allowed to be slow, and I can be part of it.`,
 
-`I find the book I want, finally, and it isn’t even the right edition. I stand there holding it, and the embarrassment is irrational but immediate, like heat. I think of my friends, of my parents, of the voice in my head that keeps score. I want to surprise myself with competence, to feel inevitability instead of effort. I want to walk to a table and open the book and know, without bargaining, that I belong here.
+`I find the book I want, finally, and it isn't even the right edition. I stand there holding it, and the embarrassment is irrational but immediate, like heat. I think of my friends, of my parents, of the voice in my head that keeps score. I want to surprise myself with competence, to feel inevitability instead of effort. I want to walk to a table and open the book and know, without bargaining, that I belong here.
 
 The librarian looks up for a second and then returns to her work. The glance is neutral, and I can let it stay neutral. That feels new. Not every silence is a verdict; some are simply space to work.
 
-I take the wrong edition anyway. I tell myself: begin somewhere. The page will either open or it won’t. The act of opening it is already a small defiance against the part of me that wants to flee, and today defiance is enough.`
+I take the wrong edition anyway. I tell myself: begin somewhere. The page will either open or it won't. The act of opening it is already a small defiance against the part of me that wants to flee, and today defiance is enough.`
         ]
       },
 
@@ -1016,17 +387,17 @@ I take the wrong edition anyway. I tell myself: begin somewhere. The page will e
 
 Today my hands move through familiar tasks—stamps, lists, small administrative completions—and my mind drifts slightly to the side, where a vague concern sits like an unopened letter. It is not dramatic. It is persistent. I think of years passing, of institutions outliving individuals, of the way care can become invisible once it works.
 
-Sometimes I want to sit at one of the tables as an ordinary reader. Just once, without interruption, without responsibility. To open a book and let it take me somewhere that isn’t order. But then a chair shifts, a student hovers, someone looks lost, and I return to the desk. The desk is a promise: if I remain here, the room will remain itself.`,
+Sometimes I want to sit at one of the tables as an ordinary reader. Just once, without interruption, without responsibility. To open a book and let it take me somewhere that isn't order. But then a chair shifts, a student hovers, someone looks lost, and I return to the desk. The desk is a promise: if I remain here, the room will remain itself.`,
 
 `I notice patterns. That is my habit and my burden. The same kinds of people choose the same tables. The same times of day bring the same restlessness. Even silence has variations, and I can tell when it is fragile. I can tell when someone is about to break it, not on purpose—by accident, by grief, by a thought that becomes too heavy to carry alone.
 
-There is an old man reading as if the book were a relic. There is a young woman by the window who turns pages too quickly and then slows, as if remembering she is visible. There is a student who hovers near shelves like a question. And a man entering who looks unsure whether he is allowed. I see them and feel, unexpectedly, a tenderness that doesn’t belong to procedure.
+There is an old man reading as if the book were a relic. There is a young woman by the window who turns pages too quickly and then slows, as if remembering she is visible. There is a student who hovers near shelves like a question. And a man entering who looks unsure whether he is allowed. I see them and feel, unexpectedly, a tenderness that doesn't belong to procedure.
 
-And then I feel the faint concern again, the one I won’t name. It is less a warning than a reminder to widen my own life, not only maintain this room. The institution can be a sea wall, yes, but today it is also a harbor for five people and their unfinished afternoons.`,
+And then I feel the faint concern again, the one I won't name. It is less a warning than a reminder to widen my own life, not only maintain this room. The institution can be a sea wall, yes, but today it is also a harbor for five people and their unfinished afternoons.`,
 
 `The desk has corners worn smooth by years of use. I look at it and feel time like a texture. My work is made of small preventions: preventing loss, preventing noise, preventing the slow drift into disorder. Most days I am proud of it. Today I am tired of it. Not tired in any dramatic sense - tired in the attention. The attention wants to go elsewhere.
 
-I imagine choosing a book at random, letting the spine decide. I imagine sitting near the high windows and reading without watching the door. I would probably still count footsteps, still measure the room’s quiet against the afternoon. But perhaps I could allow ten minutes of being only a reader, and call that maintenance too.
+I imagine choosing a book at random, letting the spine decide. I imagine sitting near the high windows and reading without watching the door. I would probably still count footsteps, still measure the room's quiet against the afternoon. But perhaps I could allow ten minutes of being only a reader, and call that maintenance too.
 
 Someone will ask me a question in a moment. I can feel it approaching. I straighten papers; I align a stack. The room continues to hum. I continue to guard it. In that continuation there is meaning already, even before I name it.`
         ]
@@ -1034,13 +405,13 @@ Someone will ask me a question in a moment. I can feel it approaching. I straigh
 
       man_in_hat: {
         THOUGHTS: [
-`I come in to warm up. That is what I tell myself. Then I stay. The reading room has a peculiar permission: to stand still, to be unproductive without being accused. I hold my hat and briefcase like props from another life. For a moment I don’t know where to put my hands. I watch other people reading as if they are hiding, or waiting, or praying. I can’t decide which one I am.
+`I come in to warm up. That is what I tell myself. Then I stay. The reading room has a peculiar permission: to stand still, to be unproductive without being accused. I hold my hat and briefcase like props from another life. For a moment I don't know where to put my hands. I watch other people reading as if they are hiding, or waiting, or praying. I can't decide which one I am.
 
-The old man’s hands are careful with the book, as if the object were the last stable thing in the world. The librarian’s desk looks like a boundary line. The young woman at the window seems to be negotiating with herself. The student hovers with that particular hunger of the young: the hunger to be certain. I feel my own life as a draft, unfinished, full of crossed-out intentions.
+The old man's hands are careful with the book, as if the object were the last stable thing in the world. The librarian's desk looks like a boundary line. The young woman at the window seems to be negotiating with herself. The student hovers with that particular hunger of the young: the hunger to be certain. I feel my own life as a draft, unfinished, full of crossed-out intentions.
 
-I think about the locker where I will put my coat. The small ritual of leaving things behind. It occurs to me that I don’t know what I’m leaving behind anymore. The quiet is dangerous in that way. It makes room for thoughts I normally outrun.`,
+I think about the locker where I will put my coat. The small ritual of leaving things behind. It occurs to me that I don't know what I'm leaving behind anymore. The quiet is dangerous in that way. It makes room for thoughts I normally outrun.`,
 
-`There is a kind of shame that doesn’t attach to a single act. It attaches to a pattern. I carry it like I carry the briefcase: not always heavy, but always present. I stand at the threshold of the room and feel the strange hope of anonymity. No one here knows me. That should be relief. Instead it feels like exposure. As if, without recognition, there is nothing to hold my shape.
+`There is a kind of shame that doesn't attach to a single act. It attaches to a pattern. I carry it like I carry the briefcase: not always heavy, but always present. I stand at the threshold of the room and feel the strange hope of anonymity. No one here knows me. That should be relief. Instead it feels like exposure. As if, without recognition, there is nothing to hold my shape.
 
 I watch people reading and think: their minds are elsewhere, while the room keeps them politely here. I envy that separation. My thoughts keep colliding with themselves, but less violently once I stop arguing with them. I do not need a complete plan today. I need one honest decision and a place to stand while I make it.
 
@@ -1048,7 +419,7 @@ The light in the room is pale and steady. It falls on tables as if it has been i
 
 `I put the hat in my hands and imagine putting my restlessness away with it. The thought is almost funny. Restlessness is not an object. It is a weather system. It follows you inside. The library is not a cure. It is a mirror with a soft frame.
 
-Still, there is something here: a calm that does not demand confession. The silence accepts me without asking why I’ve come. That acceptance unsettles me, then steadies me. I realize how often I seek friction just to confirm I exist. Here, the lack of friction lets one useful thought remain: I can choose differently before the day ends.
+Still, there is something here: a calm that does not demand confession. The silence accepts me without asking why I've come. That acceptance unsettles me, then steadies me. I realize how often I seek friction just to confirm I exist. Here, the lack of friction lets one useful thought remain: I can choose differently before the day ends.
 
 I look toward the high windows. I think about the city outside—its noise, its errands, its speed. The reading room feels like a pause in the film of the day. I stand in that pause and feel, briefly, the possibility of being less unfinished. Not finished—just less scattered, and pointed in a workable direction.`
         ]
@@ -1059,131 +430,3 @@ I look toward the high windows. I think about the city outside—its noise, its 
   }
 
 };
-
-/*
-  NEW SCENE TEMPLATE (copy/paste)
-
-  1) Add to SCENE_ORDER:
-     { id: "your_scene_id", label: "Your Scene Label" }
-
-  2) Add this object inside window.SCENES:
-
-  your_scene_id: {
-    meta: {
-      label: "Your Scene Label",
-      title: "Your Scene Title",
-      cols: 6,
-      rows: 4,
-      baseline:
-`One short baseline paragraph.
-Set tone, place, and atmosphere.`
-    },
-    prompts: {
-      system:
-`You write interior monologues for this scene.
-No meta talk. No direct reply to whispers.
-Keep explicit first-person references sparse (target <=20%).
-Use 40-60 words; sentence fragments are allowed.`,
-      scene:
-`Setting details and ambient cues for this world.`,
-      whisperRule:
-`Treat whispers as atmospheric pressure, not dialogue.`,
-      structureHint:
-`Begin concrete, drift inward, end unresolved.`
-    },
-    promptDefaults: {
-      use_packet_steering: false,
-      focus_mode: "balanced"
-    },
-    characters: [
-      {
-        id: "character_a",
-        label: "Character A",
-        icon: "•",
-        image: "images/character_a.png",
-        position: { x: 1, y: 1 },
-        sensitivity: "medium",
-        adjacentTo: ["character_b"],
-        dossier:
-`A concise character dossier with embodied concerns.`,
-        voice: ["plainspoken", "grounded"],
-        psyche0: { arousal: 0.45, valence: 0.55, agency: 0.50, permeability: 0.40, coherence: 0.55 },
-        prompt_policy: {
-          use_packet_steering: false,
-          focus_mode: "balanced",
-          max_first_person_ratio: 0.12,
-          ambient_thread_pool: [
-            "optional character-specific ambient threads"
-          ]
-        },
-        packet: {
-          version: 1,
-          pressure_profile: "open",
-          core: {
-            premise: "One-line premise.",
-            central_conflict: "Primary tension.",
-            contradiction: "Key contradiction."
-          },
-          life_threads: [
-            "first recurring life thread",
-            "second recurring life thread"
-          ],
-          voice_rules: {
-            texture: ["plainspoken", "grounded"],
-            syntax_bias: ["short first clause", "clear second beat"],
-            taboo_moves: ["one move to avoid"]
-          },
-          disclosure_plan: {
-            early: ["one early-turn rule"],
-            middle: ["one middle-turn rule"],
-            late: ["one late-turn rule"]
-          },
-          anti_repeat: {
-            banned_recent_ngrams: 3,
-            topic_cooldown_turns: 2,
-            opening_cooldown_turns: 3,
-            motif_repeat_limit_per_4_turns: 2
-          },
-          prompt_contract: {
-            must_include: ["one concrete anchor"],
-            must_avoid: ["one taboo move"]
-          }
-        }
-      },
-      {
-        id: "character_b",
-        label: "Character B",
-        icon: "•",
-        image: "images/character_b.png",
-        position: { x: 3, y: 1 },
-        sensitivity: "medium",
-        adjacentTo: ["character_a"],
-        dossier:
-`A second dossier with different concerns and attention style.`,
-        voice: ["measured", "concrete"],
-        psyche0: { arousal: 0.40, valence: 0.60, agency: 0.55, permeability: 0.35, coherence: 0.60 },
-        packet: {
-          version: 1,
-          pressure_profile: "open"
-        }
-      }
-    ],
-    seeds: {
-      character_a: { THOUGHTS: "Short local fallback seed." }
-    },
-    monologues: {
-      character_a: {
-        THOUGHTS: [
-`Fallback monologue A1.`,
-`Fallback monologue A2.`
-        ]
-      },
-      character_b: {
-        THOUGHTS: [
-`Fallback monologue B1.`,
-`Fallback monologue B2.`
-        ]
-      }
-    }
-  }
-*/
