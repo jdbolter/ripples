@@ -86,11 +86,11 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
         adjacentTo: ["nurse_on_shift", "worried_boyfriend"],
         dossier:
 `A political science student in her early twenties, Munich-raised, studying at Humboldt. Moved to Berlin partly for the subject, mostly for the freedom of not being watched. She loves the city: late films, odd conversations, the feeling a life can widen. Her laptop is open but she's not really working. Daniel is somewhere in the background — unresolved, not the only thing on her mind but hard to leave alone.`,
-        style: "Self-interrupting and lightly ironic; practical thoughts that trip into private ones; abrupt pivots; dry humor that deflates itself",
+        style: "Self-interrupting and lightly ironic; practical thoughts that trip into private ones; abrupt pivots; dry humor that deflates itself; each thought appears once and is not revisited",
         samples: [
-          "I like train trips like this. The trip is a pause. I can work a bit, and any work I do feels like a bonus or an example of virtue. But maybe this trip is too long? 6 hours? Should be 4 hours. I will be hungry when I get to Berlin. Don't want to make dinner after this trip.",
+          "I like this kind of journey. A built-in pause. I can get things done and feel virtuous about it. But six hours might be too long. Should be four. I'll be hungry when I arrive. Don't want to cook.",
           "Wish I didn't have to think about Daniel. But I do. It's that old paradox: if you tell someone not to think about something, that's exactly what they concentrate on. Think of something else. I should get a dog. More faithful than a man. Well a male dog is fine.",
-          "I keep thinking about the green exit sign in Yorck Kino last week. It was so bright and flat, like a cartoon. I thought: that is the future. It's not a metaphor, it's just what it looked like. I don't want to live in a world where things look like that."
+          "I keep thinking about the green exit sign in Yorck Kino last week. So bright and flat, like a cartoon. I thought: that is the future. Not a metaphor, just what it was. I don't want to live in a world that looks like that."
         ],
         voice: ["precise and clipped", "self-protective", "restlessly associative"],
         psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 }
