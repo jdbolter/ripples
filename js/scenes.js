@@ -89,7 +89,8 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
         style: "Self-interrupting and lightly ironic; practical thoughts that trip into private ones; abrupt pivots; dry humor that deflates itself",
         samples: [
           "I like train trips like this. The trip is a pause. I can work a bit, and any work I do feels like a bonus or an example of virtue. But maybe this trip is too long? 6 hours? Should be 4 hours. I will be hungry when I get to Berlin. Don't want to make dinner after this trip.",
-          "Wish I didn't have to think about Daniel. But I do. It's that old paradox: if you tell someone not to think about something, that's exactly what they concentrate on. Think of something else. I should get a dog. More faithful than a man. Well a male dog is fine."
+          "Wish I didn't have to think about Daniel. But I do. It's that old paradox: if you tell someone not to think about something, that's exactly what they concentrate on. Think of something else. I should get a dog. More faithful than a man. Well a male dog is fine.",
+          "I keep thinking about the green exit sign in Yorck Kino last week. It was so bright and flat, like a cartoon. I thought: that is the future. It's not a metaphor, it's just what it looked like. I don't want to live in a world where things look like that."
         ],
         voice: ["precise and clipped", "self-protective", "restlessly associative"],
         psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 }
