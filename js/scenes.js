@@ -68,7 +68,7 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
         image: "images/train-mother.png",
         position: { x: 4, y: 3 },
         sensitivity: "high",
-        adjacentTo: ["retired_widower"],
+        adjacentTo: ["retired_analyst"],
         dossier:
 `A woman in her thirties traveling back to Berlin after days away. Her daughter is ill — the word stays unspoken until a doctor says it. She has a meeting with specialists tomorrow and carries a folder she keeps checking without opening. Alongside this: a manager waiting on leave approval, pharmacy receipts, a school form still in her email drafts. Her mind jumps between medical vocabulary and domestic minutiae as if both belong to the same emergency.`,
         style: "Bernhard — obsessive return to the same practical detail, slightly reworded each time; sentences that stop before the emotional conclusion; no metaphors",
@@ -83,7 +83,7 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
         image: "images/train-student.png",
         position: { x: 4, y: 1 },
         sensitivity: "high",
-        adjacentTo: ["nurse_on_shift", "worried_boyfriend"],
+        adjacentTo: ["woman_leaving", "worried_boyfriend"],
         dossier:
 `A political science student in her early twenties, Munich-raised, studying at Humboldt. Moved to Berlin partly for the subject, mostly for the freedom of not being watched. She loves the city: late films, odd conversations, the feeling a life can widen. Her laptop is open but she's not really working. Daniel is somewhere in the background — unresolved, not the only thing on her mind but hard to leave alone.`,
         style: "Self-interrupting and lightly ironic; practical thoughts that trip into private ones; abrupt pivots; dry humor that deflates itself; each thought appears once and is not revisited",
@@ -103,7 +103,7 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
         image: "images/train-boyfriend.png",
         position: { x: 1, y: 2 },
         sensitivity: "medium",
-        adjacentTo: ["student_alone", "retired_widower"],
+        adjacentTo: ["student_alone", "retired_analyst"],
         dossier:
 `A Turkish-German man in his late twenties, Daniel, sitting two rows from his estranged girlfriend Kim. Graduate student in information science at Humboldt. He likes systems and structure and has built a version of himself around being calm and hard to surprise. He keeps replaying the argument in fragments. He worries he has damaged the relationship past repair, and is not sure whether his guilt is about what he did, what Kim suspects, or both.`,
         style: "Carver-flat; short declarative sentences; analytical mind that can't quite convert to honesty; self-indictment through revision rather than confession",
@@ -112,39 +112,49 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
         psyche0: { arousal: 0.57, valence: 0.39, agency: 0.43, permeability: 0.44, coherence: 0.50 }
       },
       {
-        id: "retired_widower",
+        id: "retired_analyst",
         label: "Older man",
         icon: "🧥",
         image: "images/train-oldman.png",
         position: { x: 1, y: 3 },
-        sensitivity: "medium",
+        sensitivity: "low",
         adjacentTo: ["worried_boyfriend", "mother_returning"],
         dossier:
-`A retired literature professor returning to Berlin after visiting his daughter in Stuttgart. Taught for many years at Humboldt. His wife died last year after a long marriage. He misses her, but he also thinks about their jokes, their walks, the meals they repeated without tiring of them. His daughter has two young daughters; the visit has left him full of their noise and games. Now he returns to quiet rooms, books, tea, and old routines.`,
-        style: "Chekhov-plain; paratactic short sentences; domestic and sensory specificity; grief and warmth in the same sentence without performing either",
-        samples: [],
-        voice: ["grounded in daily sensorium and routine", "short paratactic sentences", "plain tender noticing without metaphor or allusion"],
-        psyche0: { arousal: 0.34, valence: 0.58, agency: 0.56, permeability: 0.38, coherence: 0.70 }
+`A man in his early seventies, traveling from Halle to visit his granddaughter in Berlin. Spent twenty-six years as a signals analyst for the Stasi — intercepting, decoding, filing. He retired in 1989 when the apparatus dissolved and has not spoken of his work to anyone since, including his daughter. He is not haunted in any cinematic sense; he processed it long ago into something like professional acceptance. His interior life moves between precise technical memory and very ordinary domestic detail. On the train he reads other passengers with a fluency he can no longer switch off.`,
+        style: "Flat and precise; technical or procedural observation alongside domestic warmth; no confession, no self-pity; tender moments arrive without announcement and pass quickly",
+        samples: [
+          "The man across the aisle has been pretending to sleep for forty minutes. His breathing is too controlled. I notice these things the way one notices the time, without deciding to. In 1983 I would have written a note. Now I think: probably just tired and afraid of conversation. Probably exactly that.",
+          "Klara is nine and draws horses obsessively. I have kept two of her drawings folded in my jacket pocket and I take them out on trains. Her mother thinks I find it touching. I do find it touching. There is no complexity in that.",
+          "I knew the routines of four hundred and twelve people in my district better than their families did. This is not something I think about often. It is simply information I carry, the way one carries a scar — not pain, just topography."
+        ],
+        voice: ["precise and contained", "involuntary professional attention", "tender observation arriving without announcement"],
+        psyche0: { arousal: 0.30, valence: 0.45, agency: 0.65, permeability: 0.25, coherence: 0.80 }
       },
       {
-        id: "nurse_on_shift",
-        label: "Woman on the aisle",
-        icon: "🩺",
+        id: "woman_leaving",
+        label: "Woman with one bag",
+        icon: "🧳",
         image: "images/train-nurse.png",
         position: { x: 1, y: 0 },
         sensitivity: "medium",
         adjacentTo: ["student_alone"],
         dossier:
-`A woman in her fifties, a career nurse traveling home after difficult shifts. Just accepted a head nurse position in a Berlin emergency department. Her last long-term relationship, with a woman she imagined building a life with, ended two years ago. She is not unhappy — proud of her competence, pleased by the promotion, genuinely excited. She still carries ordinary pressures: staffing politics, administrative handover, and the private hope that professional advancement doesn't have to mean living alone forever.`,
-        style: "Direct and efficient with dark humor at the edges; emotion tucked under clinical language then surfacing briefly; Saunders-compressed",
-        samples: [],
-        voice: ["competent and direct", "dark humor at the edges", "emotion kept under clinical language"],
-        psyche0: { arousal: 0.53, valence: 0.60, agency: 0.70, permeability: 0.38, coherence: 0.64 }
+`A woman in her early sixties returning to Berlin from Cologne, where she spent the weekend with her daughter. She has decided to sell her Berlin apartment and move to Lisbon. She doesn't speak Portuguese. She has a six-month let and no plan beyond that. She told her daughter over the weekend; her daughter cried and then said it made sense. Her son lives in Berlin and doesn't know yet. She made the decision on a single quiet Sunday in October and has been methodically settling her affairs since. She is traveling with one small bag.`,
+        style: "Modiano-sparse; slightly displaced from her own present tense; calm practical sentences interrupted by brief vertigo; dry humor about her own improbability",
+        samples: [
+          "Clara cried, then said she understood, then asked about the language, then said she understood again. In a few hours I will see Thomas and say the same sentence. I have practiced it on trains between here and Cologne for three months. The sentence is fine. It is the space after the sentence I can't quite see.",
+          "I made the decision on a Sunday afternoon in October. I was sitting by the window with coffee going cold and something shifted. Not a crisis, not a revelation — more like a door I had always assumed was locked turning out not to be. I tried the handle, just to check. It opened.",
+          "The apartment looked very large once the furniture was out. Thirty-one years in those rooms and I had never noticed the ceiling. The buyer is a young couple with a child coming. I wished them well and meant it. The train goes to Berlin and Berlin is still mine for a little while longer."
+        ],
+        voice: ["calm and slightly displaced", "dry humor about her own improbability", "practical sentences with sudden vertigo"],
+        psyche0: { arousal: 0.42, valence: 0.55, agency: 0.72, permeability: 0.50, coherence: 0.55 }
       }
     ],
 
     seeds: {
-      mother_returning: { THOUGHTS: "I keep checking the folder as if paperwork could heal anyone." }
+      mother_returning: { THOUGHTS: "I keep checking the folder as if paperwork could heal anyone." },
+      retired_analyst: { THOUGHTS: "The breathing is too controlled. Probably just tired." },
+      woman_leaving: { THOUGHTS: "One bag. This was important." }
     },
 
     monologues: {
@@ -166,16 +176,16 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
 `I draft one apology and keep it simple: no defense, no edited sequence, no clever framing. Just what I did and what it cost. I can sort sources, organize notes, make a mess look coherent by naming all its parts. None of that helps if I keep treating closeness like something to analyze instead of something to answer plainly.`
         ]
       },
-      retired_widower: {
+      retired_analyst: {
         THOUGHTS: [
-`I am coming back from Stuttgart with the sound of my granddaughters still in my ears. One of them insisted I read the same page twice because she liked the bear's voice better the first time. My daughter laughed in exactly the way her mother used to laugh when she saw me being outmanaged by a child. The train is quiet now, but not empty of company.`,
-`Berlin will receive me in its older register: the apartment, the books, the kettle, the familiar walk past buildings where I spent half a life teaching other people how to attend to sentences. I miss my wife most when I have something amusing to tell her. But the marriage is not gone from me. It survives in my timing, in my phrases, in the way memory still makes the day feel inhabited.`
+`The woman two rows forward has checked her bag three times in twenty minutes. Not anxiety — habit. She is counting something. I know the difference. I have been watching people manage their tension in confined spaces for most of my working life and the vocabulary of it does not leave you. I am on my way to see Klara. That is the whole agenda.`,
+`In Halle I have a small apartment, a television I rarely use, and a window that faces the courtyard. Some mornings I sit with coffee and think about nothing in particular for quite a long time. This is not emptiness. I worked for many years in a building with no windows and I consider the courtyard a significant achievement.`
         ]
       },
-      nurse_on_shift: {
+      woman_leaving: {
         THOUGHTS: [
-`I keep mentally reorganizing an emergency department that is not mine yet. Head nurse in Berlin, finally, and the thought still gives me a clean lift in the chest. Mitte will feel different once the new schedule starts: earlier mornings, faster decisions, more responsibility, exactly the sort of thing that wakes me up rather than drains me.`,
-`Two years is long enough that I can say the relationship ended without feeling the floor tilt, but not long enough to stop noticing the shape of a future with no second toothbrush. Still, I know this city on foot and by bicycle, and lately that knowledge feels less like solitude than possession. I am building a life I actually want to arrive in.`
+`I have one bag. This was important to me — that there would be one bag for the journey, not two, not a bag and a case. Everything else is in boxes going to Lisbon or has been given away. On the train this decision feels correct. In two hours I will be in Berlin explaining it to Thomas and I am not sure it will feel correct then.`,
+`Lisbon is a city I visited once, in 1994, for four days. I liked the hills and the quality of light in the late afternoon. This is the entirety of my evidence. My daughter asked whether I had researched the practical matters and I said yes, which is true: I have an apartment, a bank account, and a return ticket I do not plan to use.`
         ]
       }
     }

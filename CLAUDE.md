@@ -13,6 +13,7 @@ A literary simulation inspired by *Wings of Desire*. Characters sit in a shared 
 
 ## Branches
 - `dev-jdb` — main working branch
+- `jdb-dev-rethink` — character redesign experiments (branched March 2026)
 - `main` — Vercel deployment branch
 
 ## Running locally
@@ -49,8 +50,8 @@ Samples do more work than rules. 2–3 author-written examples per character tea
 | mother_returning | Bernhard — obsessive return to practical detail, stops before emotional conclusion |
 | student_alone (Kim) | Self-interrupting, lightly ironic, dry humor that deflates itself |
 | worried_boyfriend (Daniel) | Carver-flat, analytical mind that can't convert to honesty |
-| retired_widower | Chekhov-plain, paratactic, domestic specificity, grief and warmth together |
-| nurse_on_shift | Direct/efficient, dark humor, emotion under clinical language, Saunders-compressed |
+| retired_analyst | Flat/precise, technical memory alongside domestic warmth, no confession or self-pity |
+| woman_leaving | Modiano-sparse, displaced from own present tense, calm practicality with sudden vertigo |
 
 **Library Reading Room:**
 | Character | Style |
@@ -65,5 +66,6 @@ Samples do more work than rules. 2–3 author-written examples per character tea
 
 ## What still needs doing
 - Write tighter dossiers for all characters (specific and concrete, not spec-sheet language)
-- Write 2–3 samples for every character except `student_alone` (Kim already has 2)
+- Write 2–3 samples for every character except `student_alone` (Kim has 3) and `retired_analyst` (has 3)
 - Samples should be written by the author, 40–60 words, in the character's voice
+- `jdb-dev-rethink` branch: replacing train characters with more varied/resonant figures; `retired_analyst` (Stasi signals analyst) replaces `retired_widower` (literature professor); `woman_leaving` (moving to Lisbon) replaces `nurse_on_shift`
