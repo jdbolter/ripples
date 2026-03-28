@@ -118,6 +118,28 @@
     return normalizeWhitespace(words.join(" "));
   }
 
+  // If text ends with "..." after only 1–3 words since the last complete sentence,
+  // drop that short fragment so the previous sentence closes cleanly instead.
+  function trimShortTrailingFragment(text, minFragmentWords) {
+    const min = Number.isFinite(minFragmentWords) ? minFragmentWords : 4;
+    const t = normalizeWhitespace(text).replace(/…/g, "...");
+    if (!t) return t;
+
+    // Strip trailing ellipsis to expose the raw fragment
+    const stripped = t.replace(/\.\.\.(\s*)$/, "").trimEnd();
+
+    // Find the last complete-sentence boundary followed by more text
+    const m = stripped.match(/^([\s\S]*[.!?])\s+(\S[\s\S]*)$/);
+    if (!m) return t; // no prior complete sentence to fall back to
+
+    const fragment = normalizeWhitespace(m[2]);
+    const fragWords = fragment.split(/\s+/).filter(w => /[A-Za-z0-9]/.test(w));
+    if (fragWords.length < min) {
+      return normalizeWhitespace(m[1]); // drop fragment, end at last sentence
+    }
+    return t;
+  }
+
   function ensureTerminalPunctuation(text) {
     const t = normalizeWhitespace(text).replace(/…/g, "...");
     if (!t) return t;
@@ -172,6 +194,7 @@
     splitClauses,
     truncateToWordCount,
     trimDanglingEnding,
+    trimShortTrailingFragment,
     ensureTerminalPunctuation,
     randInt,
     clampWordRange

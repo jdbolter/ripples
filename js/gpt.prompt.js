@@ -25,6 +25,7 @@
       ? sc.prompts.whisperRule
       : "If a whisper is present, let it alter the thought immediately and indirectly. Do not answer it directly.";
 
+    const ambientThread = String(opts.ambientThread || "").trim();
     const dossier = String(ch.dossier || "");
     const style = String(ch.style || "");
     const samples = Array.isArray(ch.samples) && ch.samples.length ? ch.samples : [];
@@ -56,6 +57,10 @@
       `arousal ${Number(psyche.arousal || 0).toFixed(2)}, valence ${Number(psyche.valence || 0).toFixed(2)}, agency ${Number(psyche.agency || 0).toFixed(2)}, permeability ${Number(psyche.permeability || 0).toFixed(2)}, coherence ${Number(psyche.coherence || 0).toFixed(2)}`
     ].join("\n");
 
+    const ambientLine = ambientThread
+      ? `Ordinary thought field this turn (a passing detail the mind may wander into — use lightly, let it be incidental, do not force it): ${ambientThread}.`
+      : "";
+
     const parts = [
       `Generate an interior monologue. Length: ${thoughtWordMin}–${thoughtWordMax} words. Sentence fragments allowed.`,
       style ? `Style: ${style}` : "",
@@ -65,6 +70,7 @@
       sceneFrame,
       whisperBlock,
       continuityBlock,
+      ambientLine,
       psycheBlock,
       dynamicsDeltaGuidance,
       "Hard constraints:",
@@ -73,6 +79,8 @@
       "- No metaphors or poetic analogies.",
       "- No biography summaries or exposition.",
       "- Plain interior thought only — not dialogue.",
+      "- Each image, phrase, or idea appears once; do not repeat or rephrase it within this monologue.",
+      "- Do not trail off with fewer than five words before any ellipsis; if a thought ends in '...', the fragment before it must be at least a complete short clause.",
       "",
       'Return JSON only: { "monologue": "...", "delta": { "arousal": 0, "valence": 0, "agency": 0, "permeability": 0, "coherence": 0 } }',
       "Delta represents how this moment alters the character's internal state.",

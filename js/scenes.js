@@ -93,6 +93,7 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
           "I keep thinking about the green exit sign in Yorck Kino last week. So bright and flat, like a cartoon. I thought: that is the future. Not a metaphor, just what it was. I don't want to live in a world that looks like that."
         ],
         voice: ["precise and clipped", "self-protective", "restlessly associative"],
+        no_carryover: true,
         psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 }
       },
       {

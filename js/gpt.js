@@ -49,6 +49,7 @@
     splitClauses,
     truncateToWordCount,
     trimDanglingEnding,
+    trimShortTrailingFragment,
     ensureTerminalPunctuation,
     randInt,
     clampWordRange
@@ -722,7 +723,10 @@
   // -----------------------------
   function buildOpeningLeadPlan({ characterId, kind, whisperText }) {
     const scene = engine.getScene();
-    const priorLead = sanitizeCarryoverLead(engine.getOpeningBuffer(characterId), scene);
+    const character = scene?.characters?.find(c => c.id === characterId);
+    const priorLead = character?.no_carryover
+      ? ""
+      : sanitizeCarryoverLead(engine.getOpeningBuffer(characterId), scene);
 
     if (kind === EVENT_KIND.WHISPER) {
       const whisperLead = normalizeWhitespace(
@@ -1344,6 +1348,13 @@
       scene: sc
     });
     const focusSteeringBlock = buildFocusSteeringBlock(focusPlan);
+    const apiState = getApiCharacterState(sceneId, characterId);
+    const ambientThread = pickAmbientThread({
+      scene: sc,
+      state: apiState,
+      turnNumber: apiState.turnIndex + 1,
+      character: ch
+    });
     const { sys, userPrompt, packetContext } = buildOpenAIUserPrompt({
       sc,
       ch,
@@ -1355,6 +1366,7 @@
       priorMonologueCount,
       toneSteeringBlock,
       focusSteeringBlock,
+      ambientThread,
       thoughtWordMin: THOUGHT_WORD_MIN,
       thoughtWordMax: THOUGHT_WORD_MAX,
       dynamicsPromptLine: DYNAMICS.promptLine,
@@ -1477,8 +1489,36 @@
     };
   }
 
+  // Remove the second (and subsequent) occurrence of any verbatim phrase of 3+ tokens.
+  // Runs recursively until no repeated n-gram remains.
+  function dedupePhraseRepetitions(text) {
+    const words = splitWords(text);
+    if (words.length < 6) return text;
+
+    const canon = words.map(canonicalToken);
+    const MIN_LEN = 3;
+
+    for (let j = MIN_LEN; j < words.length; j++) {
+      for (let len = Math.min(10, words.length - j); len >= MIN_LEN; len--) {
+        const seg = canon.slice(j, j + len);
+        for (let i = 0; i + len <= j; i++) {
+          if (canon.slice(i, i + len).every((tok, idx) => tok === seg[idx])) {
+            // seg at j is a repeat of seg at i — remove the one at j
+            const deduped = words.slice(0, j).concat(words.slice(j + len));
+            return dedupePhraseRepetitions(normalizeWhitespace(deduped.join(" ")));
+          }
+        }
+      }
+    }
+
+    return text;
+  }
+
   function postprocessMonologue(text) {
-    return stripOuterQuotes(text);
+    let t = stripOuterQuotes(text);
+    t = dedupePhraseRepetitions(t);
+    t = trimShortTrailingFragment(t, 4);
+    return t;
   }
 
   function constrainThoughtText(text, opts = {}) {
