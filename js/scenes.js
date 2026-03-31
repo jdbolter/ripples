@@ -30,13 +30,13 @@ You never explain the system, never mention "prompts" or "models," and you never
 
 Core constraint: the monologue is not a reply to the user. A whisper should alter the next thought immediately, but not as dialogue.
 Avoid direct second-person address and avoid question/answer dialogue.
-The train is a container, not the main subject. At most one brief transit cue may appear, then move into the character's wider mental life.
+The train is a container, not the  subject. The character's mental life vacillates between the everyday and their past. Often they just free associate. ONE THOUGHT PER MNONOOGUE. The vacillations occur between monologues. 
 
 Style:
 - English.
 - Present, past, or near-future tense.
 - NOT POETIC. No analogies. No metaphors. Concrete and plainspoken.
-- Phrases and fragments are allowed. Single-word thoughts punctuated with ellipses, not periods.
+- Phrases are alllowed. Their monologues often end with ellipses. Single-word thoughts punctuated with ellipses, not periods.
 - 40-60 words.
 
 Output: plain text only.`,
@@ -120,14 +120,14 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
         sensitivity: "low",
         adjacentTo: ["worried_boyfriend", "mother_returning"],
         dossier:
-`A man in his early seventies, traveling from Halle to visit his granddaughter in Berlin. Spent twenty-six years as a signals analyst for the Stasi — intercepting, decoding, filing. He retired in 1989 when the apparatus dissolved and has not spoken of his work to anyone since, including his daughter. He is not haunted in any cinematic sense; he processed it long ago into something like professional acceptance. His interior life moves between precise technical memory and very ordinary domestic detail. On the train he reads other passengers with a fluency he can no longer switch off.`,
-        style: "Flat and precise; technical or procedural observation alongside domestic warmth; no confession, no self-pity; tender moments arrive without announcement and pass quickly",
+`A man in his early seventies, traveling from Halle to visit his granddaughter Klara in Berlin. Spent twenty-six years as a signals analyst for the Stasi — intercepting, decoding, filing. His daughter Katharina was seven when the Wall came down; she knows the word Stasi and knows he worked there and has not asked further. He processed his past long ago into something like professional acceptance. His mind returns often to specific cases, specific people, specific years — not in guilt but in the way a craftsman returns to old work, examining the joints.`,
+        style: "Flat and precise; specific past anecdotes surface alongside memories of his daughter; no confession, no self-pity; tender moments arrive without announcement and pass quickly",
         samples: [
-          "The man across the aisle has been pretending to sleep for forty minutes. His breathing is too controlled. I notice these things the way one notices the time, without deciding to. In 1983 I would have written a note. Now I think: probably just tired and afraid of conversation. Probably exactly that.",
-          "Klara is nine and draws horses obsessively. I have kept two of her drawings folded in my jacket pocket and I take them out on trains. Her mother thinks I find it touching. I do find it touching. There is no complexity in that.",
-          "I knew the routines of four hundred and twelve people in my district better than their families did. This is not something I think about often. It is simply information I carry, the way one carries a scar — not pain, just topography."
+          "In 1977 I spent eleven days decoding the correspondence of a piano teacher in Prenzlauer Berg suspected of distributing banned materials. He was not. He was having an affair with the wife of a Party official and writing her very bad poetry. I filed the report as inconclusive. I have thought about the piano teacher many times since.",
+          "Katharina was seven when the Wall came down. She stood on the kitchen table to see the television and kept asking whether we would go to the West now. I said perhaps. She asked what the West looked like and I said I didn't know. This was true. I had only ever seen it on paper.",
+          "There was a man in our section called Brauer who kept a photograph of his children face-down on his desk so he would not have to look at them while working. I thought this was sentimental at the time. Now Katharina calls every Sunday and we discuss nothing that matters and I think perhaps Brauer understood something I did not."
         ],
-        voice: ["precise and contained", "involuntary professional attention", "tender observation arriving without announcement"],
+        voice: ["precise and contained", "in the style of John LeCarre", "tender observation arriving without announcement"],
         psyche0: { arousal: 0.30, valence: 0.45, agency: 0.65, permeability: 0.25, coherence: 0.80 }
       },
       {
@@ -153,7 +153,7 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
 
     seeds: {
       mother_returning: { THOUGHTS: "I keep checking the folder as if paperwork could heal anyone." },
-      retired_analyst: { THOUGHTS: "The breathing is too controlled. Probably just tired." },
+      retired_analyst: { THOUGHTS: "In 1977 there was a piano teacher in Prenzlauer Berg." },
       woman_leaving: { THOUGHTS: "One bag. This was important." }
     },
 
@@ -178,8 +178,8 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
       },
       retired_analyst: {
         THOUGHTS: [
-`The woman two rows forward has checked her bag three times in twenty minutes. Not anxiety — habit. She is counting something. I know the difference. I have been watching people manage their tension in confined spaces for most of my working life and the vocabulary of it does not leave you. I am on my way to see Klara. That is the whole agenda.`,
-`In Halle I have a small apartment, a television I rarely use, and a window that faces the courtyard. Some mornings I sit with coffee and think about nothing in particular for quite a long time. This is not emptiness. I worked for many years in a building with no windows and I consider the courtyard a significant achievement.`
+`In 1981 I was assigned to monitor a group of theologians in Leipzig who met on Tuesday evenings to discuss Augustine and the question of free will. My supervisor wanted more. I wrote that their discussions posed no operational threat. He disagreed and the file was reassigned. I have not thought about Augustine since, or not deliberately, until recently I have started to again.`,
+`Katharina does not know what I did. She knows the word and knows I worked there and has not asked beyond that. We have built a life on this arrangement and it has held for thirty-five years. When she calls on Sunday I tell her about the weather in Halle. She tells me about Klara. We are both careful and we both know we are being careful and neither of us mentions it.`
         ]
       },
       woman_leaving: {

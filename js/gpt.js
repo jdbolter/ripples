@@ -638,6 +638,7 @@
       maxWords: THOUGHT_WORD_MAX,
       maxClauses: IDEA_LIMITER.maxClauses
     });
+    text = dedupePhraseRepetitions(text);
 
     const carryoverSource = sanitizeThoughtForCarryover(text, engine.getScene()) || text;
     engine.setOpeningBufferFromThought(characterId, carryoverSource);
@@ -721,13 +722,7 @@
   // -----------------------------
   // Utilities
   // -----------------------------
-  function buildOpeningLeadPlan({ characterId, kind, whisperText }) {
-    const scene = engine.getScene();
-    const character = scene?.characters?.find(c => c.id === characterId);
-    const priorLead = character?.no_carryover
-      ? ""
-      : sanitizeCarryoverLead(engine.getOpeningBuffer(characterId), scene);
-
+  function buildOpeningLeadPlan({ kind, whisperText }) {
     if (kind === EVENT_KIND.WHISPER) {
       const whisperLead = normalizeWhitespace(
         extractFirstSentenceOrFragment(whisperText, Math.min(8, CONTINUITY_LEAD_MAX_WORDS))
@@ -738,13 +733,6 @@
           openingLeadSource: "whisper"
         };
       }
-    }
-
-    if (priorLead) {
-      return {
-        openingLead: priorLead,
-        openingLeadSource: "carryover"
-      };
     }
 
     return {
