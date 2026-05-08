@@ -5,12 +5,7 @@
     const scenes = (opts.scenes && typeof opts.scenes === "object") ? opts.scenes : {};
     const sceneOrder = Array.isArray(opts.sceneOrder) ? opts.sceneOrder : [];
     const eventKind = (opts.eventKind && typeof opts.eventKind === "object") ? opts.eventKind : { LISTEN: "LISTEN", WHISPER: "WHISPER" };
-    const dynamics = (opts.dynamics && typeof opts.dynamics === "object") ? opts.dynamics : {
-      neighborScale: 0.55,
-      stabilization: { arousal: -0.001, coherence: 0.001 },
-      whisperBase: { arousal: 0.12, permeability: 0.10, coherence: -0.03 },
-      listenBase: { arousal: -0.01, valence: 0.01, agency: 0.005, permeability: 0.015, coherence: 0.01 }
-    };
+    const dynamics = normalizeDynamics(opts.dynamics);
     const resetApiNarrativeState = (typeof opts.resetApiNarrativeState === "function")
       ? opts.resetApiNarrativeState
       : () => {};
@@ -30,186 +25,178 @@
     const whisperHistory = [];
     const openingBufferByCharacter = {};
 
-    const psyche = {};
+    const affect = {};
 
-    function initPsycheForScene() {
+    function initAffectForScene() {
       const sc = getScene();
       for (const ch of (sc.characters || [])) {
-        const p0 = upgradeLegacyPsyche(ch.psyche0 || {});
-        psyche[ch.id] = normalizePsyche(p0);
+        affect[ch.id] = normalizeAffect(ch.affect0 || ch.psyche0 || {});
       }
     }
 
     function getPsyche(id) {
-      const p = psyche[id];
-      if (!p) return defaultPsyche();
+      const p = affect[id];
+      if (!p) return defaultAffect();
       return {
-        arousal: p.arousal,
-        valence: p.valence,
-        agency: p.agency,
-        permeability: p.permeability,
-        coherence: p.coherence
+        emotion: p.emotion,
+        intensity: p.intensity
       };
     }
 
-    function applyRipple({ sourceId, kind, whisperText, deltaOverride = null }) {
+    function applyRipple({ sourceId, kind, whisperText, affectText = "" }) {
       const sc = getScene();
       const src = sc.characters.find((c) => c.id === sourceId);
       if (!src) return;
 
-      if (!psyche[sourceId]) initPsycheForScene();
+      if (!affect[sourceId]) initAffectForScene();
 
-      const delta =
-        (deltaOverride && typeof deltaOverride === "object")
-          ? sanitizeDelta(deltaOverride)
-          : computeDelta(kind, whisperText);
-
-      applyDeltaTo(sourceId, delta, 1.0);
-
-      const nbs = (src.adjacentTo || []).slice();
-      for (const nbId of nbs) {
-        applyDeltaTo(nbId, delta, dynamics.neighborScale);
-      }
+      const signal = computeAffectSignal({ kind, whisperText, affectText });
+      applySignalTo(sourceId, signal, kind === eventKind.WHISPER ? dynamics.directWhisperScale : dynamics.directThoughtScale);
 
       for (const ch of (sc.characters || [])) {
-        if (!psyche[ch.id]) continue;
-        psyche[ch.id].arousal = clamp01(psyche[ch.id].arousal + dynamics.stabilization.arousal);
-        psyche[ch.id].coherence = clamp01(psyche[ch.id].coherence + dynamics.stabilization.coherence);
+        if (ch.id === sourceId || !affect[ch.id]) continue;
+        applySignalTo(ch.id, signal, dynamics.sharedRippleScale);
+      }
+
+      stabilizeAffect();
+    }
+
+    function computeAffectSignal({ kind, whisperText, affectText }) {
+      const sourceText = normalizeWhitespace(
+        kind === eventKind.WHISPER
+          ? (whisperText || affectText || "")
+          : (affectText || whisperText || "")
+      ).toLowerCase();
+
+      const emotionLexicon = {
+        calm: ["calm", "steady", "quiet", "settled", "rest", "ease", "still", "soft", "gentle", "breathe"],
+        nervous: ["nervous", "worry", "worried", "fear", "panic", "danger", "unsafe", "hurry", "rush", "tense", "alarm", "dread"],
+        sad: ["sad", "grief", "cry", "tears", "loss", "gone", "lonely", "hopeless", "empty", "miss", "hurt"],
+        happy: ["happy", "joy", "glad", "relief", "smile", "laugh", "bright", "warm", "delight", "pleased"],
+        hopeful: ["hope", "maybe", "possible", "tomorrow", "promise", "repair", "forgive", "open", "begin", "arrive"],
+        angry: ["angry", "furious", "resent", "betray", "blame", "hate", "sharp", "cruel", "wrong", "unfair"],
+        guarded: ["careful", "guarded", "private", "contained", "watch", "hold back", "measured", "control"]
+      };
+
+      const scores = {};
+      for (const [emotion, words] of Object.entries(emotionLexicon)) {
+        scores[emotion] = words.reduce((sum, word) => sum + countKeywordHits(sourceText, word), 0);
+      }
+
+      let emotion = "guarded";
+      let score = 0;
+      for (const [label, value] of Object.entries(scores)) {
+        if (value > score) {
+          emotion = label;
+          score = value;
+        }
+      }
+
+      if (!score) {
+        if (kind === eventKind.WHISPER) {
+          emotion = /!|\b(now|must|stop|run|dont|don't)\b/.test(sourceText) ? "nervous" : "guarded";
+        } else {
+          emotion = /\b(smile|warm|light|easier|glad)\b/.test(sourceText) ? "calm" : "guarded";
+        }
+      }
+
+      const punctuationBoost = Math.min(0.10, (sourceText.match(/[!?]/g) || []).length * 0.015);
+      const lengthBoost = sourceText && sourceText.length < 28 ? 0.05 : 0;
+      const kindBase = kind === eventKind.WHISPER ? dynamics.whisperBaseIntensity : dynamics.listenBaseIntensity;
+      const keywordBoost = Math.min(0.22, score * 0.04);
+      const intensity = clamp01(kindBase + keywordBoost + punctuationBoost + lengthBoost);
+
+      return { emotion, intensity: Math.max(0.08, intensity) };
+    }
+
+    function applySignalTo(id, signal, scale) {
+      const state = affect[id];
+      if (!state) return;
+
+      const influence = clamp01(signal.intensity * Math.max(0, Number(scale) || 0));
+      if (!influence) return;
+
+      if (state.emotion === signal.emotion) {
+        state.intensity = clamp01(state.intensity + influence * 0.55);
+        return;
+      }
+
+      if (influence >= Math.max(0.14, state.intensity * 0.75)) {
+        state.emotion = signal.emotion;
+        state.intensity = clamp01((state.intensity * 0.45) + influence);
+        return;
+      }
+
+      state.intensity = clamp01((state.intensity * 0.92) + influence * 0.18);
+      if (state.intensity < 0.16) {
+        state.emotion = softenEmotion(signal.emotion);
       }
     }
 
-    function computeDelta(kind, whisperText) {
-      let arousal = 0;
-      let valence = 0;
-      let agency = 0;
-      let permeability = 0;
-      let coherence = 0;
+    function stabilizeAffect() {
+      for (const state of Object.values(affect)) {
+        if (!state) continue;
+        const eased = state.intensity + (state.baselineIntensity - state.intensity) * dynamics.recoveryRate;
+        state.intensity = clamp01(Math.max(0.05, eased));
 
-      if (kind === eventKind.WHISPER) {
-        arousal += dynamics.whisperBase.arousal;
-        permeability += dynamics.whisperBase.permeability;
-        coherence += dynamics.whisperBase.coherence;
-
-        const w = String(whisperText || "").toLowerCase();
-
-        const neg = [
-          "fear", "danger", "blood", "die", "dead", "dark", "cold", "threat", "loss", "gone", "alone", "unsafe", "panic",
-          "sad", "sorrow", "grief", "cry", "tears", "depressed", "depress", "misery", "hopeless", "lonely"
-        ];
-        const pos = [
-          "warm", "light", "forgive", "tender", "safe", "home", "quiet", "kind", "hold", "soft",
-          "happy", "joy", "joyful", "smile", "glad", "delight", "hope", "bright"
-        ];
-
-        if (neg.some((k) => w.includes(k))) {
-          arousal += 0.10;
-          valence -= 0.12;
-          agency -= 0.07;
-          coherence -= 0.05;
+        if (state.intensity <= Math.max(0.18, state.baselineIntensity + 0.04)) {
+          state.emotion = state.baselineEmotion;
         }
-        if (pos.some((k) => w.includes(k))) {
-          arousal -= 0.05;
-          valence += 0.10;
-          agency += 0.06;
-          permeability += 0.03;
-          coherence += 0.04;
-        }
+      }
+    }
 
-        const urgent = ["now", "hurry", "must", "never", "don't", "dont", "stop", "run"];
-        if (urgent.some((k) => w.includes(k))) {
-          arousal += 0.06;
-          agency -= 0.04;
-        }
+    function defaultAffect() {
+      return {
+        emotion: "guarded",
+        intensity: 0.28,
+        baselineEmotion: "guarded",
+        baselineIntensity: 0.28
+      };
+    }
 
-        const exclamations = (w.match(/!/g) || []).length;
-        if (exclamations > 0) {
-          arousal += Math.min(0.06, exclamations * 0.02);
-          coherence -= Math.min(0.04, exclamations * 0.015);
-        }
+    function normalizeAffect(input) {
+      const base = createInitialAffect(input);
+      const intensity = clamp01(numOr(base.intensity, 0.28));
+      const emotion = normalizeEmotion(base.emotion);
+      return {
+        emotion,
+        intensity,
+        baselineEmotion: emotion,
+        baselineIntensity: intensity
+      };
+    }
 
-        if (w && w.length < 18) {
-          arousal += 0.05;
-          coherence -= 0.02;
-        }
-      } else {
-        arousal += dynamics.listenBase.arousal;
-        valence += dynamics.listenBase.valence;
-        agency += dynamics.listenBase.agency;
-        permeability += dynamics.listenBase.permeability;
-        coherence += dynamics.listenBase.coherence;
+    function createInitialAffect(raw) {
+      const explicitEmotion = normalizeEmotion(raw?.emotion || raw?.mood || raw?.affect);
+      const explicitIntensity = numCoerce(raw?.intensity, NaN);
+      if (explicitEmotion && Number.isFinite(explicitIntensity)) {
+        return { emotion: explicitEmotion, intensity: clamp01(explicitIntensity) };
+      }
+      if (explicitEmotion) {
+        return { emotion: explicitEmotion, intensity: 0.30 };
       }
 
-      return { arousal, valence, agency, permeability, coherence };
-    }
+      const legacy = upgradeLegacyPsyche(raw || {});
+      const arousal = clamp01(numOr(legacy.arousal, 0.35));
+      const valence = clamp01(numOr(legacy.valence, 0.50));
 
-    function sanitizeDelta(d) {
-      const dd = mapLegacyDeltaShape(d);
-      return {
-        arousal: clampDelta("arousal", numCoerce(dd?.arousal, 0)),
-        valence: clampDelta("valence", numCoerce(dd?.valence, 0)),
-        agency: clampDelta("agency", numCoerce(dd?.agency, 0)),
-        permeability: clampDelta("permeability", numCoerce(dd?.permeability, 0)),
-        coherence: clampDelta("coherence", numCoerce(dd?.coherence, 0))
-      };
-    }
+      let emotion = "guarded";
+      if (valence >= 0.62 && arousal <= 0.48) emotion = "calm";
+      else if (valence >= 0.62) emotion = "happy";
+      else if (valence >= 0.52 && arousal >= 0.52) emotion = "hopeful";
+      else if (valence <= 0.42 && arousal >= 0.55) emotion = "nervous";
+      else if (valence <= 0.42) emotion = "sad";
+      else if (arousal >= 0.68) emotion = "nervous";
 
-    function clampDelta(axis, x) {
-      const limits = {
-        arousal: 0.15,
-        valence: 0.12,
-        agency: 0.10,
-        permeability: 0.15,
-        coherence: 0.10
-      };
-      const lim = limits[axis] || 0.12;
-      return Math.max(-lim, Math.min(lim, x));
-    }
-
-    function applyDeltaTo(id, delta, scale) {
-      if (!psyche[id]) return;
-
-      psyche[id].arousal = clamp01(psyche[id].arousal + delta.arousal * axisScale(scale, "arousal"));
-      psyche[id].valence = clamp01(psyche[id].valence + delta.valence * axisScale(scale, "valence"));
-      psyche[id].agency = clamp01(psyche[id].agency + delta.agency * axisScale(scale, "agency"));
-      psyche[id].permeability = clamp01(psyche[id].permeability + delta.permeability * axisScale(scale, "permeability"));
-      psyche[id].coherence = clamp01(psyche[id].coherence + delta.coherence * axisScale(scale, "coherence"));
-
-      psyche[id].coherence = clamp01(psyche[id].coherence - 0.015 * psyche[id].arousal + 0.010 * psyche[id].agency);
-      psyche[id].agency = clamp01(psyche[id].agency - 0.010 * psyche[id].arousal + 0.006 * psyche[id].coherence);
-      psyche[id].valence = clamp01(psyche[id].valence + 0.008 * (psyche[id].coherence - 0.5));
-    }
-
-    function axisScale(scale, axis) {
-      if (typeof scale === "number") return scale;
-      if (scale && typeof scale === "object") return numOr(scale[axis], 1);
-      return 1;
-    }
-
-    function defaultPsyche() {
-      return {
-        arousal: 0.35,
-        valence: 0.55,
-        agency: 0.55,
-        permeability: 0.40,
-        coherence: 0.55
-      };
-    }
-
-    function normalizePsyche(p) {
-      return {
-        arousal: clamp01(numOr(p.arousal, 0.35)),
-        valence: clamp01(numOr(p.valence, 0.55)),
-        agency: clamp01(numOr(p.agency, 0.55)),
-        permeability: clamp01(numOr(p.permeability, 0.40)),
-        coherence: clamp01(numOr(p.coherence, 0.55))
-      };
+      const intensity = clamp01(0.16 + Math.abs(valence - 0.5) * 0.65 + Math.abs(arousal - 0.5) * 0.55);
+      return { emotion, intensity };
     }
 
     function upgradeLegacyPsyche(p0) {
-      const hasNewShape =
+      const hasVectorShape =
         p0 && typeof p0 === "object" &&
         ["arousal", "valence", "agency", "permeability", "coherence"].every((k) => k in p0);
-      if (hasNewShape) return p0;
+      if (hasVectorShape) return p0;
 
       const tension = clamp01(numOr(p0?.tension, 0.35));
       const clarity = clamp01(numOr(p0?.clarity, 0.55));
@@ -225,27 +212,51 @@
       };
     }
 
-    function mapLegacyDeltaShape(d) {
-      const hasNew = d && typeof d === "object" &&
-        ["arousal", "valence", "agency", "permeability", "coherence"].some((k) => k in d);
-      if (hasNew) return d || {};
+    function softenEmotion(emotion) {
+      const e = normalizeEmotion(emotion);
+      if (e === "angry") return "nervous";
+      if (e === "happy") return "hopeful";
+      if (e === "sad") return "guarded";
+      if (e === "nervous") return "guarded";
+      return e || "guarded";
+    }
 
-      const hasLegacy = d && typeof d === "object" &&
-        ["tension", "clarity", "openness", "drift"].some((k) => k in d);
-      if (!hasLegacy) return d || {};
+    function normalizeEmotion(value) {
+      const clean = String(value || "").trim().toLowerCase();
+      const allowed = new Set(["calm", "nervous", "sad", "happy", "hopeful", "angry", "guarded"]);
+      return allowed.has(clean) ? clean : "";
+    }
 
-      const tension = numCoerce(d.tension, 0);
-      const clarity = numCoerce(d.clarity, 0);
-      const openness = numCoerce(d.openness, 0);
-      const drift = numCoerce(d.drift, 0);
+    function countKeywordHits(text, keyword) {
+      if (!text || !keyword) return 0;
+      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+      const matches = text.match(new RegExp(`\\b${escaped}\\b`, "g"));
+      return matches ? matches.length : 0;
+    }
 
+    function normalizeWhitespace(text) {
+      return String(text || "").replace(/\s+/g, " ").trim();
+    }
+
+    function normalizeDynamics(raw) {
+      const obj = (raw && typeof raw === "object") ? raw : {};
       return {
-        arousal: tension,
-        permeability: openness,
-        coherence: 0.65 * clarity - 0.35 * drift,
-        agency: 0.55 * clarity - 0.45 * tension,
-        valence: 0.35 * clarity - 0.45 * tension - 0.2 * drift
+        directWhisperScale: Math.max(0.2, numOr(obj.directWhisperScale, 1.0)),
+        directThoughtScale: Math.max(0.1, numOr(obj.directThoughtScale, 0.62)),
+        sharedRippleScale: Math.max(0.05, numOr(obj.sharedRippleScale, collapseLegacyScale(obj.neighborScale, 0.18))),
+        whisperBaseIntensity: clamp01(numOr(obj.whisperBaseIntensity, 0.22)),
+        listenBaseIntensity: clamp01(numOr(obj.listenBaseIntensity, 0.10)),
+        recoveryRate: clamp01(numOr(obj.recoveryRate, 0.10))
       };
+    }
+
+    function collapseLegacyScale(scale, fallback) {
+      if (typeof scale === "number" && Number.isFinite(scale)) return scale;
+      if (scale && typeof scale === "object") {
+        const nums = Object.values(scale).filter((v) => typeof v === "number" && Number.isFinite(v));
+        if (nums.length) return nums.reduce((sum, n) => sum + n, 0) / nums.length;
+      }
+      return fallback;
     }
 
     function clamp01(x) { return Math.max(0, Math.min(1, x)); }
@@ -273,8 +284,8 @@
       for (const k of Object.keys(lastWhisper)) delete lastWhisper[k];
       whisperHistory.length = 0;
       for (const k of Object.keys(openingBufferByCharacter)) delete openingBufferByCharacter[k];
-      for (const k of Object.keys(psyche)) delete psyche[k];
-      initPsycheForScene();
+      for (const k of Object.keys(affect)) delete affect[k];
+      initAffectForScene();
       return snapshot({ worldtext: getScene().meta.baseline, mode: "baseline" });
     }
 
@@ -389,7 +400,7 @@
         channel,
         whisperText,
         text,
-        psyche: getPsyche(characterId)
+        affect: getPsyche(characterId)
       };
 
       pushTrace(entry);

@@ -2,7 +2,7 @@
    RIPPLES — Scene definitions
    Each character has: id, label, icon, image, position, sensitivity, adjacentTo,
    dossier (background only), style (literary texture), samples (example monologues),
-   voice, psyche0.
+   voice, affect0.
 */
 
 window.SCENE_ORDER = [
@@ -71,7 +71,7 @@ The carriage is a loose holding environment. Passengers sit with their private t
         style: "Bernhard — obsessive return to the same practical detail, slightly reworded each time; sentences that stop before the emotional conclusion; no metaphors",
         samples: [],
         voice: ["contained urgency", "maternal vigilance", "practical language under strain"],
-        psyche0: { arousal: 0.62, valence: 0.42, agency: 0.67, permeability: 0.48, coherence: 0.55 }
+        affect0: { emotion: "nervous", intensity: 0.28 }
       },
       {
         id: "student_alone",
@@ -91,7 +91,7 @@ The carriage is a loose holding environment. Passengers sit with their private t
         ],
         voice: ["precise and clipped", "self-protective", "restlessly associative"],
         no_carryover: true,
-        psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 }
+        affect0: { emotion: "nervous", intensity: 0.35 }
       },
       {
         id: "worried_boyfriend",
@@ -106,7 +106,7 @@ The carriage is a loose holding environment. Passengers sit with their private t
         style: "Carver-flat; short declarative sentences; analytical mind that can't quite convert to honesty; self-indictment through revision rather than confession",
         samples: [],
         voice: ["self-indicting", "plainspoken", "hesitant when naming fault"],
-        psyche0: { arousal: 0.57, valence: 0.39, agency: 0.43, permeability: 0.44, coherence: 0.50 }
+        affect0: { emotion: "nervous", intensity: 0.27 }
       },
       {
         id: "retired_analyst",
@@ -125,7 +125,7 @@ The carriage is a loose holding environment. Passengers sit with their private t
           "There was a man in our section called Brauer who kept a photograph of his children face-down on his desk so he would not have to look at them while working. I thought this was sentimental at the time. Now Katharina calls every Sunday and we discuss nothing that matters and I think perhaps Brauer understood something I did not."
         ],
         voice: ["precise and contained", "in the style of John LeCarre", "tender observation arriving without announcement"],
-        psyche0: { arousal: 0.30, valence: 0.45, agency: 0.65, permeability: 0.25, coherence: 0.80 }
+        affect0: { emotion: "guarded", intensity: 0.30 }
       },
       {
         id: "woman_leaving",
@@ -144,7 +144,7 @@ The carriage is a loose holding environment. Passengers sit with their private t
           "The apartment looked very large once the furniture was out. Thirty-one years in those rooms and I had never noticed the ceiling. The buyer is a young couple with a child coming. I wished them well and meant it. The train goes to Berlin and Berlin is still mine for a little while longer."
         ],
         voice: ["calm and slightly displaced", "dry humor about her own improbability", "practical sentences with sudden vertigo"],
-        psyche0: { arousal: 0.42, valence: 0.55, agency: 0.72, permeability: 0.50, coherence: 0.55 }
+        affect0: { emotion: "hopeful", intensity: 0.24 }
       }
     ],
 
@@ -253,7 +253,7 @@ Instead, let it alter the next thought immediately: mood, attention, desire, int
         style: "Slow and measured; attention to physical sensation and small effort; patience as a practiced texture; precision without obsessiveness",
         samples: [],
         voice: ["measured", "precise about sensation", "restrained tenderness"],
-        psyche0: { arousal: 0.35, valence: 0.61, agency: 0.60, permeability: 0.30, coherence: 0.57 }
+        affect0: { emotion: "calm", intensity: 0.31 }
       },
 
       {
@@ -269,7 +269,7 @@ Instead, let it alter the next thought immediately: mood, attention, desire, int
         style: "Woolf-influenced — perception and thought blur; quick self-correction; image-driven with a restless corrective second clause",
         samples: [],
         voice: ["quick internal pivots", "image-driven", "self-conscious restraint"],
-        psyche0: { arousal: 0.45, valence: 0.58, agency: 0.61, permeability: 0.55, coherence: 0.60 }
+        affect0: { emotion: "guarded", intensity: 0.26 }
       },
 
       {
@@ -285,7 +285,7 @@ Instead, let it alter the next thought immediately: mood, attention, desire, int
         style: "Restless and self-correcting; spare humor that deflates before it lands; Kafka-adjacent impostor feeling but contemporary and un-grand",
         samples: [],
         voice: ["restless", "self-correcting", "spare humor that doesn't land"],
-        psyche0: { arousal: 0.55, valence: 0.49, agency: 0.48, permeability: 0.35, coherence: 0.52 }
+        affect0: { emotion: "guarded", intensity: 0.20 }
       },
 
       {
@@ -301,7 +301,7 @@ Instead, let it alter the next thought immediately: mood, attention, desire, int
         style: "Observational and procedural; Perec-like attention to systems and routine; quiet unease tucked under the language of maintenance",
         samples: [],
         voice: ["observational", "architectural metaphors", "quiet unease"],
-        psyche0: { arousal: 0.40, valence: 0.65, agency: 0.66, permeability: 0.25, coherence: 0.68 }
+        affect0: { emotion: "calm", intensity: 0.31 }
       },
 
       {
@@ -317,7 +317,7 @@ Instead, let it alter the next thought immediately: mood, attention, desire, int
         style: "Beckett-adjacent drift; plainspoken with soft metaphysical recoil; self-judgment without drama; short turns that don't resolve",
         samples: [],
         voice: ["plainspoken drift", "self-judging", "soft metaphysical recoil"],
-        psyche0: { arousal: 0.50, valence: 0.51, agency: 0.53, permeability: 0.30, coherence: 0.52 }
+        affect0: { emotion: "guarded", intensity: 0.17 }
       }
 
     ],

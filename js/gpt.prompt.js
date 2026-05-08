@@ -8,9 +8,8 @@
     const recentThoughts = Array.isArray(opts.recentThoughts) ? opts.recentThoughts : [];
     const thoughtWordMin = Math.max(1, Number(opts.thoughtWordMin) || 40);
     const thoughtWordMax = Math.max(thoughtWordMin, Number(opts.thoughtWordMax) || 60);
-    const dynamicsDeltaGuidance = String(opts.dynamicsDeltaGuidance || "");
     const psyche = (opts.psyche && typeof opts.psyche === "object") ? opts.psyche : {
-      arousal: 0.5, valence: 0.5, agency: 0.5, permeability: 0.5, coherence: 0.5
+      emotion: "guarded", intensity: 0.3
     };
 
     const sys = (sc.prompts && sc.prompts.system)
@@ -51,10 +50,11 @@
       ? `A whisper has reached this character: "${whisperText}"\n${whisperRule}`
       : "(No whisper present.)";
 
-    // Psyche — intensity modulation only
+    const emotion = String(psyche.emotion || "guarded").trim().toLowerCase() || "guarded";
+    const intensity = Math.max(0, Math.min(1, Number(psyche.intensity || 0)));
     const psycheBlock = [
-      "Internal state (use only to modulate tone and intensity, not as subject matter):",
-      `arousal ${Number(psyche.arousal || 0).toFixed(2)}, valence ${Number(psyche.valence || 0).toFixed(2)}, agency ${Number(psyche.agency || 0).toFixed(2)}, permeability ${Number(psyche.permeability || 0).toFixed(2)}, coherence ${Number(psyche.coherence || 0).toFixed(2)}`
+      "Current affect state (guidance only; do not name it explicitly unless the thought naturally implies it):",
+      `${emotion} at intensity ${intensity.toFixed(2)}`
     ].join("\n");
 
     const ambientLine = ambientThread
@@ -72,7 +72,6 @@
       continuityBlock,
       ambientLine,
       psycheBlock,
-      dynamicsDeltaGuidance,
       "Hard constraints:",
       "- No direct second-person reply to a whisper.",
       "- No meta-commentary (no mention of prompts, models, AI, system).",
@@ -82,10 +81,7 @@
       "- Each image, phrase, or idea appears once; do not repeat or rephrase it within this monologue.",
       "- Do not trail off with fewer than five words before any ellipsis; if a thought ends in '...', the fragment before it must be at least a complete short clause.",
       "",
-      'Return JSON only: { "monologue": "...", "delta": { "arousal": 0, "valence": 0, "agency": 0, "permeability": 0, "coherence": 0 } }',
-      "Delta represents how this moment alters the character's internal state.",
-      "Range: arousal/permeability in [-0.15,0.15], valence in [-0.12,0.12], agency/coherence in [-0.10,0.10].",
-      "If no whisper, delta should be near 0."
+      'Return JSON only: { "monologue": "..." }'
     ].filter(Boolean).join("\n\n");
 
     return { sys, userPrompt: parts, packetContext: { promptBlock: "" } };

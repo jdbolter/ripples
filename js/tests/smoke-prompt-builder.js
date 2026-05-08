@@ -84,9 +84,9 @@ const { sys, userPrompt, packetContext } = p.buildOpenAIUserPrompt({
 
 assert.equal(sys, "You write short interior monologues.");
 assert.ok(typeof userPrompt === "string" && userPrompt.includes("Generate an interior monologue."));
-assert.ok(userPrompt.includes("Carry-over riff persistence (MANDATORY):"));
-assert.ok(userPrompt.includes("Allow ordinary, neutral, or gently pleasant observations when natural"));
-assert.ok(!userPrompt.includes("Character motif seeds:"));
+assert.ok(userPrompt.includes("A whisper has reached this character: \"stay calm\""));
+assert.ok(userPrompt.includes("Current affect state"));
+assert.ok(userPrompt.includes('Return JSON only: { "monologue": "..." }'));
 assert.ok(packetContext && typeof packetContext.promptBlock === "string");
 
 const whisperPrompt = p.buildOpenAIUserPrompt({
@@ -123,7 +123,7 @@ const whisperPrompt = p.buildOpenAIUserPrompt({
   normalizeWhitespace: stubNormalizeWhitespace,
   uniqList: stubUniqList
 });
-assert.ok(whisperPrompt.userPrompt.includes("Echo 2-5 distinctive words from this whisper-derived phrase"));
-assert.ok(whisperPrompt.userPrompt.includes("Do not repeat the same whisper phrase twice in one monologue."));
+assert.ok(whisperPrompt.userPrompt.includes("A whisper has reached this character: \"stay calm stay calm\""));
+assert.ok(whisperPrompt.userPrompt.includes("Whisper bends mood indirectly."));
 
 console.log("smoke-prompt-builder: ok");

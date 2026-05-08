@@ -35,10 +35,12 @@ const engine = api.createEngine({
   sceneOrder: [{ id: "reading_room", label: "Reading Room" }],
   eventKind: { LISTEN: "LISTEN", WHISPER: "WHISPER" },
   dynamics: {
-    neighborScale: { arousal: 0.6, valence: 0.4, agency: 0.3, permeability: 0.5, coherence: 0.3 },
-    stabilization: { arousal: -0.001, coherence: 0.001 },
-    whisperBase: { arousal: 0.1, permeability: 0.08, coherence: -0.03 },
-    listenBase: { arousal: -0.01, valence: 0.01, agency: 0.005, permeability: 0.01, coherence: 0.01 }
+    sharedRippleScale: 0.2,
+    directWhisperScale: 1.0,
+    directThoughtScale: 0.6,
+    whisperBaseIntensity: 0.22,
+    listenBaseIntensity: 0.10,
+    recoveryRate: 0.10
   },
   resetApiNarrativeState: () => { resetCalls += 1; },
   extractLastSentenceOrFragment: () => "tail fragment",
@@ -64,9 +66,10 @@ assert.ok(["one line", "another line"].includes(m));
 engine.applyRipple({ sourceId: "a", kind: "WHISPER", whisperText: "danger now!" });
 const pa = engine.getPsyche("a");
 const pb = engine.getPsyche("b");
-for (const v of [pa.arousal, pa.valence, pa.agency, pa.permeability, pa.coherence, pb.arousal, pb.valence, pb.agency, pb.permeability, pb.coherence]) {
-  assert.ok(v >= 0 && v <= 1, "Psyche values must remain clamped to [0, 1].");
-}
+assert.ok(typeof pa.emotion === "string" && pa.emotion.length > 0);
+assert.ok(typeof pb.emotion === "string" && pb.emotion.length > 0);
+assert.ok(pa.intensity >= 0 && pa.intensity <= 1, "Affect intensity must remain clamped to [0, 1].");
+assert.ok(pb.intensity >= 0 && pb.intensity <= 1, "Affect intensity must remain clamped to [0, 1].");
 
 engine.newTrace({ kind: "LISTEN", characterId: "a", channel: "THOUGHTS", text: "A trace line." });
 assert.equal(engine.getMonologueCount("a"), 1);

@@ -4,9 +4,9 @@
    Interaction model:
    - Click a character => opens photo + immediately produces a monologue (DEFAULT channel)
    - Whisper text + click Whisper => re-generates monologue; whisper causes visible ripple
-   - Traces log records both "LISTEN" and "WHISPER" events + psyche snapshot per trace
-   - API mode: a SINGLE OpenAI call returns BOTH monologue + psyche delta (semantic)
-   - Local fallback: deterministic monologue rotation + heuristic delta when generation is unavailable
+   - Traces log records both "LISTEN" and "WHISPER" events + affect snapshot per trace
+   - API mode: a SINGLE OpenAI call returns the monologue; affect ripple is inferred locally
+   - Local fallback: deterministic monologue rotation with locally inferred affect ripple
 
    Depends on: js/scenes.js providing window.SCENES and window.SCENE_ORDER
    Requires index.html elements:
@@ -96,46 +96,34 @@
   const DYNAMICS_MODE = "high"; // change to "intense" or "subtle" to alter tonal pressure
   const DYNAMICS_PROFILES = {
     intense: {
-      neighborScale: {
-        arousal: 0.80,
-        valence: 0.58,
-        agency: 0.32,
-        permeability: 0.76,
-        coherence: 0.28
-      },
-      stabilization: { arousal: -0.0002, coherence: 0.0003 },
-      whisperBase: { arousal: 0.16, permeability: 0.14, coherence: -0.05 },
-      listenBase: { arousal: -0.008, valence: 0.010, agency: 0.004, permeability: 0.012, coherence: 0.008 },
+      directWhisperScale: 1.00,
+      directThoughtScale: 0.72,
+      sharedRippleScale: 0.24,
+      whisperBaseIntensity: 0.28,
+      listenBaseIntensity: 0.14,
+      recoveryRate: 0.08,
       promptLine: "- Intense mode: after a whisper, make the tonal bend immediate and dominant in the monologue.",
-      deltaGuidance: "- In WHISPER events, favor clear, upper-range-but-bounded shifts over mild deltas."
+      deltaGuidance: ""
     },
     high: {
-      neighborScale: {
-        arousal: 0.62,
-        valence: 0.45,
-        agency: 0.25,
-        permeability: 0.58,
-        coherence: 0.22
-      },
-      stabilization: { arousal: -0.0005, coherence: 0.0006 },
-      whisperBase: { arousal: 0.12, permeability: 0.10, coherence: -0.03 },
-      listenBase: { arousal: -0.01, valence: 0.01, agency: 0.005, permeability: 0.015, coherence: 0.01 },
+      directWhisperScale: 1.00,
+      directThoughtScale: 0.62,
+      sharedRippleScale: 0.18,
+      whisperBaseIntensity: 0.22,
+      listenBaseIntensity: 0.10,
+      recoveryRate: 0.10,
       promptLine: "- High-immediacy mode: after a whisper, make the tonal bend unmistakable within 1-2 sentences.",
-      deltaGuidance: "- In WHISPER events, prefer visible-but-bounded shifts over near-zero deltas."
+      deltaGuidance: ""
     },
     subtle: {
-      neighborScale: {
-        arousal: 0.45,
-        valence: 0.35,
-        agency: 0.20,
-        permeability: 0.42,
-        coherence: 0.20
-      },
-      stabilization: { arousal: -0.0025, coherence: 0.0030 },
-      whisperBase: { arousal: 0.07, permeability: 0.06, coherence: -0.02 },
-      listenBase: { arousal: -0.015, valence: 0.012, agency: 0.008, permeability: 0.012, coherence: 0.013 },
+      directWhisperScale: 0.92,
+      directThoughtScale: 0.52,
+      sharedRippleScale: 0.12,
+      whisperBaseIntensity: 0.16,
+      listenBaseIntensity: 0.08,
+      recoveryRate: 0.14,
       promptLine: "- Subtle mode: let whispers bend tone gradually rather than sharply.",
-      deltaGuidance: "- In WHISPER events, keep shifts perceptible but restrained."
+      deltaGuidance: ""
     }
   };
   const DYNAMICS = DYNAMICS_PROFILES[DYNAMICS_MODE] || DYNAMICS_PROFILES.high;
@@ -250,7 +238,7 @@
   let isApiKeyChecking = false;
 
   // -----------------------------
-  // ENGINE (scene state + rotation + psyche)
+  // ENGINE (scene state + rotation + affect)
   // -----------------------------
   const engine = createEngine({
     scenes: window.SCENES,
@@ -553,18 +541,9 @@
     });
     let text = "";
     let usedLocalPool = false;
-    let generatedFromApi = false;
-
     ui.setWorldtext("…", { mode: "baseline" });
 
-    // Drift update strategy:
-    // - Local mode (no API): applyRipple BEFORE selecting from pool.
-    // - API mode + WHISPER: model returns a delta; applyRipple AFTER generation using that delta.
     const canUseOpenAI = hasApiAccess();
-    const useModelDelta = canUseOpenAI && kind === EVENT_KIND.WHISPER;
-    if (!useModelDelta) {
-      engine.applyRipple({ sourceId: characterId, kind, whisperText });
-    }
 
     try {
       if (canUseOpenAI) {
@@ -579,16 +558,6 @@
           focusSteering
         });
         text = out.text;
-        generatedFromApi = true;
-
-        if (useModelDelta && out.delta) {
-          engine.applyRipple({
-            sourceId: characterId,
-            kind,
-            whisperText,
-            deltaOverride: out.delta
-          });
-        }
       } else {
         text = engine.nextMonologue(characterId, channel);
         usedLocalPool = true;
@@ -625,6 +594,13 @@
       maxClauses: IDEA_LIMITER.maxClauses
     });
     text = dedupePhraseRepetitions(text);
+
+    engine.applyRipple({
+      sourceId: characterId,
+      kind,
+      whisperText,
+      affectText: text
+    });
 
     const carryoverSource = sanitizeThoughtForCarryover(text, engine.getScene()) || text;
     engine.setOpeningBufferFromThought(characterId, carryoverSource);
@@ -1284,7 +1260,7 @@
   }
 
   // -----------------------------
-  // OpenAI (Responses API) — single call returns {monologue, delta}
+  // OpenAI (Responses API) — single call returns {monologue}
   //
   // CRITICAL FIX FOR YOUR 400:
   // `name` must be at text.format.name (NOT inside a json_schema wrapper).
@@ -1344,7 +1320,6 @@
       thoughtWordMin: THOUGHT_WORD_MIN,
       thoughtWordMax: THOUGHT_WORD_MAX,
       dynamicsPromptLine: DYNAMICS.promptLine,
-      dynamicsDeltaGuidance: DYNAMICS.deltaGuidance,
       psyche: engine.getPsyche(characterId),
       classifyWhisperTone,
       trimForPrompt,
@@ -1360,8 +1335,6 @@
         { role: "user", content: userPrompt }
       ],
 
-      // ✅ Correct structured output shape for Responses:
-      //    name is directly under format (text.format.name)
       text: {
         format: {
           type: "json_schema",
@@ -1370,21 +1343,9 @@
           schema: {
             type: "object",
             additionalProperties: false,
-            required: ["monologue", "delta"],
+            required: ["monologue"],
             properties: {
-              monologue: { type: "string" },
-              delta: {
-                type: "object",
-                additionalProperties: false,
-                required: ["arousal", "valence", "agency", "permeability", "coherence"],
-                properties: {
-                  arousal: { type: "number" },
-                  valence: { type: "number" },
-                  agency: { type: "number" },
-                  permeability: { type: "number" },
-                  coherence: { type: "number" }
-                }
-              }
+              monologue: { type: "string" }
             }
           }
         }
@@ -1414,7 +1375,6 @@
     const payload = extractResponseJson(data);
 
     const monologue = postprocessMonologue(payload?.monologue);
-    const delta = payload?.delta || null;
 
     updateApiNarrativeState({
       sceneId,
@@ -1423,7 +1383,7 @@
       packetContext
     });
 
-    return { text: monologue, delta };
+    return { text: monologue };
   }
 
   function extractResponseJson(data) {
@@ -1458,8 +1418,7 @@
     }
 
     return {
-      monologue: "(No JSON returned.)",
-      delta: { arousal: 0, valence: 0, agency: 0, permeability: 0, coherence: 0 }
+      monologue: "(No JSON returned.)"
     };
   }
 
