@@ -84,7 +84,7 @@
   ]);
   const AUTO_THOUGHT = {
     enabled: true,
-    intervalMs: 20_000,
+    intervalMs: 30_000,
     retryWhileBusyMs: 1_200,
     passiveCyclesBeforeAdvance: 2
   };
@@ -500,22 +500,8 @@
       trigger: "whisper"
     });
 
-    // TEMPORARILY HIDE PHOTO → SHOW RIPPLE → RESTORE (slow cinematic cycle)
-    let restorePhoto = null;
-
-    if (ui.getFocusMode() === "photo") {
-      restorePhoto = ui.getFocusImageState();
-      ui.closeFocus();
-    }
-
     window.setTimeout(() => {
       ui.flashRippleFor(selectedId);
-
-      if (restorePhoto && restorePhoto.src) {
-        window.setTimeout(() => {
-          ui.openFocusImage(restorePhoto.src, restorePhoto.alt);
-        }, 1900);
-      }
     }, 240);
 
     ui.clearWhisperValue();

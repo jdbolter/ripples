@@ -36,23 +36,20 @@ Style:
 - English.
 - Present, past, or near-future tense.
 - NOT POETIC. No analogies. No metaphors. Concrete and plainspoken.
-- Phrases are alllowed. Their monologues often end with ellipses. Single-word thoughts punctuated with ellipses, not periods.
+- Phrases are alllowed. Their monologues often end with ellipses but only after nouns or verbs so that the sentence fragment makes some senese.
 - 40-60 words.
 
 Output: plain text only.`,
 
       scene:
 `Setting: an ICE train carriage in second class, en route to Berlin.
-The carriage is a loose holding environment. Passengers sit with their private thoughts.
-Use transit details sparingly and only as brief pivots into broader association.`,
+The carriage is a loose holding environment. Passengers sit with their private thoughts.`,
 
       whisperRule:
-`If a whisper is present, treat it as atmospheric pressure, not dialogue.
-Do not answer it directly.
-Let it change the next thought noticeably and immediately: mood, attention, desire, interpretation, or direction of thought should shift in the first sentence.`,
+`If a whisper is present, let it change the next thought noticeably and immediately: mood, attention, desire, interpretation, or direction of thought should shift in the first sentence.`,
 
       structureHint:
-`Move through memories, obligations, heard-about events, stray objects, and wider personal associations.`
+`Move through memories, obligations, heard-about events, stray objects, and wider personal associations. Remember the carriage contains ONLY these characters. Do not refer to other passengers who aren't there -- unless they are just passing through the carriage.`,
     },
 
     promptDefaults: {
@@ -63,7 +60,7 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
     characters: [
       {
         id: "mother_returning",
-        label: "Woman by the window",
+        label: "Barbara",
         icon: "🧳",
         image: "images/train-mother.png",
         position: { x: 4, y: 3 },
@@ -78,17 +75,17 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
       },
       {
         id: "student_alone",
-        label: "Student with Laptop",
+        label: "Kim",
         icon: "💻",
         image: "images/train-student.png",
         position: { x: 4, y: 1 },
         sensitivity: "high",
         adjacentTo: ["woman_leaving", "worried_boyfriend"],
         dossier:
-`A political science student in her early twenties, Munich-raised, studying at Humboldt. Moved to Berlin partly for the subject, mostly for the freedom of not being watched. She loves the city: late films, odd conversations, the feeling a life can widen. Her laptop is open but she's not really working. Daniel is somewhere in the background — unresolved, not the only thing on her mind but hard to leave alone.`,
+        `A political science student in her early twenties, Munich-raised, studying at Humboldt. Moved to Berlin partly for the subject, mostly for the freedom of not being watched. She loves the city: late films, odd conversations, the feeling a life can widen. Her laptop is open but she's not really working. Daniel is somewhere in the background — unresolved, not the only thing on her mind but hard to leave alone.`,
         style: "Self-interrupting and lightly ironic; practical thoughts that trip into private ones; abrupt pivots; dry humor that deflates itself; each thought appears once and is not revisited",
         samples: [
-          "I like this kind of journey. A built-in pause. I can get things done and feel virtuous about it. But six hours might be too long. Should be four. I'll be hungry when I arrive. Don't want to cook.",
+          "I like this kind of journey. A built-in pause. I can get things done and feel virtuous about it. But six hours is a bit too long. Should be four. I'll be hungry when I arrive. Don't want to cook.",
           "Wish I didn't have to think about Daniel. But I do. It's that old paradox: if you tell someone not to think about something, that's exactly what they concentrate on. Think of something else. I should get a dog. More faithful than a man. Well a male dog is fine.",
           "I keep thinking about the green exit sign in Yorck Kino last week. So bright and flat, like a cartoon. I thought: that is the future. Not a metaphor, just what it was. I don't want to live in a world that looks like that."
         ],
@@ -98,7 +95,7 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
       },
       {
         id: "worried_boyfriend",
-        label: "Young man by the window",
+        label: "Daniel",
         icon: "🪟",
         image: "images/train-boyfriend.png",
         position: { x: 1, y: 2 },
@@ -113,15 +110,15 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
       },
       {
         id: "retired_analyst",
-        label: "Older man",
+        label: "Friedrich",
         icon: "🧥",
         image: "images/train-oldman.png",
         position: { x: 1, y: 3 },
         sensitivity: "low",
         adjacentTo: ["worried_boyfriend", "mother_returning"],
         dossier:
-`A man in his early seventies, traveling from Halle to visit his granddaughter Klara in Berlin. Spent twenty-six years as a signals analyst for the Stasi — intercepting, decoding, filing. His daughter Katharina was seven when the Wall came down; she knows the word Stasi and knows he worked there and has not asked further. He processed his past long ago into something like professional acceptance. His mind returns often to specific cases, specific people, specific years — not in guilt but in the way a craftsman returns to old work, examining the joints.`,
-        style: "Flat and precise; specific past anecdotes surface alongside memories of his daughter; no confession, no self-pity; tender moments arrive without announcement and pass quickly",
+`A man in his early seventies, traveling from Halle to visit his granddaughter Klara in Berlin. Spent twenty-six years as a signals analyst for the Stasi — intercepting, decoding, filing. His daughter Katharina was seven when the Wall came down; she knows about Stasi and knows he worked there and has not asked further. He processed his past long ago into something like professional acceptance. His mind returns often to specific cases, specific people, specific years — with regret but also in the way a craftsman returns to old work, examining the joints.`,
+        style: "Flat and precise; specific past anecdotes surface alongside memories of his daughter; with some regret but not self-pity; tender moments arrive without announcement and pass quickly",
         samples: [
           "In 1977 I spent eleven days decoding the correspondence of a piano teacher in Prenzlauer Berg suspected of distributing banned materials. He was not. He was having an affair with the wife of a Party official and writing her very bad poetry. I filed the report as inconclusive. I have thought about the piano teacher many times since.",
           "Katharina was seven when the Wall came down. She stood on the kitchen table to see the television and kept asking whether we would go to the West now. I said perhaps. She asked what the West looked like and I said I didn't know. This was true. I had only ever seen it on paper.",
@@ -132,7 +129,7 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
       },
       {
         id: "woman_leaving",
-        label: "Woman with one bag",
+        label: "Susanna",
         icon: "🧳",
         image: "images/train-nurse.png",
         position: { x: 1, y: 0 },

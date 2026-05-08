@@ -338,13 +338,6 @@
       const ch = sc.characters.find((c) => c.id === characterId);
       if (!ch) return;
 
-      if (isFocusOpen && focusMode === "photo") {
-        elFocusOverlay.style.opacity = "0.05";
-        window.setTimeout(() => {
-          elFocusOverlay.style.opacity = "";
-        }, 1600);
-      }
-
       rippleAtCharacter(ch.id, "thoughts", 1.0);
       (ch.adjacentTo || []).forEach((nbId, i) => {
         window.setTimeout(() => rippleAtCharacter(nbId, "thoughts", 0.55), 180 + i * 110);
