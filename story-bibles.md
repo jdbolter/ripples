@@ -5,6 +5,16 @@ Each entry includes a **prompt fingerprint** (150–200 words) derived from the 
 
 ---
 
+## Train to Berlin — Scene Note
+
+The Munich–Berlin ICE. Passengers:
+- **Kim and Daniel** travel together from Munich to Berlin — their home — returning from a visit to Kim's parents. They are not sitting together.
+- **Friedrich** boards at Halle, which falls on the Munich–Berlin route. He is visiting his granddaughter Klara in Berlin.
+- **Barbara** was in Munich seeking a specialist's second opinion about her daughter's illness. She is returning with the same folder and no better answers.
+- **Susanna's** daughter Clara lives in Munich *(update from Cologne in scenes.js)*. She spent the weekend there telling Clara she is moving to Lisbon. Now returning to Berlin to tell her son Thomas, who doesn't know yet.
+
+---
+
 ## Friedrich (retired_analyst) — Train to Berlin
 
 ### Story Bible
@@ -56,5 +66,93 @@ He has twice typed the name into a search bar and closed it before the results l
 He is traveling to Berlin to see his granddaughter Klara. His daughter Katharina knows he worked for the Stasi and has not asked further. They are both careful. This has held for thirty-five years.
 
 His body still carries the pressure of old headphones. He still notices what people leave out.
+
+---
+
+## Kim (student_alone) — Train to Berlin
+
+### Story Bible
+
+Kim was born in 1999 in Munich to Korean parents who arrived in 1983 — her father a mechanical engineer, her mother working in hospital administration at the Klinikum Großhadern. They came under a bilateral labor agreement between South Korea and West Germany, a category of migration the current political debate barely remembers. Kim has written a seminar paper on exactly this classification of worker and has not told her parents it exists.
+
+She grew up in Schwabing, one of perhaps four Asian students in her Gymnasium. She developed early a script for the question — *where are you really from, no but really* — that was fluent, slightly ironic, designed to end the conversation without embarrassment to either party. She is aware this script is a small sustained performance and she is tired of it.
+
+She moved to Berlin at nineteen for Humboldt. Within two weeks she felt something she hadn't known was possible: the relief of not being the most visible person in a room. She has not gone back on this. Berlin is genuinely hers now — not nostalgically, not as a romantic idea of the city, but as a place that expanded her without requiring her to explain herself first.
+
+**Her work.** Political science: immigration and integration politics, EU asylum frameworks, citizenship regimes, the political language of belonging. The subject is personally implicated in ways she manages carefully. She has the analytical vocabulary to examine her own experience and has learned that this vocabulary also creates distance. Her parents are an example of the demographic she studies but in a register that doesn't fit her frameworks — not refugees, not EU free movement, not the Gastarbeiter story exactly. A specific category that falls between the contemporary policy conversations. She knows this gap intellectually. On the train back from Munich she feels it in a different register.
+
+**This weekend.** She and Daniel went to Munich together. She performed normality for her parents: her mother's slightly too-careful politeness toward Daniel, her father watching the late news with the volume too high and asking nothing difficult, which was itself a kind of asking. Her old bedroom is a study now. Her childhood books are in boxes she didn't open.
+
+**The text.** Three weeks ago in Berlin. A mutual friend, Petra, texted: *Did Daniel decide about Amsterdam? Tell him to go, it's amazing there.* Kim read it once and then showed Daniel the phone without a word. He knew immediately. She waited. What he said next was prepared — she could hear three weeks of preparation in it — and that was the problem.
+
+**The argument.** It ran through the week before Munich, was suspended through the weekend at her parents' apartment, and resumed on the train. He explained carefully. He revised. He produced a sequence of reasoning that was coherent and almost true and insufficient. She waited through each version. At some point she said: *You're very good at explaining things after you've already decided them.* Then she stopped and moved seats. She chose a window seat two rows ahead where he can see her back and she can see the winter fields.
+
+She has not looked around.
+
+**What she won't say.** That she moved partly to see what he would do — and that he hasn't moved, which is information. That she is not certain she wants to end this, only that she could not continue that conversation. That she is not sure the Amsterdam thing is the actual problem or just the name she finally has for something older. That going home to Munich for forty-eight hours made her feel slightly smaller, more managed, the old legibility returning, and that she doesn't entirely hate this about Munich, which unsettles her.
+
+**Contradictions.** She studies belonging and has built hers in Berlin with considerable effort and intention. Going home undoes some of it — not all, but enough that she notices. She is self-interrupting by habit and calls this precision. Sometimes it is precision. Sometimes it is a way of not finishing a thought that is taking her somewhere uncomfortable.
+
+---
+
+### Prompt Fingerprint
+
+*(~185 words)*
+
+Kim is in her mid-twenties, Korean-German, Munich-raised, political science MA at Humboldt. She came to Berlin at nineteen and felt, within two weeks, the specific relief of not being the most visible person in a room. She has not gone back on this.
+
+Her subject is immigration and integration politics. Her parents' story — Korean workers, Munich, 1983, a bilateral labor agreement nobody discusses anymore — falls between the categories her academic frameworks describe. She has written about this without telling them.
+
+Three weeks ago a mutual friend texted asking if Daniel had decided about Amsterdam. Kim hadn't known. She showed him the phone without a word. The argument ran through a week, was suspended across a weekend at her parents' apartment in Munich, and resumed on the train. At some point she said something precise and moved seats. She is two rows ahead of him. She has not looked around.
+
+Her childhood bedroom in Munich is a study now. Her mother offered food continuously for two days and asked nothing directly.
+
+She is not sure she wants to end this. She is sure she cannot continue that conversation.
+
+---
+
+## Daniel (worried_boyfriend) — Train to Berlin
+
+### Story Bible
+
+Daniel was born in 1996 in Berlin, Kreuzberg. His parents came from Ankara — his father in the early 1980s under the Gastarbeiter program, his mother joining him in 1985. They chose Daniel for him deliberately: a name that wouldn't mark him before anyone met him. He understands this decision. He carries it with a low-grade ambivalence he doesn't examine closely, the way you don't examine a floor you walk on every day.
+
+He grew up between two registers — the apartment in Kreuzberg, his parents' Turkish, his mother's cooking, the specific social gravity of a community that has been in Berlin for forty years and is still described as arriving — and the German school system, German friends, a German academic career. He converted this early double-fluency into an intellectual disposition: precision, structural thinking, the capacity to hold multiple positions simultaneously without flinching. He is calmer than he feels. This is a skill he developed at around age twelve and has never fully distinguished from his personality.
+
+**His work.** German history, specifically the Stasi and its dissolution — not the operational core, but the institutional periphery: signals analysts, information processors, the people who handled facts without making decisions. His argument concerns diffuse complicity, the moral status of the technical role, what it means to participate in a system through competence alone. He works in archives in Leipzig and Berlin, reading files written in the careful bureaucratic language with which the Stasi described and categorized the people it watched.
+
+He did not choose Turkish-German history. Kim has come close to asking him directly why not. They have had the beginning of this conversation twice and not finished it. He knows what he would say if she asked clearly: that the Stasi is a bounded historical problem with an endpoint, and that his parents' story is not bounded and does not have an endpoint, and he needs the one that ends. He has not quite said this to himself in these words.
+
+What he has not examined: that he studies people who processed other people's lives at careful procedural distance, and that this is also, structurally, what he does. The twenty-two days he sat on the Amsterdam email are an example of this. He did not experience those days as suppression or self-protection. He experienced them as method — letting a decision clarify before it became a conversation.
+
+**Amsterdam.** A six-month research placement at an institute in Utrecht with access to a Stasi archive collection not available in Germany — genuinely significant for his dissertation chapter on the dissolution period. The email arrived in January. He sat on it for twenty-two days. His argument to himself: he needed to resolve the work question before the conversation became about them. What he required himself not to notice: that this ordering was itself a position on the relationship, and that Kim would recognize it.
+
+**The text.** Petra texted Kim. Kim showed him the phone. He saw her face before she turned the screen toward him and the twenty-two days collapsed into a single visible fact. He said: *I was still deciding.* Kim said nothing immediately, which was not the same as accepting this.
+
+**The argument.** It ran for a week before Munich and was suspended through the weekend at Kim's parents' apartment — he performed fine, he thinks he performed fine, he was careful and warm and asked Kim's father about his work and helped with the washing up. On the train it resumed. He produced his explanation in full: the uncertainty, the intention to tell her, the timing. Kim listened through all of it. Then she said: *You're very good at explaining things after you've already decided them.* Then she moved. He watched her choose a seat two rows ahead and settle into it. She hasn't looked back.
+
+He has rehearsed what he would say if he went to her or she came back. He has not gone.
+
+**The Friedrich connection.** Daniel has probably written the theoretical version of Friedrich's moral situation — the analyst who processed files on people whose fates he didn't follow, the question of what is owed when your role was technical. He has argued in seminar that the non-deciding hand is not innocent. He doesn't know that a man in his early seventies boarded this train at Halle and is sitting somewhere in this carriage, living the interior life that Daniel's dissertation processes from the outside.
+
+**What he won't say.** That he chose Stasi history partly because studying Turkish-German integration would mean studying his parents' lives, and he is not ready for that — not the politics of it but the specific texture of it, the forty years in Kreuzberg, the name they chose for him. That the twenty-two days with the Amsterdam email were not only about uncertainty. They were also about wanting, briefly, to imagine a version of his future that he hadn't already shared. That sitting two rows behind Kim and not going to her is the same gesture as the email, and he can see this clearly, and cannot find the mechanism to override it.
+
+**Contradictions.** He studies diffuse complicity — the question of what you owe when your participation was procedural — with genuine intellectual sympathy for its difficulty. He cannot apply the same sympathy to himself. His analytical precision is real and is also a form of shelter. He knows this and continues to use it.
+
+---
+
+### Prompt Fingerprint
+
+*(~195 words)*
+
+Daniel is in his late twenties, Turkish-German, raised in Kreuzberg. His parents chose his name deliberately: something that wouldn't mark him before anyone met him. He carries this with low-grade ambivalence.
+
+He studies the Stasi and its dissolution — specifically the institutional periphery: signals analysts, information processors, diffuse complicity, the moral weight of the technical role. He did not choose his parents' story. He and Kim have started the conversation about why twice and not finished it.
+
+Three weeks ago a research placement arrived from an archive institute in Utrecht. He held the email for twenty-two days while he resolved the work question — then a mutual friend texted Kim, assuming she knew. Kim showed him the phone without a word. The argument ran through a week, was suspended across a weekend in Munich at Kim's parents' apartment, and resumed on the train. She listened through his full explanation. Then she said something precise and moved two rows ahead. He watched her go. He has not followed.
+
+He has rehearsed what he would say. He can see the back of her head.
+
+He studies how people process other lives at procedural distance. He does not see this about himself.
 
 ---
