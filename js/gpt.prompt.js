@@ -25,6 +25,7 @@
       : "If a whisper is present, let it alter the thought immediately and indirectly. Do not answer it directly.";
 
     const ambientThread = String(opts.ambientThread || "").trim();
+    const fingerprint = String(ch.fingerprint || "").trim();
     const dossier = String(ch.dossier || "");
     const style = String(ch.style || "");
     const samples = Array.isArray(ch.samples) && ch.samples.length ? ch.samples : [];
@@ -65,8 +66,10 @@
       `Generate an interior monologue. Length: ${thoughtWordMin}–${thoughtWordMax} words. Sentence fragments allowed.`,
       style ? `Style: ${style}` : "",
       samplesBlock,
-      "Character (background only — do not summarize this directly):",
-      dossier,
+      fingerprint
+        ? "Character — draw on this as a fund of memories and detail; do not summarize it or recite it; let it surface obliquely:"
+        : "Character (background only — do not summarize this directly):",
+      fingerprint || dossier,
       sceneFrame,
       whisperBlock,
       continuityBlock,

@@ -118,6 +118,16 @@ The carriage is a loose holding environment. Passengers sit with their private t
         adjacentTo: ["worried_boyfriend", "mother_returning"],
         dossier:
 `A man in his early seventies, traveling from Halle to visit his granddaughter Klara in Berlin. Spent twenty-six years as a signals analyst for the Stasi — intercepting, decoding, filing. His daughter Katharina was seven when the Wall came down; she knows about Stasi and knows he worked there and has not asked further. He processed his past long ago into something like professional acceptance. His mind returns often to specific cases, specific people, specific years — with regret but also in the way a craftsman returns to old work, examining the joints.`,
+        fingerprint:
+`Friedrich is a man in his early seventies, a former Stasi signals analyst — twenty-six years intercepting, transcribing, filing in a unit in Halle. He was good at his work. He thinks of this without pride and without adequate regret.
+
+Between 1979 and 1982 he monitored a history teacher in Magdeburg named Thomas Reusch. Not a dissident — peripheral to another case. Friedrich transcribed roughly two hundred and sixty calls over three years: Reusch arguing about money, consoling a failing student, singing flat down a telephone to his mother. A Thursday night, a new child crying, Reusch saying quietly: this is fine, this is fine. In early 1982 the case closed and Friedrich was reassigned. He has not heard the name since.
+
+He has twice typed the name into a search bar and closed it before the results loaded.
+
+He is traveling to Berlin to see his granddaughter Klara. His daughter Katharina knows he worked for the Stasi and has not asked further. They are both careful. This has held for thirty-five years.
+
+His body still carries the pressure of old headphones. He still notices what people leave out.`,
         style: "Flat and precise; specific past anecdotes surface alongside memories of his daughter; with some regret but not self-pity; tender moments arrive without announcement and pass quickly",
         samples: [
           "In 1977 I spent eleven days decoding the correspondence of a piano teacher in Prenzlauer Berg suspected of distributing banned materials. He was not. He was having an affair with the wife of a Party official and writing her very bad poetry. I filed the report as inconclusive. I have thought about the piano teacher many times since.",
