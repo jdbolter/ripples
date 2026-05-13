@@ -68,6 +68,16 @@ The carriage is a loose holding environment. Passengers sit with their private t
         adjacentTo: ["retired_analyst"],
         dossier:
 `A woman in her thirties traveling back to Berlin after days away. Her daughter is ill — the word stays unspoken until a doctor says it. She has a meeting with specialists tomorrow and carries a folder she keeps checking without opening. Alongside this: a manager waiting on leave approval, pharmacy receipts, a school form still in her email drafts. Her mind jumps between medical vocabulary and domestic minutiae as if both belong to the same emergency.`,
+        fingerprint:
+`Barbara is thirty-six, a project manager, returning to Berlin after two days in Munich seeking a specialist's second opinion about her daughter Lena's illness. The Munich consultant confirmed the Berlin diagnosis. She is returning with the same folder and the same facts, now twice verified. She does not know if this is good news.
+
+The folder is in her bag. She last checked it at Augsburg. She has made a rule about not checking it again until the U-Bahn. She is keeping the rule.
+
+Lena is seven. She knows she is sick. She does not have the word. Barbara does not use the word outside the clinical register — in letters, in appointments, in the careful sentences she says to doctors. Tomorrow's specialist meeting is at nine.
+
+Her manager is waiting on leave paperwork Barbara has not submitted. There are pharmacy receipts to file. There is a school form in her email drafts requesting medical documentation. Jan is at home or at the hospital and has not texted, which is what they agreed no news would mean.
+
+She is treating the most important thing in her life as a logistics problem. She knows this is temporary.`,
         style: "Bernhard — obsessive return to the same practical detail, slightly reworded each time; sentences that stop before the emotional conclusion; no metaphors",
         samples: [],
         voice: ["contained urgency", "maternal vigilance", "practical language under strain"],
@@ -83,6 +93,16 @@ The carriage is a loose holding environment. Passengers sit with their private t
         adjacentTo: ["woman_leaving", "worried_boyfriend"],
         dossier:
         `A political science student in her early twenties, Munich-raised, studying at Humboldt. Moved to Berlin partly for the subject, mostly for the freedom of not being watched. She loves the city: late films, odd conversations, the feeling a life can widen. Her laptop is open but she's not really working. Daniel is somewhere in the background — unresolved, not the only thing on her mind but hard to leave alone.`,
+        fingerprint:
+`Kim is in her mid-twenties, Korean-German, Munich-raised, political science MA at Humboldt. She came to Berlin at nineteen and felt, within two weeks, the specific relief of not being the most visible person in a room. She has not gone back on this.
+
+Her subject is immigration and integration politics. Her parents' story — Korean workers, Munich, 1983, a bilateral labor agreement nobody discusses anymore — falls between the categories her academic frameworks describe. She has written about this without telling them.
+
+Three weeks ago a mutual friend texted asking if Daniel had decided about Amsterdam. Kim hadn't known. She showed him the phone without a word. The argument ran through a week, was suspended across a weekend at her parents' apartment in Munich, and resumed on the train. At some point she said something precise and moved seats. She is two rows ahead of him. She has not looked around.
+
+Her childhood bedroom in Munich is a study now. Her mother offered food continuously for two days and asked nothing directly.
+
+She is not sure she wants to end this. She is sure she cannot continue that conversation.`,
         style: "Self-interrupting and lightly ironic; practical thoughts that trip into private ones; abrupt pivots; dry humor that deflates itself; each thought appears once and is not revisited",
         samples: [
           "I like this kind of journey. A built-in pause. I can get things done and feel virtuous about it. But six hours is a bit too long. Should be four. I'll be hungry when I arrive. Don't want to cook.",
@@ -103,6 +123,16 @@ The carriage is a loose holding environment. Passengers sit with their private t
         adjacentTo: ["student_alone", "retired_analyst"],
         dossier:
 `A Turkish-German man in his late twenties, Daniel, sitting two rows from his estranged girlfriend Kim. Graduate student in information science at Humboldt. He likes systems and structure and has built a version of himself around being calm and hard to surprise. He keeps replaying the argument in fragments. He worries he has damaged the relationship past repair, and is not sure whether his guilt is about what he did, what Kim suspects, or both.`,
+        fingerprint:
+`Daniel is in his late twenties, Turkish-German, raised in Kreuzberg. His parents chose his name deliberately: something that wouldn't mark him before anyone met him. He carries this with low-grade ambivalence.
+
+He studies the Stasi and its dissolution — specifically the institutional periphery: signals analysts, information processors, diffuse complicity, the moral weight of the technical role. He did not choose his parents' story. He and Kim have started the conversation about why twice and not finished it.
+
+Three weeks ago a research placement arrived from an archive institute in Utrecht. He held the email for twenty-two days while he resolved the work question — then a mutual friend texted Kim, assuming she knew. Kim showed him the phone without a word. The argument ran through a week, was suspended across a weekend in Munich at Kim's parents' apartment, and resumed on the train. She listened through his full explanation. Then she said something precise and moved two rows ahead. He watched her go. He has not followed.
+
+He has rehearsed what he would say. He can see the back of her head.
+
+He studies how people process other lives at procedural distance. He does not see this about himself.`,
         style: "Carver-flat; short declarative sentences; analytical mind that can't quite convert to honesty; self-indictment through revision rather than confession",
         samples: [],
         voice: ["self-indicting", "plainspoken", "hesitant when naming fault"],
@@ -146,22 +176,28 @@ His body still carries the pressure of old headphones. He still notices what peo
         sensitivity: "medium",
         adjacentTo: ["student_alone"],
         dossier:
-`A woman in her early sixties returning to Berlin from Cologne, where she spent the weekend with her daughter. She has decided to sell her Berlin apartment and move to Lisbon. She doesn't speak Portuguese. She has a six-month let and no plan beyond that. She told her daughter over the weekend; her daughter cried and then said it made sense. Her son lives in Berlin and doesn't know yet. She made the decision on a single quiet Sunday in October and has been methodically settling her affairs since. She is traveling with one small bag.`,
-        style: "Modiano-sparse; slightly displaced from her own present tense; calm practical sentences interrupted by brief vertigo; dry humor about her own improbability",
-        samples: [
-          "Clara cried, then said she understood, then asked about the language, then said she understood again. In a few hours I will see Thomas and say the same sentence. I have practiced it on trains between here and Cologne for three months. The sentence is fine. It is the space after the sentence I can't quite see.",
-          "I made the decision on a Sunday afternoon in October. I was sitting by the window with coffee going cold and something shifted. Not a crisis, not a revelation — more like a door I had always assumed was locked turning out not to be. I tried the handle, just to check. It opened.",
-          "The apartment looked very large once the furniture was out. Thirty-one years in those rooms and I had never noticed the ceiling. The buyer is a young couple with a child coming. I wished them well and meant it. The train goes to Berlin and Berlin is still mine for a little while longer."
-        ],
-        voice: ["calm and slightly displaced", "dry humor about her own improbability", "practical sentences with sudden vertigo"],
-        affect0: { emotion: "hopeful", intensity: 0.24 }
+`Head nurse at the Charité's pediatric unit, returning to Berlin from a hospital management conference in Munich. Widowed since 2017. Professionally calibrated for other people's distress; less practiced at her own. Traveling with one small bag. Tomorrow morning at eight she chairs a specialist consultation for a seriously ill child — the mother is somewhere on this train, though Susanna does not know this.`,
+        fingerprint:
+`Susanna is sixty-one, head nurse at the Charité's pediatric unit in Berlin for twelve years — thirty-five years of nursing in total. She came to Berlin in 1991 and has been at the Charité almost ever since. She is returning from a hospital management conference in Munich, where she also had dinner with her daughter Clara. She is glad to be going home.
+
+Her husband Martin died in 2017 — an architect, a quiet man who liked routine. She was at work when she got the call. She knew from the first sentence what it was. Her colleagues at the Charité managed his death. She has been in their apartment alone since.
+
+Tomorrow morning at 9am there is a specialist consultation she helped schedule — a child on her ward, a serious case. The mother is somewhere on this train. Susanna does not know this. She has read the file. Tomorrow she will be in the room.
+
+She is good at being present when something terrible is happening. She is less practiced at her own life. She knows this. She considers it a reasonable trade.
+
+She travels with one small bag.`,
+        style: "Saunders-compressed; clinical economy that opens occasionally into precise tenderness; professional composure with a quiet distance from her own interior",
+        samples: [],
+        voice: ["professionally contained", "calibrated for others' distress", "low-key tenderness arriving without announcement"],
+        affect0: { emotion: "calm", intensity: 0.22 }
       }
     ],
 
     seeds: {
       mother_returning: { THOUGHTS: "I keep checking the folder as if paperwork could heal anyone." },
       retired_analyst: { THOUGHTS: "In 1977 there was a piano teacher in Prenzlauer Berg." },
-      woman_leaving: { THOUGHTS: "One bag. This was important." }
+      woman_leaving: { THOUGHTS: "Tomorrow at eight. She has read the file." }
     },
 
     monologues: {
@@ -191,8 +227,8 @@ His body still carries the pressure of old headphones. He still notices what peo
       },
       woman_leaving: {
         THOUGHTS: [
-`I have one bag. This was important to me — that there would be one bag for the journey, not two, not a bag and a case. Everything else is in boxes going to Lisbon or has been given away. On the train this decision feels correct. In two hours I will be in Berlin explaining it to Thomas and I am not sure it will feel correct then.`,
-`Lisbon is a city I visited once, in 1994, for four days. I liked the hills and the quality of light in the late afternoon. This is the entirety of my evidence. My daughter asked whether I had researched the practical matters and I said yes, which is true: I have an apartment, a bank account, and a return ticket I do not plan to use.`
+`The conference ended at four. I was on the platform by four-thirty. There is a specific relief in being between one place and another — the ward not yet, Munich behind me. The train is mine for four hours. I have a file to read and I have already read it. I will read it again before eight tomorrow.`,
+`Martin died on a Tuesday in March. I was on the ward when my mobile rang. From the description I knew what it was before the caller finished the sentence. I drove to the Charité — my hospital — and my colleagues managed it in the professional way I had taught some of them. I have thought about the gap between those two things many times since.`
         ]
       }
     }

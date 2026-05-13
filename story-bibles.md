@@ -11,7 +11,9 @@ The Munich–Berlin ICE. Passengers:
 - **Kim and Daniel** travel together from Munich to Berlin — their home — returning from a visit to Kim's parents. They are not sitting together.
 - **Friedrich** boards at Halle, which falls on the Munich–Berlin route. He is visiting his granddaughter Klara in Berlin.
 - **Barbara** was in Munich seeking a specialist's second opinion about her daughter's illness. She is returning with the same folder and no better answers.
-- **Susanna's** daughter Clara lives in Munich *(update from Cologne in scenes.js)*. She spent the weekend there telling Clara she is moving to Lisbon. Now returning to Berlin to tell her son Thomas, who doesn't know yet.
+- **Susanna** was in Munich for a hospital management conference. She saw her daughter Clara while there. She is returning to her ward at the Charité. She does not know that Barbara — whose daughter she is treating — is on this train.
+
+*Note: Susanna's character has been changed from woman-leaving-for-Lisbon to head nurse. The existing samples in `scenes.js` for `woman_leaving` reference Lisbon and need to be replaced.*
 
 ---
 
@@ -66,6 +68,98 @@ He has twice typed the name into a search bar and closed it before the results l
 He is traveling to Berlin to see his granddaughter Klara. His daughter Katharina knows he worked for the Stasi and has not asked further. They are both careful. This has held for thirty-five years.
 
 His body still carries the pressure of old headphones. He still notices what people leave out.
+
+---
+
+## Susanna (woman_leaving) — Train to Berlin
+
+### Story Bible
+
+Susanna is sixty-one. She has been a nurse for thirty-five years and head nurse at the Charité's pediatric unit for the last twelve. She came to nursing not through vocation exactly — she had also considered teaching — but through a practical decision at twenty-two that turned out to be correct in ways she didn't anticipate. She has never quite explained to her children why she chose it, partly because the explanation would require her to say: I find it easier to be useful than to be comfortable, and this seemed like a place where that was valued.
+
+She came to Berlin in 1991, two years after the Wall, when the city was still raw and unfinished. She arrived with a nursing qualification and a suitcase and a vague sense that Berlin was where things were happening. The Charité took her on. She has worked there ever since.
+
+**The ward.** The pediatric unit at 6am: the specific smell of the cleaning products they use, which she no longer notices except when she returns from time away and it comes back to her clearly. The quality of the overhead lights before the morning shift change. The handover meeting at 6:45, when the night staff brief the day staff with a particular economy of language — what is urgent, what is stable, what is uncertain. She has attended this meeting several thousand times. She still listens carefully.
+
+She has been present at a number of deaths. She counts this differently than other people might: not as accumulation but as individual events, each with its own character. The first child's death she was present at — a girl of six, a ward in 1992, before she moved to the Charité — she thinks about occasionally, not with grief but with a kind of attention. She does not know why this death rather than others. She has stopped asking herself.
+
+**Martin.** She married Martin in 1994 — an architect who had come to Berlin for the same reason everyone came to Berlin in those years. He was quiet and precise and liked routine and liked their life. He died in 2017. A heart attack, sudden. She was at work when her mobile rang. From the description of symptoms she knew what it was before the caller finished the sentence. She drove to the Charité — her hospital — and saw colleagues she had worked beside for twenty years managing her husband's death in the competent professional way she had taught some of them herself. The gap between her professional knowledge and what was happening to her personally was one of the more difficult experiences of her life. She has never found words for why, exactly, so she has not tried.
+
+She has been in their Berlin apartment alone since. She has made it work.
+
+**Clara and Thomas.** Her daughter Clara lives in Munich with her husband and two young children. Susanna was at a conference and had dinner with them on Saturday evening — ordinary and good, the right kind of evening. Clara is practical and warm in equal measure and has her mother's capacity for containment. Her son Thomas is in Berlin, works in something corporate, is less emotionally fluent than his sister. They have Sunday phone calls that cover the important things without always touching them directly.
+
+**The conference.** Three days of hospital management and nursing leadership in Munich. She gave a paper on ward handover protocols. It was well received. She is glad it is over. She is glad to be on the train.
+
+**The invisible connection.** Tomorrow morning at 8am there is a specialist consultation she helped schedule — a child on her ward, a serious case, a mother who has been traveling to get answers. Susanna has read the file. She does not know that the mother is on this train. She knows the case as a set of facts in a document and tomorrow she will know it as a room with people in it, and she has learned that these are two different kinds of knowing and that the second one is the one that stays with you.
+
+**What she won't say.** That she has on occasion found it easier to be present at another person's worst moment than to sit with her own minor discomforts. That she misses Martin in a way that has no urgency — a low continuous frequency rather than sharp absence — and that she is not sure this is an improvement. That she felt, at the conference, briefly and unexpectedly, the sense of being properly seen by her work, and that this was both sustaining and slightly melancholy, and she is not sure what to do with that.
+
+**Contradictions.** She is professionally calibrated for other people's distress and less practiced at her own. She knows this and considers it a reasonable trade. She is calmer than the situation usually warrants, and she is aware that this is sometimes useful and sometimes a way of not being quite where she is.
+
+---
+
+### Prompt Fingerprint
+
+*(~185 words)*
+
+Susanna is sixty-one, head nurse at the Charité's pediatric unit in Berlin for twelve years — thirty-five years of nursing in total. She came to Berlin in 1991 and has been at the Charité almost ever since. She is returning from a hospital management conference in Munich, where she also had dinner with her daughter Clara. She is glad to be going home.
+
+Her husband Martin died in 2017 — an architect, a quiet man who liked routine. She was at work when she got the call. She knew from the first sentence what it was. Her colleagues at the Charité managed his death. She has been in their apartment alone since.
+
+Tomorrow morning at 9am there is a specialist consultation she helped schedule — a child on her ward, a serious case. The mother is somewhere on this train. Susanna does not know this. She has read the file. Tomorrow she will be in the room.
+
+She is good at being present when something terrible is happening. She is less practiced at her own life. She knows this. She considers it a reasonable trade.
+
+She travels with one small bag.
+
+---
+
+## Barbara (mother_returning) — Train to Berlin
+
+### Story Bible
+
+Barbara is thirty-six. She is a project manager at a media company in Berlin, which means she is good at tracking dependencies, identifying blockers, and keeping multiple things moving simultaneously. She has been applying this competence to her daughter's illness for six weeks. She is aware that this is not the right tool and is using it anyway because it is the tool she has.
+
+Her daughter Lena is seven. Three weeks ago — four weeks ago, she has lost track of the exact number — a diagnosis was made. Barbara uses the clinical terms when she speaks to doctors and uses no terms at all when she speaks to Lena, who knows that she is sick and that there are many appointments and that her mother checks on her more often in the night than she used to. Lena has not asked for the word directly. Barbara has not offered it. This arrangement holds.
+
+**The folder.** It contains the original pathology report, two sets of scan results, the letter from the primary specialist in Berlin, the referral to Munich, and now — added this morning in a waiting room at the Klinikum Großhadern — a four-page assessment from the Munich consultant that Barbara has read once, standing in the corridor before she put it in the folder. The Munich consultant confirmed the Berlin diagnosis. He did not offer a different treatment path. She is not sure if this is good news. She is not sure what the category of good news applies to, currently.
+
+She checks the folder without opening it. She checked it at Munich Hauptbahnhof. She checked it somewhere before Augsburg. She will not check it again until she is on the U-Bahn. This is a rule she has made and she is keeping it.
+
+**The other things.** Her manager is waiting on extended leave paperwork that Barbara drafted and has not submitted because submitting it means her absence has a formal duration. There are three pharmacy receipts in her wallet that need to be filed for reimbursement. There is a form from Lena's school in her email drafts, requesting documentation of Lena's medical absence, which Barbara has been meaning to complete since Tuesday and has not. The form requires a doctor's signature. The doctor's office closes at five. Tomorrow's appointment is at nine.
+
+These things exist alongside the diagnosis with equal clarity. Barbara's mind treats them with equal urgency. She is aware this is not a proportional response and finds it useful anyway.
+
+**Jan.** He is at home with Lena, or at the hospital — they agreed he would take Lena to the afternoon check-in at the Charité while Barbara was in Munich. He has not texted. The agreement was that he would text if anything changed. He has not texted. She has checked her phone at Munich Hauptbahnhof and at Augsburg and twice since Augsburg. He has not texted, which is what they agreed no news would mean, and she is treating it as no news.
+
+She and Jan are managing this together in the way that two competent people manage a crisis together, which is to say they have divided the tasks and are each completing their tasks and are speaking to each other primarily about the tasks. She knows this is not sustainable. She does not know when sustainability becomes possible.
+
+**What she went to Munich for.** She organized the Munich referral herself — found the consultant's name in a paper, wrote the referral request, chased it when it stalled. She did this while Jan was managing the Berlin side. She went alone because Jan could not take more time away, and also because she needed to be alone in the room when the Munich consultant said what he said. She was not sure she could hold her face correctly if Jan were there. She went alone and held her face correctly. The folder now contains a four-page document that confirms what they already knew.
+
+**The word.** She uses it in the clinical register — in sentences with doctors, in the folder's paperwork, in her own mind when she is being precise. It is a noun with a treatment protocol. In any other register she does not use it. The word stays unspoken until a doctor says it, which is a sentence she heard from another parent in a waiting room three weeks ago and has been using as a rule since.
+
+**Lena.** She ran a particular way — a very fast run with her arms slightly back — that she did across the garden in the summer. She sang songs to herself when she thought no one was listening. She has an opinion about which cup is hers and will not use a different cup. She asked Barbara last week whether she would be able to go back to school before the summer. Barbara said she would ask the doctor. She is going to ask the doctor tomorrow.
+
+**What she will not say.** That she is afraid of arriving in Berlin, because the train arriving means tomorrow's appointment is real and the appointment means a decision and a decision means the thing they are managing becomes the thing they are doing. That she went to Munich partly because she needed twenty-four hours inside this without being watched, and she has had them, and they have not helped. That she has been keeping everything moving because if she stops moving the other thing will be there waiting, and she is not ready for it to be there waiting, and she does not know when she will be.
+
+**Contradictions.** She is simultaneously more organized than she has ever been and barely managing. She is treating the most important thing in her life as a project with deliverables and she knows this is temporary and she is doing it anyway because tomorrow is nine o'clock and she needs to be ready.
+
+---
+
+### Prompt Fingerprint
+
+*(~195 words)*
+
+Barbara is thirty-six, a project manager, traveling back to Berlin after two days in Munich seeking a specialist's second opinion about her daughter Lena's illness. The Munich consultant confirmed the Berlin diagnosis. She is returning with the same folder and the same facts, now twice verified. She does not know if this is good news.
+
+The folder is in her bag. She last checked it at Augsburg. She has made a rule about not checking it again until the U-Bahn. She is keeping the rule.
+
+Lena is seven. She knows she is sick. She does not have the word. Barbara does not use the word outside the clinical register — in letters, in appointments, in the careful sentences she says to doctors. Tomorrow's specialist meeting is at nine.
+
+Her manager is waiting on leave paperwork Barbara has not submitted. There are pharmacy receipts to file. There is a school form in her email drafts requesting medical documentation. Jan is at home or at the hospital and has not texted, which is what they agreed no news would mean.
+
+She is treating the most important thing in her life as a logistics problem. She knows this is temporary.
 
 ---
 
