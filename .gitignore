@@ -3,3 +3,5 @@
 .env.*.local
 .vercel
 .env*.local
+node_modules/
+scratch/

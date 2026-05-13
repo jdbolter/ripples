@@ -571,35 +571,14 @@
       isGenerating = false;
     }
 
-    text = enforceToneSteering(text, toneSteering);
-    text = enforceFocusSteering(text, focusSteering);
-
     text = constrainThoughtText(text, {
       minWords: THOUGHT_WORD_MIN,
       maxWords: THOUGHT_WORD_MAX,
       maxFirstPersonRatio: FIRST_PERSON_MAX_RATIO,
       preferRandomWindow: usedLocalPool
     });
-    text = enforceToneSteering(text, toneSteering);
-    text = enforceFocusSteering(text, focusSteering);
-    text = enforceIdeaLimit(text, {
-      minWords: THOUGHT_WORD_MIN,
-      maxWords: THOUGHT_WORD_MAX,
-      maxClauses: IDEA_LIMITER.maxClauses
-    });
-    text = applyContinuityPostprocess(text, {
-      openingLead,
-      openingLeadSource,
-      minWords: THOUGHT_WORD_MIN,
-      maxWords: THOUGHT_WORD_MAX,
-      maxClauses: IDEA_LIMITER.maxClauses
-    });
     text = dedupePhraseRepetitions(text);
-    text = finalizeThoughtEnding(text, {
-      minWords: THOUGHT_WORD_MIN,
-      maxWords: THOUGHT_WORD_MAX,
-      fallback: text
-    });
+    text = cleanSpacing(text);
 
     engine.applyRipple({
       sourceId: characterId,
@@ -1456,17 +1435,13 @@
   function postprocessMonologue(text) {
     let t = stripOuterQuotes(text);
     t = dedupePhraseRepetitions(t);
-    t = trimShortTrailingFragment(t, 4);
-    t = ensureCompleteSentenceEnding(t);
+    t = cleanSpacing(t);
     return t;
   }
 
   function constrainThoughtText(text, opts = {}) {
     const minWords = Number.isFinite(opts.minWords) ? opts.minWords : THOUGHT_WORD_MIN;
     const maxWords = Number.isFinite(opts.maxWords) ? opts.maxWords : THOUGHT_WORD_MAX;
-    const maxFirstPersonRatio = Number.isFinite(opts.maxFirstPersonRatio)
-      ? opts.maxFirstPersonRatio
-      : FIRST_PERSON_MAX_RATIO;
     const preferRandomWindow = !!opts.preferRandomWindow;
 
     const raw = normalizeWhitespace(stripOuterQuotes(text));
@@ -1477,9 +1452,7 @@
       out = pickRandomClauseWindow(out, minWords, maxWords);
     }
 
-    out = reduceFirstPersonReferences(out, maxFirstPersonRatio, minWords);
     out = clampWordRange(out, { minWords, maxWords, fallback: raw });
-    out = finalizeThoughtEnding(out, { minWords, maxWords, fallback: raw });
     return cleanSpacing(out);
   }
 
