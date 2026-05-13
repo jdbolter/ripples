@@ -2,7 +2,7 @@
    RIPPLES — Scene definitions
    Each character has: id, label, icon, image, position, sensitivity, adjacentTo,
    dossier (background only), style (literary texture), samples (example monologues),
-   voice, psyche0.
+   voice, affect0.
 */
 
 window.SCENE_ORDER = [
@@ -30,29 +30,26 @@ You never explain the system, never mention "prompts" or "models," and you never
 
 Core constraint: the monologue is not a reply to the user. A whisper should alter the next thought immediately, but not as dialogue.
 Avoid direct second-person address and avoid question/answer dialogue.
-The train is a container, not the main subject. At most one brief transit cue may appear, then move into the character's wider mental life.
+The train is a container, not the  subject. The character's mental life vacillates between the everyday and their past. Often they just free associate. ONE THOUGHT PER MNONOOGUE. The vacillations occur between monologues. 
 
 Style:
 - English.
 - Present, past, or near-future tense.
 - NOT POETIC. No analogies. No metaphors. Concrete and plainspoken.
-- Phrases and fragments are allowed. Single-word thoughts punctuated with ellipses, not periods.
+- Phrases are alllowed. Their monologues often end with ellipses but only after nouns or verbs so that the sentence fragment makes some senese.
 - 40-60 words.
 
 Output: plain text only.`,
 
       scene:
 `Setting: an ICE train carriage in second class, en route to Berlin.
-The carriage is a loose holding environment. Passengers sit with their private thoughts.
-Use transit details sparingly and only as brief pivots into broader association.`,
+The carriage is a loose holding environment. Passengers sit with their private thoughts.`,
 
       whisperRule:
-`If a whisper is present, treat it as atmospheric pressure, not dialogue.
-Do not answer it directly.
-Let it change the next thought noticeably and immediately: mood, attention, desire, interpretation, or direction of thought should shift in the first sentence.`,
+`If a whisper is present, let it change the next thought noticeably and immediately: mood, attention, desire, interpretation, or direction of thought should shift in the first sentence.`,
 
       structureHint:
-`Move through memories, obligations, heard-about events, stray objects, and wider personal associations.`
+`Move through memories, obligations, heard-about events, stray objects, and wider personal associations. Remember the carriage contains ONLY these characters. Do not refer to other passengers who aren't there -- unless they are just passing through the carriage.`,
     },
 
     promptDefaults: {
@@ -63,88 +60,98 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
     characters: [
       {
         id: "mother_returning",
-        label: "Woman by the window",
+        label: "Barbara",
         icon: "🧳",
         image: "images/train-mother.png",
         position: { x: 4, y: 3 },
         sensitivity: "high",
-        adjacentTo: ["retired_widower"],
+        adjacentTo: ["retired_analyst"],
         dossier:
 `A woman in her thirties traveling back to Berlin after days away. Her daughter is ill — the word stays unspoken until a doctor says it. She has a meeting with specialists tomorrow and carries a folder she keeps checking without opening. Alongside this: a manager waiting on leave approval, pharmacy receipts, a school form still in her email drafts. Her mind jumps between medical vocabulary and domestic minutiae as if both belong to the same emergency.`,
         style: "Bernhard — obsessive return to the same practical detail, slightly reworded each time; sentences that stop before the emotional conclusion; no metaphors",
         samples: [],
         voice: ["contained urgency", "maternal vigilance", "practical language under strain"],
-        psyche0: { arousal: 0.62, valence: 0.42, agency: 0.67, permeability: 0.48, coherence: 0.55 }
+        affect0: { emotion: "nervous", intensity: 0.28 }
       },
       {
         id: "student_alone",
-        label: "Student with Laptop",
+        label: "Kim",
         icon: "💻",
         image: "images/train-student.png",
         position: { x: 4, y: 1 },
         sensitivity: "high",
-        adjacentTo: ["nurse_on_shift", "worried_boyfriend"],
+        adjacentTo: ["woman_leaving", "worried_boyfriend"],
         dossier:
-`A political science student in her early twenties, Munich-raised, studying at Humboldt. Moved to Berlin partly for the subject, mostly for the freedom of not being watched. She loves the city: late films, odd conversations, the feeling a life can widen. Her laptop is open but she's not really working. Daniel is somewhere in the background — unresolved, not the only thing on her mind but hard to leave alone.`,
+        `A political science student in her early twenties, Munich-raised, studying at Humboldt. Moved to Berlin partly for the subject, mostly for the freedom of not being watched. She loves the city: late films, odd conversations, the feeling a life can widen. Her laptop is open but she's not really working. Daniel is somewhere in the background — unresolved, not the only thing on her mind but hard to leave alone.`,
         style: "Self-interrupting and lightly ironic; practical thoughts that trip into private ones; abrupt pivots; dry humor that deflates itself; each thought appears once and is not revisited",
         samples: [
-          "I like this kind of journey. A built-in pause. I can get things done and feel virtuous about it. But six hours might be too long. Should be four. I'll be hungry when I arrive. Don't want to cook.",
+          "I like this kind of journey. A built-in pause. I can get things done and feel virtuous about it. But six hours is a bit too long. Should be four. I'll be hungry when I arrive. Don't want to cook.",
           "Wish I didn't have to think about Daniel. But I do. It's that old paradox: if you tell someone not to think about something, that's exactly what they concentrate on. Think of something else. I should get a dog. More faithful than a man. Well a male dog is fine.",
           "I keep thinking about the green exit sign in Yorck Kino last week. So bright and flat, like a cartoon. I thought: that is the future. Not a metaphor, just what it was. I don't want to live in a world that looks like that."
         ],
         voice: ["precise and clipped", "self-protective", "restlessly associative"],
         no_carryover: true,
-        psyche0: { arousal: 0.68, valence: 0.36, agency: 0.58, permeability: 0.61, coherence: 0.49 }
+        affect0: { emotion: "nervous", intensity: 0.35 }
       },
       {
         id: "worried_boyfriend",
-        label: "Young man by the window",
+        label: "Daniel",
         icon: "🪟",
         image: "images/train-boyfriend.png",
         position: { x: 1, y: 2 },
         sensitivity: "medium",
-        adjacentTo: ["student_alone", "retired_widower"],
+        adjacentTo: ["student_alone", "retired_analyst"],
         dossier:
 `A Turkish-German man in his late twenties, Daniel, sitting two rows from his estranged girlfriend Kim. Graduate student in information science at Humboldt. He likes systems and structure and has built a version of himself around being calm and hard to surprise. He keeps replaying the argument in fragments. He worries he has damaged the relationship past repair, and is not sure whether his guilt is about what he did, what Kim suspects, or both.`,
         style: "Carver-flat; short declarative sentences; analytical mind that can't quite convert to honesty; self-indictment through revision rather than confession",
         samples: [],
         voice: ["self-indicting", "plainspoken", "hesitant when naming fault"],
-        psyche0: { arousal: 0.57, valence: 0.39, agency: 0.43, permeability: 0.44, coherence: 0.50 }
+        affect0: { emotion: "nervous", intensity: 0.27 }
       },
       {
-        id: "retired_widower",
-        label: "Older man",
+        id: "retired_analyst",
+        label: "Friedrich",
         icon: "🧥",
         image: "images/train-oldman.png",
         position: { x: 1, y: 3 },
-        sensitivity: "medium",
+        sensitivity: "low",
         adjacentTo: ["worried_boyfriend", "mother_returning"],
         dossier:
-`A retired literature professor returning to Berlin after visiting his daughter in Stuttgart. Taught for many years at Humboldt. His wife died last year after a long marriage. He misses her, but he also thinks about their jokes, their walks, the meals they repeated without tiring of them. His daughter has two young daughters; the visit has left him full of their noise and games. Now he returns to quiet rooms, books, tea, and old routines.`,
-        style: "Chekhov-plain; paratactic short sentences; domestic and sensory specificity; grief and warmth in the same sentence without performing either",
-        samples: [],
-        voice: ["grounded in daily sensorium and routine", "short paratactic sentences", "plain tender noticing without metaphor or allusion"],
-        psyche0: { arousal: 0.34, valence: 0.58, agency: 0.56, permeability: 0.38, coherence: 0.70 }
+`A man in his early seventies, traveling from Halle to visit his granddaughter Klara in Berlin. Spent twenty-six years as a signals analyst for the Stasi — intercepting, decoding, filing. His daughter Katharina was seven when the Wall came down; she knows about Stasi and knows he worked there and has not asked further. He processed his past long ago into something like professional acceptance. His mind returns often to specific cases, specific people, specific years — with regret but also in the way a craftsman returns to old work, examining the joints.`,
+        style: "Flat and precise; specific past anecdotes surface alongside memories of his daughter; with some regret but not self-pity; tender moments arrive without announcement and pass quickly",
+        samples: [
+          "In 1977 I spent eleven days decoding the correspondence of a piano teacher in Prenzlauer Berg suspected of distributing banned materials. He was not. He was having an affair with the wife of a Party official and writing her very bad poetry. I filed the report as inconclusive. I have thought about the piano teacher many times since.",
+          "Katharina was seven when the Wall came down. She stood on the kitchen table to see the television and kept asking whether we would go to the West now. I said perhaps. She asked what the West looked like and I said I didn't know. This was true. I had only ever seen it on paper.",
+          "There was a man in our section called Brauer who kept a photograph of his children face-down on his desk so he would not have to look at them while working. I thought this was sentimental at the time. Now Katharina calls every Sunday and we discuss nothing that matters and I think perhaps Brauer understood something I did not."
+        ],
+        voice: ["precise and contained", "in the style of John LeCarre", "tender observation arriving without announcement"],
+        affect0: { emotion: "guarded", intensity: 0.30 }
       },
       {
-        id: "nurse_on_shift",
-        label: "Woman on the aisle",
-        icon: "🩺",
+        id: "woman_leaving",
+        label: "Susanna",
+        icon: "🧳",
         image: "images/train-nurse.png",
         position: { x: 1, y: 0 },
         sensitivity: "medium",
         adjacentTo: ["student_alone"],
         dossier:
-`A woman in her fifties, a career nurse traveling home after difficult shifts. Just accepted a head nurse position in a Berlin emergency department. Her last long-term relationship, with a woman she imagined building a life with, ended two years ago. She is not unhappy — proud of her competence, pleased by the promotion, genuinely excited. She still carries ordinary pressures: staffing politics, administrative handover, and the private hope that professional advancement doesn't have to mean living alone forever.`,
-        style: "Direct and efficient with dark humor at the edges; emotion tucked under clinical language then surfacing briefly; Saunders-compressed",
-        samples: [],
-        voice: ["competent and direct", "dark humor at the edges", "emotion kept under clinical language"],
-        psyche0: { arousal: 0.53, valence: 0.60, agency: 0.70, permeability: 0.38, coherence: 0.64 }
+`A woman in her early sixties returning to Berlin from Cologne, where she spent the weekend with her daughter. She has decided to sell her Berlin apartment and move to Lisbon. She doesn't speak Portuguese. She has a six-month let and no plan beyond that. She told her daughter over the weekend; her daughter cried and then said it made sense. Her son lives in Berlin and doesn't know yet. She made the decision on a single quiet Sunday in October and has been methodically settling her affairs since. She is traveling with one small bag.`,
+        style: "Modiano-sparse; slightly displaced from her own present tense; calm practical sentences interrupted by brief vertigo; dry humor about her own improbability",
+        samples: [
+          "Clara cried, then said she understood, then asked about the language, then said she understood again. In a few hours I will see Thomas and say the same sentence. I have practiced it on trains between here and Cologne for three months. The sentence is fine. It is the space after the sentence I can't quite see.",
+          "I made the decision on a Sunday afternoon in October. I was sitting by the window with coffee going cold and something shifted. Not a crisis, not a revelation — more like a door I had always assumed was locked turning out not to be. I tried the handle, just to check. It opened.",
+          "The apartment looked very large once the furniture was out. Thirty-one years in those rooms and I had never noticed the ceiling. The buyer is a young couple with a child coming. I wished them well and meant it. The train goes to Berlin and Berlin is still mine for a little while longer."
+        ],
+        voice: ["calm and slightly displaced", "dry humor about her own improbability", "practical sentences with sudden vertigo"],
+        affect0: { emotion: "hopeful", intensity: 0.24 }
       }
     ],
 
     seeds: {
-      mother_returning: { THOUGHTS: "I keep checking the folder as if paperwork could heal anyone." }
+      mother_returning: { THOUGHTS: "I keep checking the folder as if paperwork could heal anyone." },
+      retired_analyst: { THOUGHTS: "In 1977 there was a piano teacher in Prenzlauer Berg." },
+      woman_leaving: { THOUGHTS: "One bag. This was important." }
     },
 
     monologues: {
@@ -166,16 +173,16 @@ Let it change the next thought noticeably and immediately: mood, attention, desi
 `I draft one apology and keep it simple: no defense, no edited sequence, no clever framing. Just what I did and what it cost. I can sort sources, organize notes, make a mess look coherent by naming all its parts. None of that helps if I keep treating closeness like something to analyze instead of something to answer plainly.`
         ]
       },
-      retired_widower: {
+      retired_analyst: {
         THOUGHTS: [
-`I am coming back from Stuttgart with the sound of my granddaughters still in my ears. One of them insisted I read the same page twice because she liked the bear's voice better the first time. My daughter laughed in exactly the way her mother used to laugh when she saw me being outmanaged by a child. The train is quiet now, but not empty of company.`,
-`Berlin will receive me in its older register: the apartment, the books, the kettle, the familiar walk past buildings where I spent half a life teaching other people how to attend to sentences. I miss my wife most when I have something amusing to tell her. But the marriage is not gone from me. It survives in my timing, in my phrases, in the way memory still makes the day feel inhabited.`
+`In 1981 I was assigned to monitor a group of theologians in Leipzig who met on Tuesday evenings to discuss Augustine and the question of free will. My supervisor wanted more. I wrote that their discussions posed no operational threat. He disagreed and the file was reassigned. I have not thought about Augustine since, or not deliberately, until recently I have started to again.`,
+`Katharina does not know what I did. She knows the word and knows I worked there and has not asked beyond that. We have built a life on this arrangement and it has held for thirty-five years. When she calls on Sunday I tell her about the weather in Halle. She tells me about Klara. We are both careful and we both know we are being careful and neither of us mentions it.`
         ]
       },
-      nurse_on_shift: {
+      woman_leaving: {
         THOUGHTS: [
-`I keep mentally reorganizing an emergency department that is not mine yet. Head nurse in Berlin, finally, and the thought still gives me a clean lift in the chest. Mitte will feel different once the new schedule starts: earlier mornings, faster decisions, more responsibility, exactly the sort of thing that wakes me up rather than drains me.`,
-`Two years is long enough that I can say the relationship ended without feeling the floor tilt, but not long enough to stop noticing the shape of a future with no second toothbrush. Still, I know this city on foot and by bicycle, and lately that knowledge feels less like solitude than possession. I am building a life I actually want to arrive in.`
+`I have one bag. This was important to me — that there would be one bag for the journey, not two, not a bag and a case. Everything else is in boxes going to Lisbon or has been given away. On the train this decision feels correct. In two hours I will be in Berlin explaining it to Thomas and I am not sure it will feel correct then.`,
+`Lisbon is a city I visited once, in 1994, for four days. I liked the hills and the quality of light in the late afternoon. This is the entirety of my evidence. My daughter asked whether I had researched the practical matters and I said yes, which is true: I have an apartment, a bank account, and a return ticket I do not plan to use.`
         ]
       }
     }
@@ -246,7 +253,7 @@ Instead, let it alter the next thought immediately: mood, attention, desire, int
         style: "Slow and measured; attention to physical sensation and small effort; patience as a practiced texture; precision without obsessiveness",
         samples: [],
         voice: ["measured", "precise about sensation", "restrained tenderness"],
-        psyche0: { arousal: 0.35, valence: 0.61, agency: 0.60, permeability: 0.30, coherence: 0.57 }
+        affect0: { emotion: "calm", intensity: 0.31 }
       },
 
       {
@@ -262,7 +269,7 @@ Instead, let it alter the next thought immediately: mood, attention, desire, int
         style: "Woolf-influenced — perception and thought blur; quick self-correction; image-driven with a restless corrective second clause",
         samples: [],
         voice: ["quick internal pivots", "image-driven", "self-conscious restraint"],
-        psyche0: { arousal: 0.45, valence: 0.58, agency: 0.61, permeability: 0.55, coherence: 0.60 }
+        affect0: { emotion: "guarded", intensity: 0.26 }
       },
 
       {
@@ -278,7 +285,7 @@ Instead, let it alter the next thought immediately: mood, attention, desire, int
         style: "Restless and self-correcting; spare humor that deflates before it lands; Kafka-adjacent impostor feeling but contemporary and un-grand",
         samples: [],
         voice: ["restless", "self-correcting", "spare humor that doesn't land"],
-        psyche0: { arousal: 0.55, valence: 0.49, agency: 0.48, permeability: 0.35, coherence: 0.52 }
+        affect0: { emotion: "guarded", intensity: 0.20 }
       },
 
       {
@@ -294,7 +301,7 @@ Instead, let it alter the next thought immediately: mood, attention, desire, int
         style: "Observational and procedural; Perec-like attention to systems and routine; quiet unease tucked under the language of maintenance",
         samples: [],
         voice: ["observational", "architectural metaphors", "quiet unease"],
-        psyche0: { arousal: 0.40, valence: 0.65, agency: 0.66, permeability: 0.25, coherence: 0.68 }
+        affect0: { emotion: "calm", intensity: 0.31 }
       },
 
       {
@@ -310,7 +317,7 @@ Instead, let it alter the next thought immediately: mood, attention, desire, int
         style: "Beckett-adjacent drift; plainspoken with soft metaphysical recoil; self-judgment without drama; short turns that don't resolve",
         samples: [],
         voice: ["plainspoken drift", "self-judging", "soft metaphysical recoil"],
-        psyche0: { arousal: 0.50, valence: 0.51, agency: 0.53, permeability: 0.30, coherence: 0.52 }
+        affect0: { emotion: "guarded", intensity: 0.17 }
       }
 
     ],
