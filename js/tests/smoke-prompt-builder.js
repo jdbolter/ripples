@@ -84,9 +84,10 @@ const { sys, userPrompt, packetContext } = p.buildOpenAIUserPrompt({
 
 assert.equal(sys, "You write short interior monologues.");
 assert.ok(typeof userPrompt === "string" && userPrompt.includes("Generate an interior monologue."));
-assert.ok(userPrompt.includes("Carry-over riff persistence (MANDATORY):"));
-assert.ok(userPrompt.includes("Allow ordinary, neutral, or gently pleasant observations when natural"));
-assert.ok(!userPrompt.includes("Character motif seeds:"));
+assert.ok(userPrompt.includes("Character (background only — do not summarize this directly):"));
+assert.ok(userPrompt.includes('A whisper has reached this character: "stay calm"'));
+assert.ok(userPrompt.includes("Internal state (use only to modulate tone and intensity, not as subject matter):"));
+assert.ok(userPrompt.includes('Return JSON only: { "monologue": "...", "delta": { "arousal": 0, "valence": 0, "agency": 0, "permeability": 0, "coherence": 0 } }'));
 assert.ok(packetContext && typeof packetContext.promptBlock === "string");
 
 const whisperPrompt = p.buildOpenAIUserPrompt({
@@ -123,7 +124,8 @@ const whisperPrompt = p.buildOpenAIUserPrompt({
   normalizeWhitespace: stubNormalizeWhitespace,
   uniqList: stubUniqList
 });
-assert.ok(whisperPrompt.userPrompt.includes("Echo 2-5 distinctive words from this whisper-derived phrase"));
-assert.ok(whisperPrompt.userPrompt.includes("Do not repeat the same whisper phrase twice in one monologue."));
+assert.ok(whisperPrompt.userPrompt.includes('A whisper has reached this character: "stay calm stay calm"'));
+assert.ok(whisperPrompt.userPrompt.includes("Whisper bends mood indirectly."));
+assert.ok(whisperPrompt.userPrompt.includes("Delta represents how this moment alters the character's internal state."));
 
 console.log("smoke-prompt-builder: ok");
