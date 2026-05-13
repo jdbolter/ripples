@@ -82,7 +82,7 @@
       "a", "an", "the",
       "to", "of", "in", "on", "at", "for", "from", "with", "by",
       "as", "if", "than", "that", "which", "who", "whom", "whose",
-      "and", "or", "but", "nor", "so", "yet",
+      "and", "or", "but", "nor", "so", "then",
       "about", "above", "across", "after", "against", "along", "around",
       "before", "behind", "below", "beneath", "beside", "between", "beyond",
       "during", "into", "near", "onto", "over", "through", "toward", "towards",
@@ -107,6 +107,25 @@
     ]);
 
     return clipped.has(t);
+  }
+
+  function trimTrailingDependentPhrase(text) {
+    const t = normalizeWhitespace(text);
+    if (!t) return t;
+
+    const patterns = [
+      /,\s*(?:and|but|or|so)\s+[a-z][a-z'\-]*$/i,
+      /,\s*but\s+then$/i,
+      /\s+(?:because|although|though|while|when|if|unless)\s+[^.!?]*$/i
+    ];
+
+    for (const pattern of patterns) {
+      if (pattern.test(t)) {
+        return normalizeWhitespace(t.replace(pattern, ""));
+      }
+    }
+
+    return t;
   }
 
   function trimDanglingEnding(text, minWords = 0) {
@@ -138,6 +157,51 @@
       return normalizeWhitespace(m[1]); // drop fragment, end at last sentence
     }
     return t;
+  }
+
+  function ensureCompleteSentenceEnding(text) {
+    const t = normalizeWhitespace(text).replace(/…/g, "...");
+    if (!t) return t;
+
+    const hadEllipsis = /\.\.\.$/.test(t);
+    const stripped = t.replace(/\.\.\.$/, "").trim();
+    if (!stripped) return stripped;
+
+    const depTrimmed = trimTrailingDependentPhrase(stripped);
+    if (depTrimmed && depTrimmed !== stripped) {
+      return ensureCompleteSentenceEnding(hadEllipsis ? `${depTrimmed}...` : depTrimmed);
+    }
+
+    if (/[.!?]$/.test(stripped)) {
+      return stripped;
+    }
+
+    const clauses = splitClauses(stripped);
+    if (clauses.length > 1) {
+      const lastClause = clauses[clauses.length - 1] || "";
+      const lastWords = splitWords(lastClause);
+      const lastToken = canonicalToken(lastWords[lastWords.length - 1] || "");
+      if (!lastWords.length || isDanglingEndToken(lastToken) || isLikelyClippedEndToken(lastToken)) {
+        clauses.pop();
+        const trimmed = normalizeWhitespace(clauses.join(" "));
+        if (trimmed && /[.!?]$/.test(trimmed)) {
+          return trimmed;
+        }
+      }
+    }
+
+    const words = splitWords(stripped);
+    const lastToken = canonicalToken(words[words.length - 1] || "");
+    const trimmed = trimDanglingEnding(stripped, 0);
+    if (trimmed && trimmed !== stripped) {
+      return ensureCompleteSentenceEnding(trimmed);
+    }
+
+    if (words.length >= 3 && !isDanglingEndToken(lastToken)) {
+      return hadEllipsis ? `${stripped}...` : `${stripped}.`;
+    }
+
+    return stripped;
   }
 
   function ensureTerminalPunctuation(text) {
@@ -195,6 +259,8 @@
     truncateToWordCount,
     trimDanglingEnding,
     trimShortTrailingFragment,
+    trimTrailingDependentPhrase,
+    ensureCompleteSentenceEnding,
     ensureTerminalPunctuation,
     randInt,
     clampWordRange

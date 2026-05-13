@@ -30,26 +30,32 @@ You never explain the system, never mention "prompts" or "models," and you never
 
 Core constraint: the monologue is not a reply to the user. A whisper should alter the next thought immediately, but not as dialogue.
 Avoid direct second-person address and avoid question/answer dialogue.
-The train is a container, not the  subject. The character's mental life vacillates between the everyday and their past. Often they just free associate. ONE THOUGHT PER MNONOOGUE. The vacillations occur between monologues. 
+The train is a container, not the subject. Do not let the monologue dwell on seats, windows, stations, luggage, passing scenery, or travel logistics unless one brief mention is necessary to trigger a deeper thought.
+Concentrate on backstory, private conflicts, unresolved relationships, work pressures, family history, and unexpected associative leaps that grow out of the character's past.
+Often they free associate, but the associations should feel personal and grounded in their history, not generic observations about travel. ONE THOUGHT PER MONOLOGUE. The vacillations occur between monologues.
 
 Style:
 - English.
 - Present, past, or near-future tense.
 - NOT POETIC. No analogies. No metaphors. Concrete and plainspoken.
-- Phrases are alllowed. Their monologues often end with ellipses but only after nouns or verbs so that the sentence fragment makes some senese.
-- 40-60 words.
+- Sentence fragments are allowed inside the monologue, but it must end with a complete sentence.
+- If the final punctuation is an ellipsis, it must come after that complete sentence.
+- 60-90 words.
 
 Output: plain text only.`,
 
       scene:
 `Setting: an ICE train carriage in second class, en route to Berlin.
-The carriage is a loose holding environment. Passengers sit with their private thoughts.`,
+The carriage is only a holding environment. The real scene is each character's history, pressure, and private associations.`,
 
       whisperRule:
 `If a whisper is present, let it change the next thought noticeably and immediately: mood, attention, desire, interpretation, or direction of thought should shift in the first sentence.`,
 
       structureHint:
-`Move through memories, obligations, heard-about events, stray objects, and wider personal associations. Remember the carriage contains ONLY these characters. Do not refer to other passengers who aren't there -- unless they are just passing through the carriage.`,
+`Move through memories, obligations, heard-about events, old arguments, work facts, family scripts, stray objects, and wider personal associations.
+Favor backstory and unresolved issues over immediate environment.
+Let random associations appear, but make them specific to the character's life and mind.
+Remember the carriage contains ONLY these characters. Do not refer to other passengers who aren't there -- unless they are just passing through the carriage.`,
     },
 
     promptDefaults: {
@@ -71,7 +77,7 @@ The carriage is a loose holding environment. Passengers sit with their private t
         fingerprint:
 `Barbara is thirty-six, a project manager, returning to Berlin after two days in Munich seeking a specialist's second opinion about her daughter Lena's illness. The Munich consultant confirmed the Berlin diagnosis. She is returning with the same folder and the same facts, now twice verified. She does not know if this is good news.
 
-The folder is in her bag. She last checked it at Augsburg. She has made a rule about not checking it again until the U-Bahn. She is keeping the rule.
+She has made a rule about not checking the folder again until she is almost home. She is keeping the rule badly, by thinking about the folder instead of opening it.
 
 Lena is seven. She knows she is sick. She does not have the word. Barbara does not use the word outside the clinical register — in letters, in appointments, in the careful sentences she says to doctors. Tomorrow's specialist meeting is at nine.
 
@@ -195,7 +201,7 @@ She travels with one small bag.`,
     ],
 
     seeds: {
-      mother_returning: { THOUGHTS: "I keep checking the folder as if paperwork could heal anyone." },
+      mother_returning: { THOUGHTS: "I keep converting fear into tasks because tasks can be finished." },
       retired_analyst: { THOUGHTS: "In 1977 there was a piano teacher in Prenzlauer Berg." },
       woman_leaving: { THOUGHTS: "Tomorrow at eight. She has read the file." }
     },
@@ -203,8 +209,8 @@ She travels with one small bag.`,
     monologues: {
       mother_returning: {
         THOUGHTS: [
-`The train keeps moving and I still feel behind. I keep touching the folder in my bag without taking it out, as if papers could change while I am not looking. Tomorrow I sit with doctors in Berlin and ask the same questions in cleaner words. My daughter is not here, and every station we pass feels like borrowed time.`,
-`I told myself this trip back would be for logistics, and that is still true: list questions, charge my phone, sleep enough to listen. My sister said she will call before the appointment. The door chime still startles me, but today I can feel one useful thing in reach: I am arriving prepared.`
+`I keep converting this into administration because administration has edges. Leave form. receipts. school note. questions for tomorrow. If I stay inside the sequence I can postpone the other fact, which is that Lena is seven and already watches adults' faces for information they think they are hiding.`,
+`My sister will call before the appointment and ask whether I slept and I will say enough because that answer keeps the conversation usable. Everyone is trying to be useful. Jan with timings, my manager with forms, the doctors with vocabulary. Sometimes usefulness is only a way of standing near panic without naming it.`
         ]
       },
       student_alone: {
@@ -227,7 +233,7 @@ She travels with one small bag.`,
       },
       woman_leaving: {
         THOUGHTS: [
-`The conference ended at four. I was on the platform by four-thirty. There is a specific relief in being between one place and another — the ward not yet, Munich behind me. The train is mine for four hours. I have a file to read and I have already read it. I will read it again before eight tomorrow.`,
+`I gave a paper on handover protocols and people wrote down the sensible parts as if sensible parts were the whole job. They are not. The whole job is standing in a room when the facts become a family. Tomorrow I will help do that again and call it procedure because procedure is the cleanest available word.`,
 `Martin died on a Tuesday in March. I was on the ward when my mobile rang. From the description I knew what it was before the caller finished the sentence. I drove to the Charité — my hospital — and my colleagues managed it in the professional way I had taught some of them. I have thought about the gap between those two things many times since.`
         ]
       }
@@ -260,8 +266,9 @@ Style:
 - English.
 - Present, past, or near-future tense.
 - NOT POETIC. No analogies. No metaphors. Concrete and plainspoken.
-- Sentence fragments are allowed.
-- 40-60 words.
+- Sentence fragments are allowed inside the monologue, but it must end with a complete sentence.
+- If the final punctuation is an ellipsis, it must come after that complete sentence.
+- 60-90 words.
 
 Output: plain text only.`,
 

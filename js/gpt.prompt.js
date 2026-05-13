@@ -63,7 +63,7 @@
       : "";
 
     const parts = [
-      `Generate an interior monologue. Length: ${thoughtWordMin}–${thoughtWordMax} words. Sentence fragments allowed.`,
+      `Generate an interior monologue. Length: ${thoughtWordMin}–${thoughtWordMax} words. Sentence fragments are allowed internally, but the monologue must end with a complete sentence.`,
       style ? `Style: ${style}` : "",
       samplesBlock,
       fingerprint
@@ -82,7 +82,8 @@
       "- No biography summaries or exposition.",
       "- Plain interior thought only — not dialogue.",
       "- Each image, phrase, or idea appears once; do not repeat or rephrase it within this monologue.",
-      "- Do not trail off with fewer than five words before any ellipsis; if a thought ends in '...', the fragment before it must be at least a complete short clause.",
+      "- The monologue must end on a complete sentence.",
+      "- If the monologue ends in '...', the ellipsis must come after a complete sentence, not after a fragment.",
       "",
       'Return JSON only: { "monologue": "..." }'
     ].filter(Boolean).join("\n\n");

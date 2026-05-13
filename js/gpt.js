@@ -50,6 +50,7 @@
     truncateToWordCount,
     trimDanglingEnding,
     trimShortTrailingFragment,
+    ensureCompleteSentenceEnding,
     ensureTerminalPunctuation,
     randInt,
     clampWordRange
@@ -61,8 +62,8 @@
   // Single implicit channel for now
   const DEFAULT_CHANNEL = "THOUGHTS";
   const EVENT_KIND = { LISTEN: "LISTEN", WHISPER: "WHISPER" };
-  const THOUGHT_WORD_MIN = 40;
-  const THOUGHT_WORD_MAX = 60;
+  const THOUGHT_WORD_MIN = 60;
+  const THOUGHT_WORD_MAX = 90;
   const CONTINUITY_LEAD_MAX_WORDS = 16;
   const FIRST_PERSON_MAX_RATIO = 0.20;
   // Global fallback stays off unless a scene/character policy opts in.
@@ -594,6 +595,11 @@
       maxClauses: IDEA_LIMITER.maxClauses
     });
     text = dedupePhraseRepetitions(text);
+    text = finalizeThoughtEnding(text, {
+      minWords: THOUGHT_WORD_MIN,
+      maxWords: THOUGHT_WORD_MAX,
+      fallback: text
+    });
 
     engine.applyRipple({
       sourceId: characterId,
@@ -1451,6 +1457,7 @@
     let t = stripOuterQuotes(text);
     t = dedupePhraseRepetitions(t);
     t = trimShortTrailingFragment(t, 4);
+    t = ensureCompleteSentenceEnding(t);
     return t;
   }
 
@@ -1921,6 +1928,7 @@
     out = truncateToWordCount(out, maxWords);
     out = trimDanglingEnding(out, minWords);
     out = ensureTerminalPunctuation(out);
+    out = ensureCompleteSentenceEnding(out);
     return out;
   }
 
