@@ -16,27 +16,18 @@ The result is not dialogue but a cumulative confluence of voices and concerns.
 Ripples is built around three principles:
 
 1. **Interior monologue as event**
-2. **Psychic state as measurable vector**
-3. **Adjacency as diffusion network**
+2. **Affect state as simple signal**
+3. **Thought as diffusion**
 
-Each character has an internal state:
+Each character has an internal affect state:
 
-- `arousal`
-- `valence`
-- `agency`
-- `permeability`
-- `coherence`
+- `emotion` — a label: calm, nervous, sad, happy, hopeful, angry, or guarded
+- `intensity` — a single value between 0 and 1
 
-All values are normalized between 0 and 1.
-
-When a monologue is generated, it reflects the current psychic state.
-When a whisper occurs, it produces a semantic delta that modifies that state.
-That delta diffuses to adjacent characters in attenuated form.
+When a monologue is generated, it reflects the current affect state.
+When a thought occurs — triggered by a click or a whisper — the generated text is read for emotional tone, and that signal diffuses across all characters in attenuated form.
 
 The scene becomes a small dynamical system.
-
-Backward compatibility note:
-- Legacy scene seeds using `tension`, `clarity`, `openness`, `drift` are auto-migrated at runtime.
 
 ---
 
@@ -45,15 +36,12 @@ Backward compatibility note:
 ### API Mode
 If a server-side or browser-session API key is available:
 
-- A single model call generates:
-  - a 20–40 word interior monologue
-  - a semantic `delta` to the psyche vector
-
-The delta is bounded and diffused across the scene.
+- A single model call generates a 40–60 word interior monologue.
+- The affect signal is then inferred locally from the monologue text and diffused across all characters.
 
 ### Local Fallback
 If generation is unavailable, Ripples falls back to predefined monologues stored in `js/scenes.js`.
-Psychic deltas are then estimated heuristically.
+The affect signal is inferred from those texts by the same local process.
 
 ### Dynamics Mode
 `js/gpt.js` exposes a single switch:
@@ -73,8 +61,8 @@ Each scene contains:
 
 - Grid dimensions
 - Character definitions
-- Initial psychic vectors
-- Adjacency relations
+- Initial affect state (`emotion` + `intensity`)
+- Adjacency relations (used for layout; ripples now reach all characters)
 - Prompt scaffolding
 - Optional local monologue pools
 

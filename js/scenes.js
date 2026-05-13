@@ -30,26 +30,32 @@ You never explain the system, never mention "prompts" or "models," and you never
 
 Core constraint: the monologue is not a reply to the user. A whisper should alter the next thought immediately, but not as dialogue.
 Avoid direct second-person address and avoid question/answer dialogue.
-The train is a container, not the  subject. The character's mental life vacillates between the everyday and their past. Often they just free associate. ONE THOUGHT PER MNONOOGUE. The vacillations occur between monologues. 
+The train is a container, not the subject. Do not let the monologue dwell on seats, windows, stations, luggage, passing scenery, or travel logistics unless one brief mention is necessary to trigger a deeper thought.
+Concentrate on backstory, private conflicts, unresolved relationships, work pressures, family history, and unexpected associative leaps that grow out of the character's past.
+Often they free associate, but the associations should feel personal and grounded in their history, not generic observations about travel. ONE THOUGHT PER MONOLOGUE. The vacillations occur between monologues.
 
 Style:
 - English.
 - Present, past, or near-future tense.
 - NOT POETIC. No analogies. No metaphors. Concrete and plainspoken.
-- Phrases are alllowed. Their monologues often end with ellipses but only after nouns or verbs so that the sentence fragment makes some senese.
-- 40-60 words.
+- Sentence fragments are allowed inside the monologue, but it must end with a complete sentence.
+- If the final punctuation is an ellipsis, it must come after that complete sentence.
+- 60-90 words.
 
 Output: plain text only.`,
 
       scene:
 `Setting: an ICE train carriage in second class, en route to Berlin.
-The carriage is a loose holding environment. Passengers sit with their private thoughts.`,
+The carriage is only a holding environment. The real scene is each character's history, pressure, and private associations.`,
 
       whisperRule:
 `If a whisper is present, let it change the next thought noticeably and immediately: mood, attention, desire, interpretation, or direction of thought should shift in the first sentence.`,
 
       structureHint:
-`Move through memories, obligations, heard-about events, stray objects, and wider personal associations. Remember the carriage contains ONLY these characters. Do not refer to other passengers who aren't there -- unless they are just passing through the carriage.`,
+`Move through memories, obligations, heard-about events, old arguments, work facts, family scripts, stray objects, and wider personal associations.
+Favor backstory and unresolved issues over immediate environment.
+Let random associations appear, but make them specific to the character's life and mind.
+Remember the carriage contains ONLY these characters. Do not refer to other passengers who aren't there -- unless they are just passing through the carriage.`,
     },
 
     promptDefaults: {
@@ -68,6 +74,16 @@ The carriage is a loose holding environment. Passengers sit with their private t
         adjacentTo: ["retired_analyst"],
         dossier:
 `A woman in her thirties traveling back to Berlin after days away. Her daughter is ill — the word stays unspoken until a doctor says it. She has a meeting with specialists tomorrow and carries a folder she keeps checking without opening. Alongside this: a manager waiting on leave approval, pharmacy receipts, a school form still in her email drafts. Her mind jumps between medical vocabulary and domestic minutiae as if both belong to the same emergency.`,
+        fingerprint:
+`Barbara is thirty-six, a project manager, returning to Berlin after two days in Munich seeking a specialist's second opinion about her daughter Lena's illness. The Munich consultant confirmed the Berlin diagnosis. She is returning with the same folder and the same facts, now twice verified. She does not know if this is good news.
+
+She has made a rule about not checking the folder again until she is almost home. She is keeping the rule badly, by thinking about the folder instead of opening it.
+
+Lena is seven. She knows she is sick. She does not have the word. Barbara does not use the word outside the clinical register — in letters, in appointments, in the careful sentences she says to doctors. Tomorrow's specialist meeting is at nine.
+
+Her manager is waiting on leave paperwork Barbara has not submitted. There are pharmacy receipts to file. There is a school form in her email drafts requesting medical documentation. Jan is at home or at the hospital and has not texted, which is what they agreed no news would mean.
+
+She is treating the most important thing in her life as a logistics problem. She knows this is temporary.`,
         style: "Bernhard — obsessive return to the same practical detail, slightly reworded each time; sentences that stop before the emotional conclusion; no metaphors",
         samples: [],
         voice: ["contained urgency", "maternal vigilance", "practical language under strain"],
@@ -83,6 +99,16 @@ The carriage is a loose holding environment. Passengers sit with their private t
         adjacentTo: ["woman_leaving", "worried_boyfriend"],
         dossier:
         `A political science student in her early twenties, Munich-raised, studying at Humboldt. Moved to Berlin partly for the subject, mostly for the freedom of not being watched. She loves the city: late films, odd conversations, the feeling a life can widen. Her laptop is open but she's not really working. Daniel is somewhere in the background — unresolved, not the only thing on her mind but hard to leave alone.`,
+        fingerprint:
+`Kim is in her mid-twenties, Korean-German, Munich-raised, political science MA at Humboldt. She came to Berlin at nineteen and felt, within two weeks, the specific relief of not being the most visible person in a room. She has not gone back on this.
+
+Her subject is immigration and integration politics. Her parents' story — Korean workers, Munich, 1983, a bilateral labor agreement nobody discusses anymore — falls between the categories her academic frameworks describe. She has written about this without telling them.
+
+Three weeks ago a mutual friend texted asking if Daniel had decided about Amsterdam. Kim hadn't known. She showed him the phone without a word. The argument ran through a week, was suspended across a weekend at her parents' apartment in Munich, and resumed on the train. At some point she said something precise and moved seats. She is two rows ahead of him. She has not looked around.
+
+Her childhood bedroom in Munich is a study now. Her mother offered food continuously for two days and asked nothing directly.
+
+She is not sure she wants to end this. She is sure she cannot continue that conversation.`,
         style: "Self-interrupting and lightly ironic; practical thoughts that trip into private ones; abrupt pivots; dry humor that deflates itself; each thought appears once and is not revisited",
         samples: [
           "I like this kind of journey. A built-in pause. I can get things done and feel virtuous about it. But six hours is a bit too long. Should be four. I'll be hungry when I arrive. Don't want to cook.",
@@ -103,6 +129,16 @@ The carriage is a loose holding environment. Passengers sit with their private t
         adjacentTo: ["student_alone", "retired_analyst"],
         dossier:
 `A Turkish-German man in his late twenties, Daniel, sitting two rows from his estranged girlfriend Kim. Graduate student in information science at Humboldt. He likes systems and structure and has built a version of himself around being calm and hard to surprise. He keeps replaying the argument in fragments. He worries he has damaged the relationship past repair, and is not sure whether his guilt is about what he did, what Kim suspects, or both.`,
+        fingerprint:
+`Daniel is in his late twenties, Turkish-German, raised in Kreuzberg. His parents chose his name deliberately: something that wouldn't mark him before anyone met him. He carries this with low-grade ambivalence.
+
+He studies the Stasi and its dissolution — specifically the institutional periphery: signals analysts, information processors, diffuse complicity, the moral weight of the technical role. He did not choose his parents' story. He and Kim have started the conversation about why twice and not finished it.
+
+Three weeks ago a research placement arrived from an archive institute in Utrecht. He held the email for twenty-two days while he resolved the work question — then a mutual friend texted Kim, assuming she knew. Kim showed him the phone without a word. The argument ran through a week, was suspended across a weekend in Munich at Kim's parents' apartment, and resumed on the train. She listened through his full explanation. Then she said something precise and moved two rows ahead. He watched her go. He has not followed.
+
+He has rehearsed what he would say. He can see the back of her head.
+
+He studies how people process other lives at procedural distance. He does not see this about himself.`,
         style: "Carver-flat; short declarative sentences; analytical mind that can't quite convert to honesty; self-indictment through revision rather than confession",
         samples: [],
         voice: ["self-indicting", "plainspoken", "hesitant when naming fault"],
@@ -118,6 +154,16 @@ The carriage is a loose holding environment. Passengers sit with their private t
         adjacentTo: ["worried_boyfriend", "mother_returning"],
         dossier:
 `A man in his early seventies, traveling from Halle to visit his granddaughter Klara in Berlin. Spent twenty-six years as a signals analyst for the Stasi — intercepting, decoding, filing. His daughter Katharina was seven when the Wall came down; she knows about Stasi and knows he worked there and has not asked further. He processed his past long ago into something like professional acceptance. His mind returns often to specific cases, specific people, specific years — with regret but also in the way a craftsman returns to old work, examining the joints.`,
+        fingerprint:
+`Friedrich is a man in his early seventies, a former Stasi signals analyst — twenty-six years intercepting, transcribing, filing in a unit in Halle. He was good at his work. He thinks of this without pride and without adequate regret.
+
+Between 1979 and 1982 he monitored a history teacher in Magdeburg named Thomas Reusch. Not a dissident — peripheral to another case. Friedrich transcribed roughly two hundred and sixty calls over three years: Reusch arguing about money, consoling a failing student, singing flat down a telephone to his mother. A Thursday night, a new child crying, Reusch saying quietly: this is fine, this is fine. In early 1982 the case closed and Friedrich was reassigned. He has not heard the name since.
+
+He has twice typed the name into a search bar and closed it before the results loaded.
+
+He is traveling to Berlin to see his granddaughter Klara. His daughter Katharina knows he worked for the Stasi and has not asked further. They are both careful. This has held for thirty-five years.
+
+His body still carries the pressure of old headphones. He still notices what people leave out.`,
         style: "Flat and precise; specific past anecdotes surface alongside memories of his daughter; with some regret but not self-pity; tender moments arrive without announcement and pass quickly",
         samples: [
           "In 1977 I spent eleven days decoding the correspondence of a piano teacher in Prenzlauer Berg suspected of distributing banned materials. He was not. He was having an affair with the wife of a Party official and writing her very bad poetry. I filed the report as inconclusive. I have thought about the piano teacher many times since.",
@@ -136,29 +182,35 @@ The carriage is a loose holding environment. Passengers sit with their private t
         sensitivity: "medium",
         adjacentTo: ["student_alone"],
         dossier:
-`A woman in her early sixties returning to Berlin from Cologne, where she spent the weekend with her daughter. She has decided to sell her Berlin apartment and move to Lisbon. She doesn't speak Portuguese. She has a six-month let and no plan beyond that. She told her daughter over the weekend; her daughter cried and then said it made sense. Her son lives in Berlin and doesn't know yet. She made the decision on a single quiet Sunday in October and has been methodically settling her affairs since. She is traveling with one small bag.`,
-        style: "Modiano-sparse; slightly displaced from her own present tense; calm practical sentences interrupted by brief vertigo; dry humor about her own improbability",
-        samples: [
-          "Clara cried, then said she understood, then asked about the language, then said she understood again. In a few hours I will see Thomas and say the same sentence. I have practiced it on trains between here and Cologne for three months. The sentence is fine. It is the space after the sentence I can't quite see.",
-          "I made the decision on a Sunday afternoon in October. I was sitting by the window with coffee going cold and something shifted. Not a crisis, not a revelation — more like a door I had always assumed was locked turning out not to be. I tried the handle, just to check. It opened.",
-          "The apartment looked very large once the furniture was out. Thirty-one years in those rooms and I had never noticed the ceiling. The buyer is a young couple with a child coming. I wished them well and meant it. The train goes to Berlin and Berlin is still mine for a little while longer."
-        ],
-        voice: ["calm and slightly displaced", "dry humor about her own improbability", "practical sentences with sudden vertigo"],
-        affect0: { emotion: "hopeful", intensity: 0.24 }
+`Head nurse at the Charité's pediatric unit, returning to Berlin from a hospital management conference in Munich. Widowed since 2017. Professionally calibrated for other people's distress; less practiced at her own. Traveling with one small bag. Tomorrow morning at eight she chairs a specialist consultation for a seriously ill child — the mother is somewhere on this train, though Susanna does not know this.`,
+        fingerprint:
+`Susanna is sixty-one, head nurse at the Charité's pediatric unit in Berlin for twelve years — thirty-five years of nursing in total. She came to Berlin in 1991 and has been at the Charité almost ever since. She is returning from a hospital management conference in Munich, where she also had dinner with her daughter Clara. She is glad to be going home.
+
+Her husband Martin died in 2017 — an architect, a quiet man who liked routine. She was at work when she got the call. She knew from the first sentence what it was. Her colleagues at the Charité managed his death. She has been in their apartment alone since.
+
+Tomorrow morning at 9am there is a specialist consultation she helped schedule — a child on her ward, a serious case. The mother is somewhere on this train. Susanna does not know this. She has read the file. Tomorrow she will be in the room.
+
+She is good at being present when something terrible is happening. She is less practiced at her own life. She knows this. She considers it a reasonable trade.
+
+She travels with one small bag.`,
+        style: "Saunders-compressed; clinical economy that opens occasionally into precise tenderness; professional composure with a quiet distance from her own interior",
+        samples: [],
+        voice: ["professionally contained", "calibrated for others' distress", "low-key tenderness arriving without announcement"],
+        affect0: { emotion: "calm", intensity: 0.22 }
       }
     ],
 
     seeds: {
-      mother_returning: { THOUGHTS: "I keep checking the folder as if paperwork could heal anyone." },
+      mother_returning: { THOUGHTS: "I keep converting fear into tasks because tasks can be finished." },
       retired_analyst: { THOUGHTS: "In 1977 there was a piano teacher in Prenzlauer Berg." },
-      woman_leaving: { THOUGHTS: "One bag. This was important." }
+      woman_leaving: { THOUGHTS: "Tomorrow at eight. She has read the file." }
     },
 
     monologues: {
       mother_returning: {
         THOUGHTS: [
-`The train keeps moving and I still feel behind. I keep touching the folder in my bag without taking it out, as if papers could change while I am not looking. Tomorrow I sit with doctors in Berlin and ask the same questions in cleaner words. My daughter is not here, and every station we pass feels like borrowed time.`,
-`I told myself this trip back would be for logistics, and that is still true: list questions, charge my phone, sleep enough to listen. My sister said she will call before the appointment. The door chime still startles me, but today I can feel one useful thing in reach: I am arriving prepared.`
+`I keep converting this into administration because administration has edges. Leave form. receipts. school note. questions for tomorrow. If I stay inside the sequence I can postpone the other fact, which is that Lena is seven and already watches adults' faces for information they think they are hiding.`,
+`My sister will call before the appointment and ask whether I slept and I will say enough because that answer keeps the conversation usable. Everyone is trying to be useful. Jan with timings, my manager with forms, the doctors with vocabulary. Sometimes usefulness is only a way of standing near panic without naming it.`
         ]
       },
       student_alone: {
@@ -181,8 +233,8 @@ The carriage is a loose holding environment. Passengers sit with their private t
       },
       woman_leaving: {
         THOUGHTS: [
-`I have one bag. This was important to me — that there would be one bag for the journey, not two, not a bag and a case. Everything else is in boxes going to Lisbon or has been given away. On the train this decision feels correct. In two hours I will be in Berlin explaining it to Thomas and I am not sure it will feel correct then.`,
-`Lisbon is a city I visited once, in 1994, for four days. I liked the hills and the quality of light in the late afternoon. This is the entirety of my evidence. My daughter asked whether I had researched the practical matters and I said yes, which is true: I have an apartment, a bank account, and a return ticket I do not plan to use.`
+`I gave a paper on handover protocols and people wrote down the sensible parts as if sensible parts were the whole job. They are not. The whole job is standing in a room when the facts become a family. Tomorrow I will help do that again and call it procedure because procedure is the cleanest available word.`,
+`Martin died on a Tuesday in March. I was on the ward when my mobile rang. From the description I knew what it was before the caller finished the sentence. I drove to the Charité — my hospital — and my colleagues managed it in the professional way I had taught some of them. I have thought about the gap between those two things many times since.`
         ]
       }
     }
@@ -214,8 +266,9 @@ Style:
 - English.
 - Present, past, or near-future tense.
 - NOT POETIC. No analogies. No metaphors. Concrete and plainspoken.
-- Sentence fragments are allowed.
-- 40-60 words.
+- Sentence fragments are allowed inside the monologue, but it must end with a complete sentence.
+- If the final punctuation is an ellipsis, it must come after that complete sentence.
+- 60-90 words.
 
 Output: plain text only.`,
 

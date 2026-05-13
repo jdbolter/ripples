@@ -25,6 +25,7 @@
       : "If a whisper is present, let it alter the thought immediately and indirectly. Do not answer it directly.";
 
     const ambientThread = String(opts.ambientThread || "").trim();
+    const fingerprint = String(ch.fingerprint || "").trim();
     const dossier = String(ch.dossier || "");
     const style = String(ch.style || "");
     const samples = Array.isArray(ch.samples) && ch.samples.length ? ch.samples : [];
@@ -62,11 +63,13 @@
       : "";
 
     const parts = [
-      `Generate an interior monologue. Length: ${thoughtWordMin}–${thoughtWordMax} words. Sentence fragments allowed.`,
+      `Generate an interior monologue. Length: ${thoughtWordMin}–${thoughtWordMax} words. Sentence fragments are allowed internally, but the monologue must end with a complete sentence.`,
       style ? `Style: ${style}` : "",
       samplesBlock,
-      "Character (background only — do not summarize this directly):",
-      dossier,
+      fingerprint
+        ? "Character — draw on this as a fund of memories and detail; do not summarize it or recite it; let it surface obliquely:"
+        : "Character (background only — do not summarize this directly):",
+      fingerprint || dossier,
       sceneFrame,
       whisperBlock,
       continuityBlock,
@@ -79,7 +82,8 @@
       "- No biography summaries or exposition.",
       "- Plain interior thought only — not dialogue.",
       "- Each image, phrase, or idea appears once; do not repeat or rephrase it within this monologue.",
-      "- Do not trail off with fewer than five words before any ellipsis; if a thought ends in '...', the fragment before it must be at least a complete short clause.",
+      "- The monologue must end on a complete sentence.",
+      "- If the monologue ends in '...', the ellipsis must come after a complete sentence, not after a fragment.",
       "",
       'Return JSON only: { "monologue": "..." }'
     ].filter(Boolean).join("\n\n");

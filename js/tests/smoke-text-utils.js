@@ -31,6 +31,10 @@ assert.ok(u.wordCount(truncated) <= 3, "truncateToWordCount should cap to max wo
 
 assert.equal(u.trimDanglingEnding("carry this to", 1), "carry this");
 assert.equal(u.ensureTerminalPunctuation("No ending yet"), "No ending yet...");
+assert.equal(u.ensureCompleteSentenceEnding("No ending yet..."), "No ending yet...");
+assert.equal(u.ensureCompleteSentenceEnding("He keeps thinking about it and"), "He keeps thinking about it.");
+assert.equal(u.ensureCompleteSentenceEnding("First sentence. Half a thought at the"), "First sentence.");
+assert.equal(u.ensureCompleteSentenceEnding("He said he would, but then..."), "He said he would...");
 
 const clamped = u.clampWordRange("short phrase", {
   minWords: 4,

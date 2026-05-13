@@ -50,6 +50,7 @@
     truncateToWordCount,
     trimDanglingEnding,
     trimShortTrailingFragment,
+    ensureCompleteSentenceEnding,
     ensureTerminalPunctuation,
     randInt,
     clampWordRange
@@ -61,8 +62,8 @@
   // Single implicit channel for now
   const DEFAULT_CHANNEL = "THOUGHTS";
   const EVENT_KIND = { LISTEN: "LISTEN", WHISPER: "WHISPER" };
-  const THOUGHT_WORD_MIN = 40;
-  const THOUGHT_WORD_MAX = 60;
+  const THOUGHT_WORD_MIN = 60;
+  const THOUGHT_WORD_MAX = 90;
   const CONTINUITY_LEAD_MAX_WORDS = 16;
   const FIRST_PERSON_MAX_RATIO = 0.20;
   // Global fallback stays off unless a scene/character policy opts in.
@@ -570,30 +571,14 @@
       isGenerating = false;
     }
 
-    text = enforceToneSteering(text, toneSteering);
-    text = enforceFocusSteering(text, focusSteering);
-
     text = constrainThoughtText(text, {
       minWords: THOUGHT_WORD_MIN,
       maxWords: THOUGHT_WORD_MAX,
       maxFirstPersonRatio: FIRST_PERSON_MAX_RATIO,
       preferRandomWindow: usedLocalPool
     });
-    text = enforceToneSteering(text, toneSteering);
-    text = enforceFocusSteering(text, focusSteering);
-    text = enforceIdeaLimit(text, {
-      minWords: THOUGHT_WORD_MIN,
-      maxWords: THOUGHT_WORD_MAX,
-      maxClauses: IDEA_LIMITER.maxClauses
-    });
-    text = applyContinuityPostprocess(text, {
-      openingLead,
-      openingLeadSource,
-      minWords: THOUGHT_WORD_MIN,
-      maxWords: THOUGHT_WORD_MAX,
-      maxClauses: IDEA_LIMITER.maxClauses
-    });
     text = dedupePhraseRepetitions(text);
+    text = cleanSpacing(text);
 
     engine.applyRipple({
       sourceId: characterId,
@@ -1450,16 +1435,13 @@
   function postprocessMonologue(text) {
     let t = stripOuterQuotes(text);
     t = dedupePhraseRepetitions(t);
-    t = trimShortTrailingFragment(t, 4);
+    t = cleanSpacing(t);
     return t;
   }
 
   function constrainThoughtText(text, opts = {}) {
     const minWords = Number.isFinite(opts.minWords) ? opts.minWords : THOUGHT_WORD_MIN;
     const maxWords = Number.isFinite(opts.maxWords) ? opts.maxWords : THOUGHT_WORD_MAX;
-    const maxFirstPersonRatio = Number.isFinite(opts.maxFirstPersonRatio)
-      ? opts.maxFirstPersonRatio
-      : FIRST_PERSON_MAX_RATIO;
     const preferRandomWindow = !!opts.preferRandomWindow;
 
     const raw = normalizeWhitespace(stripOuterQuotes(text));
@@ -1470,9 +1452,7 @@
       out = pickRandomClauseWindow(out, minWords, maxWords);
     }
 
-    out = reduceFirstPersonReferences(out, maxFirstPersonRatio, minWords);
     out = clampWordRange(out, { minWords, maxWords, fallback: raw });
-    out = finalizeThoughtEnding(out, { minWords, maxWords, fallback: raw });
     return cleanSpacing(out);
   }
 
@@ -1921,6 +1901,7 @@
     out = truncateToWordCount(out, maxWords);
     out = trimDanglingEnding(out, minWords);
     out = ensureTerminalPunctuation(out);
+    out = ensureCompleteSentenceEnding(out);
     return out;
   }
 
