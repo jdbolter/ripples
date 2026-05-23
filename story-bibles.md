@@ -67,7 +67,7 @@ He has twice typed the name into a search bar and closed it before the results l
 
 He is traveling to Berlin to see his granddaughter Klara. His daughter Katharina knows he worked for the Stasi and has not asked further. They are both careful. This has held for thirty-five years.
 
-His body still carries the pressure of old headphones. He still notices what people leave out.
+He notices the other old man in the carriage. He begins to notice details and begins to think that it might indeed by Thomas Reusch. He weighs in his mind the unlikelihood of this, but the details of appearance and demeanor play on his careful mind. What should he do?
 
 ---
 
