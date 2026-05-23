@@ -11,9 +11,7 @@ The Munich–Berlin ICE. Passengers:
 - **Kim and Daniel** travel together from Munich to Berlin — their home — returning from a visit to Kim's parents. They are not sitting together.
 - **Friedrich** boards at Halle, which falls on the Munich–Berlin route. He is visiting his granddaughter Klara in Berlin.
 - **Barbara** was in Munich seeking a specialist's second opinion about her daughter's illness. She is returning with the same folder and no better answers.
-- **Susanna** was in Munich for a hospital management conference. She saw her daughter Clara while there. She is returning to her ward at the Charité. She does not know that Barbara — whose daughter she is treating — is on this train.
-
-*Note: Susanna's character has been changed from woman-leaving-for-Lisbon to head nurse. The existing samples in `scenes.js` for `woman_leaving` reference Lisbon and need to be replaced.*
+- **Susanna** was in Munich for a hospital management conference. She saw her daughter Anna while there. She is returning to her ward at the Charité. She does not know that Barbara — whose daughter she is treating — is on this train.
 
 ---
 
@@ -47,11 +45,31 @@ He is going to Berlin to see Klara, who is nine, and who asks him questions he a
 
 **A colleague.** There was a man in his section called Brauer who kept a photograph of his children face-down on his desk so he would not have to look at them while working. Friedrich thought this sentimental at the time. He has revised this opinion.
 
+**The man who walked through.** When Friedrich boarded at Halle, a man walked through the carriage looking for his seat. Late sixties, a heavy coat, a deliberate way of moving. He paused near Friedrich's row, checked the reservation card, and moved on through to the next car. Friedrich watched without appearing to. He has been doing this for fifty years and cannot stop.
+
+He has been reconstructing the man since the train left Halle. The height is consistent with what the file suggested — Reusch was listed as 1.79m, medium build. The coat. A way of moving that Friedrich associates, inadequately, with a voice he no longer trusts himself to remember accurately. He had a file photograph once, from 1979. It showed a man in his mid-twenties. That photograph is not retrievable, and even if it were, a face at twenty-five is not the same face at sixty-nine.
+
+Friedrich is a signals analyst. He knows Reusch's voice — the rhythm of it, the way sentences slightly accelerated when Reusch was uncomfortable, the flat Saxonian vowels, a hesitation before proper names. The man in the heavy coat said nothing. He paused, looked at a number, and walked on. Friedrich heard the sound of his shoes and the shift of his coat. This is not enough to identify anyone.
+
+It is not nothing.
+
+He has not gone to the next car. He has been in his seat for an hour and has not gone. He has his usual explanation: the resemblance is probably coincidental, memory manufactures patterns, he is seventy-two years old on a train and the mind finds what it is looking for. He is not persuaded by this explanation. He does not replace it with a better one. He did not go.
+
+The irony has not escaped him. For three years he listened to Reusch's voice without Reusch knowing he was there. If that is Reusch in the next car, the situation is structurally identical. Friedrich is present. Reusch does not know. The only difference is that Friedrich no longer has a function.
+
 **What he will not say.** That he was good at his job and found satisfaction in the precision of it. That monitoring Reusch for three years produced something he can only describe, inadequately, as familiarity — not affection exactly, but the particular knowledge that comes from prolonged attention to an ordinary life. That when the reassignment came and Reusch's voice disappeared from his headphones, something ended that had no name. That he still listens — to trains, to adjacent conversations, to the space before someone speaks — and cannot make this stop.
 
 **The contradictions.** He thinks of himself as someone who processed facts rather than made decisions, and he knows this distinction is real and also insufficient. He is precise and orderly in his daily life — his apartment in Halle arranged, his books organized by year of publication — as if the maintenance of small order is continuous with the old work, even now. He loves his granddaughter with a seriousness that has no adequate expression and this coexists, without resolution, with the other thing.
 
 He would like, before he dies, to know that Thomas Reusch is all right. He does not know what he would do with this information.
+
+### Samples
+
+1. "In 1977 I spent eleven days decoding the correspondence of a piano teacher in Prenzlauer Berg suspected of distributing banned materials. He was not. He was having an affair with the wife of a Party official and writing her very bad poetry. I filed the report as inconclusive. I have thought about the piano teacher many times since."
+
+2. "I have typed the name Thomas Reusch into a search bar twice. Both times I closed the window before the results loaded. The second time I left it open longer before closing it. I have considered what the difference between those two moments means. I have not arrived at an explanation that is not also, in some way, a form of evasion."
+
+3. "In three years I transcribed two hundred and sixty-three calls. I know the precise number because I counted in 1983, after the reassignment. Reusch argued with his wife about money on fourteen occasions. I recorded the amounts carefully. They were small. I can still recall them exactly. I have never understood why this kind of accuracy felt like something owed."
 
 ---
 
@@ -65,13 +83,15 @@ Between 1979 and 1982 he monitored a history teacher in Magdeburg named Thomas R
 
 He has twice typed the name into a search bar and closed it before the results loaded.
 
-He is traveling to Berlin to see his granddaughter Klara. His daughter Katharina knows he worked for the Stasi and has not asked further. They are both careful. This has held for thirty-five years.
+When Friedrich boarded at Halle, a man walked through the carriage looking for his seat — late sixties, heavy coat, a deliberate way of moving. He paused near Friedrich's row, checked a reservation, moved through to the next car. Friedrich watched without appearing to. He has been reconstructing him since. The height is consistent. He knows Reusch's voice, not his face at seventy — he is a signals analyst; voices were the material, photographs were secondary. The man said nothing. Friedrich heard his shoes, the shift of his coat.
 
-He notices the other old man in the carriage. He begins to notice details and begins to think that it might indeed by Thomas Reusch. He weighs in his mind the unlikelihood of this, but the details of appearance and demeanor play on his careful mind. What should he do?
+He has not gone to the next car. He has his usual explanation: memory manufactures patterns, forty years is a long time. He is not persuaded by it. He did not go.
+
+He is traveling to Berlin to see his granddaughter Klara. His daughter Katharina knows he worked for the Stasi and has not asked further. They are both careful. This has held for thirty-five years.
 
 ---
 
-## Susanna (woman_leaving) — Train to Berlin
+## Susanna (head_nurse) — Train to Berlin
 
 ### Story Bible
 
@@ -87,7 +107,7 @@ She has been present at a number of deaths. She counts this differently than oth
 
 She has been in their Berlin apartment alone since. She has made it work.
 
-**Clara and Thomas.** Her daughter Clara lives in Munich with her husband and two young children. Susanna was at a conference and had dinner with them on Saturday evening — ordinary and good, the right kind of evening. Clara is practical and warm in equal measure and has her mother's capacity for containment. Her son Thomas is in Berlin, works in something corporate, is less emotionally fluent than his sister. They have Sunday phone calls that cover the important things without always touching them directly.
+**Anna and Thomas.** Her daughter Anna lives in Munich with her husband and two young children. Susanna was at a conference and had dinner with them on Saturday evening — ordinary and good, the right kind of evening. Anna is practical and warm in equal measure and has her mother's capacity for containment. Her son Thomas is in Berlin, works in something corporate, is less emotionally fluent than his sister. They have Sunday phone calls that cover the important things without always touching them directly.
 
 **The conference.** Three days of hospital management and nursing leadership in Munich. She gave a paper on ward handover protocols. It was well received. She is glad it is over. She is glad to be on the train.
 
@@ -103,7 +123,7 @@ She has been in their Berlin apartment alone since. She has made it work.
 
 *(~185 words)*
 
-Susanna is sixty-one, head nurse at the Charité's pediatric unit in Berlin for twelve years — thirty-five years of nursing in total. She came to Berlin in 1991 and has been at the Charité almost ever since. She is returning from a hospital management conference in Munich, where she also had dinner with her daughter Clara. She is glad to be going home.
+Susanna is sixty-one, head nurse at the Charité's pediatric unit in Berlin for twelve years — thirty-five years of nursing in total. She came to Berlin in 1991 and has been at the Charité almost ever since. She is returning from a hospital management conference in Munich, where she also had dinner with her daughter Anna. She is glad to be going home.
 
 Her husband Martin died in 2017 — an architect, a quiet man who liked routine. She was at work when she got the call. She knew from the first sentence what it was. Her colleagues at the Charité managed his death. She has been in their apartment alone since.
 
@@ -121,29 +141,33 @@ She travels with one small bag.
 
 Barbara is thirty-six. She is a project manager at a media company in Berlin, which means she is good at tracking dependencies, identifying blockers, and keeping multiple things moving simultaneously. She has been applying this competence to her daughter's illness for six weeks. She is aware that this is not the right tool and is using it anyway because it is the tool she has.
 
-Her daughter Lena is seven. Three weeks ago — four weeks ago, she has lost track of the exact number — a diagnosis was made. Barbara uses the clinical terms when she speaks to doctors and uses no terms at all when she speaks to Lena, who knows that she is sick and that there are many appointments and that her mother checks on her more often in the night than she used to. Lena has not asked for the word directly. Barbara has not offered it. This arrangement holds.
+Her daughter Lena is seven. Six weeks ago a diagnosis was made. Barbara uses the clinical terms when she speaks to doctors and uses no terms at all when she speaks to Lena, who knows that she is sick and that there are many appointments and that her mother checks on her more often in the night than she used to. Lena has not asked for the word directly. Barbara has not offered it. This arrangement holds.
 
-**The folder.** It contains the original pathology report, two sets of scan results, the letter from the primary specialist in Berlin, the referral to Munich, and now — added this morning in a waiting room at the Klinikum Großhadern — a four-page assessment from the Munich consultant that Barbara has read once, standing in the corridor before she put it in the folder. The Munich consultant confirmed the Berlin diagnosis. He did not offer a different treatment path. She is not sure if this is good news. She is not sure what the category of good news applies to, currently.
+**What she knows.** The Munich consultant's four-page assessment confirms what the Berlin specialist said. He offered no different treatment path. She read the document once, standing in the corridor outside his office. She has a project manager's training in reading documents carefully. She knows what the language means — the precise hedging, the absence of any alternative trajectory. There is a sentence the document makes and she is not completing it. She has been managing this sentence for six weeks.
 
-She checks the folder without opening it. She checked it at Munich Hauptbahnhof. She checked it somewhere before Augsburg. She will not check it again until she is on the U-Bahn. This is a rule she has made and she is keeping it.
+**Lena.** She ran a particular way — a very fast run with her arms slightly back — across the garden in the summer. She sang songs to herself when she thought no one was listening. She has an opinion about which cup is hers and will not use a different cup. She has a way of waking up: lying still for a moment, looking at the ceiling, then looking to see if her mother is there. These are the things Barbara finds herself storing with unusual precision. She is not examining why she stores them this way.
 
-**The other things.** Her manager is waiting on extended leave paperwork that Barbara drafted and has not submitted because submitting it means her absence has a formal duration. There are three pharmacy receipts in her wallet that need to be filed for reimbursement. There is a form from Lena's school in her email drafts, requesting documentation of Lena's medical absence, which Barbara has been meaning to complete since Tuesday and has not. The form requires a doctor's signature. The doctor's office closes at five. Tomorrow's appointment is at nine.
+Last week Lena asked whether she would be able to go back to school before the summer. Barbara said she would ask the doctor. The thought of the answer is a room Barbara has not entered. She will enter it tomorrow at nine.
 
-These things exist alongside the diagnosis with equal clarity. Barbara's mind treats them with equal urgency. She is aware this is not a proportional response and finds it useful anyway.
+**The future.** It keeps appearing and redirecting. *When Lena is better. Next summer. When she's older.* Each time the thought begins and then finds itself somewhere else — the leave paperwork, the school form, the appointment at nine. Not forcibly. Not consciously. It redirects the way a car moves onto a different road. She has become, in six weeks, very efficient at this. She does not call it anything.
 
-**Jan.** He is at home with Lena, or at the hospital — they agreed he would take Lena to the afternoon check-in at the Charité while Barbara was in Munich. He has not texted. The agreement was that he would text if anything changed. He has not texted. She has checked her phone at Munich Hauptbahnhof and at Augsburg and twice since Augsburg. He has not texted, which is what they agreed no news would mean, and she is treating it as no news.
+**Jan.** He is at home with Lena, or at the Charité — they agreed he would take her to the afternoon check-in while Barbara was in Munich. He has not texted, which is what they agreed no news would mean. She has checked her phone at every station since Munich. They are managing this together the way two competent people manage a crisis together: divided tasks, completed tasks, conversations primarily about the tasks. Neither of them has said the sentences that would come after the tasks are done. She does not know who is waiting for the other to say them first.
 
-She and Jan are managing this together in the way that two competent people manage a crisis together, which is to say they have divided the tasks and are each completing their tasks and are speaking to each other primarily about the tasks. She knows this is not sustainable. She does not know when sustainability becomes possible.
+**What she went to Munich for.** She organized the referral herself — found the consultant's name in a paper, chased it when it stalled. She went alone because Jan could not take more time away, and because she needed to be alone in the room when the consultant said what he said. She held her face correctly. She came out into the corridor and read four pages. Then she walked to the station.
 
-**What she went to Munich for.** She organized the Munich referral herself — found the consultant's name in a paper, wrote the referral request, chased it when it stalled. She did this while Jan was managing the Berlin side. She went alone because Jan could not take more time away, and also because she needed to be alone in the room when the Munich consultant said what he said. She was not sure she could hold her face correctly if Jan were there. She went alone and held her face correctly. The folder now contains a four-page document that confirms what they already knew.
+Part of why she went: she needed someone to tell her something different. She has only understood this on the train back. A second opinion confirms the first. She is not sure what she would have done if it hadn't.
 
-**The word.** She uses it in the clinical register — in sentences with doctors, in the folder's paperwork, in her own mind when she is being precise. It is a noun with a treatment protocol. In any other register she does not use it. The word stays unspoken until a doctor says it, which is a sentence she heard from another parent in a waiting room three weeks ago and has been using as a rule since.
+**What she will not say.** That the last time Lena ran across the garden in that particular way, Barbara watched from the kitchen window and stood very still, and what happened in her in that moment had no name and she has not tried to give it one. That the thought she keeps not completing — *when Lena gets better* — is not a thought she is preventing. It stops itself. She has noticed this and has not opened the observation any further. That she has pharmacy receipts and a school form and leave paperwork and tomorrow at nine, and that the movement between these things is not organization. It is the only available forward.
 
-**Lena.** She ran a particular way — a very fast run with her arms slightly back — that she did across the garden in the summer. She sang songs to herself when she thought no one was listening. She has an opinion about which cup is hers and will not use a different cup. She asked Barbara last week whether she would be able to go back to school before the summer. Barbara said she would ask the doctor. She is going to ask the doctor tomorrow.
+**Contradictions.** She is simultaneously the most organized she has ever been and barely managing. The competence is real and inside it is something she has not touched.
 
-**What she will not say.** That she is afraid of arriving in Berlin, because the train arriving means tomorrow's appointment is real and the appointment means a decision and a decision means the thing they are managing becomes the thing they are doing. That she went to Munich partly because she needed twenty-four hours inside this without being watched, and she has had them, and they have not helped. That she has been keeping everything moving because if she stops moving the other thing will be there waiting, and she is not ready for it to be there waiting, and she does not know when she will be.
+### Samples
 
-**Contradictions.** She is simultaneously more organized than she has ever been and barely managing. She is treating the most important thing in her life as a project with deliverables and she knows this is temporary and she is doing it anyway because tomorrow is nine o'clock and she needs to be ready.
+1. "The last time Lena ran across the garden she had her arms back the way she does, and I was at the kitchen window, and I stood there until she went inside. I have stood at that window other times and not stood still. I don't know what the difference was. I think I know what the difference was. I have not said this out loud."
+
+2. "Jan texted fine at half past three. Fine means the afternoon check-in, nothing further, which is what we agreed fine would mean. I have read it twice. There is a school form in my drafts requiring a doctor's signature. I have been meaning to complete it since Tuesday. I said I would do it last night too."
+
+3. "The appointment is at nine. I have organized everything that can be organized before nine — the referrals, the questions, the file. What I have not organized is what I will do after the questions are answered. I haven't written that down because it requires knowing the answer first, which is what tomorrow is for."
 
 ---
 
@@ -151,15 +175,13 @@ She and Jan are managing this together in the way that two competent people mana
 
 *(~195 words)*
 
-Barbara is thirty-six, a project manager, traveling back to Berlin after two days in Munich seeking a specialist's second opinion about her daughter Lena's illness. The Munich consultant confirmed the Berlin diagnosis. She is returning with the same folder and the same facts, now twice verified. She does not know if this is good news.
+Barbara is thirty-six, a project manager, returning to Berlin after two days in Munich where a specialist confirmed her daughter Lena's diagnosis. He offered no different treatment path. She read the assessment once in the corridor and has not opened it since. She does not let herself finish the sentence the facts make.
 
-The folder is in her bag. She last checked it at Augsburg. She has made a rule about not checking it again until the U-Bahn. She is keeping the rule.
+Lena is seven. She runs with her arms slightly back. She has a particular cup she will not use a different version of. She sings to herself when she thinks no one is listening. She has a way of waking up: lying still, then looking to see if her mother is there. Barbara finds herself storing these things with unusual precision. She does not examine why. Last week Lena asked if she could go back to school before summer. Barbara said she would ask the doctor. She has not thought past the appointment to the answer.
 
-Lena is seven. She knows she is sick. She does not have the word. Barbara does not use the word outside the clinical register — in letters, in appointments, in the careful sentences she says to doctors. Tomorrow's specialist meeting is at nine.
+Jan is at home and has not texted, which is what they agreed no news would mean. The leave paperwork is not submitted. There are pharmacy receipts. Tomorrow is at nine.
 
-Her manager is waiting on leave paperwork Barbara has not submitted. There are pharmacy receipts to file. There is a school form in her email drafts requesting medical documentation. Jan is at home or at the hospital and has not texted, which is what they agreed no news would mean.
-
-She is treating the most important thing in her life as a logistics problem. She knows this is temporary.
+She is treating the most important thing in her life as a logistics problem. She knows this is not adequate. She is doing it anyway.
 
 ---
 
@@ -175,17 +197,19 @@ She moved to Berlin at nineteen for Humboldt. Within two weeks she felt somethin
 
 **Her work.** Political science: immigration and integration politics, EU asylum frameworks, citizenship regimes, the political language of belonging. The subject is personally implicated in ways she manages carefully. She has the analytical vocabulary to examine her own experience and has learned that this vocabulary also creates distance. Her parents are an example of the demographic she studies but in a register that doesn't fit her frameworks — not refugees, not EU free movement, not the Gastarbeiter story exactly. A specific category that falls between the contemporary policy conversations. She knows this gap intellectually. On the train back from Munich she feels it in a different register.
 
-**This weekend.** She and Daniel went to Munich together. She performed normality for her parents: her mother's slightly too-careful politeness toward Daniel, her father watching the late news with the volume too high and asking nothing difficult, which was itself a kind of asking. Her old bedroom is a study now. Her childhood books are in boxes she didn't open.
+**The fellowship.** In November she applied for a two-year research fellowship at the Centre for International Studies at Cambridge, working under a professor whose book on the political taxonomy of citizenship regimes had shaped her dissertation framework. She wrote the twelve-page application in ten evenings, without telling anyone. She heard in February. She read the letter in the university café, bought a second coffee she didn't drink, and sat with it for two hours. Then she called her mother. Her mother cried briefly. She did not call Daniel.
 
-**The text.** Three weeks ago in Berlin. A mutual friend, Petra, texted: *Did Daniel decide about Amsterdam? Tell him to go, it's amazing there.* Kim read it once and then showed Daniel the phone without a word. He knew immediately. She waited. What he said next was prepared — she could hear three weeks of preparation in it — and that was the problem.
+She accepted the following morning. She waited three weeks to tell him. She told him on Saturday evening at her parents' apartment in Munich, after dinner, while her parents were in the other room.
 
-**The argument.** It ran through the week before Munich, was suspended through the weekend at her parents' apartment, and resumed on the train. He explained carefully. He revised. He produced a sequence of reasoning that was coherent and almost true and insufficient. She waited through each version. At some point she said: *You're very good at explaining things after you've already decided them.* Then she stopped and moved seats. She chose a window seat two rows ahead where he can see her back and she can see the winter fields.
+**This weekend.** She and Daniel went to Munich together. She performed normality for two days: her mother's slightly too-careful politeness toward Daniel, her father watching the late news with the volume too high and asking nothing difficult, which was itself a kind of asking. Her old bedroom is a study now. Her childhood books are in boxes she didn't open. She knew, the whole weekend, what she was about to say.
 
-She has not looked around.
+**The telling.** He went still when she told him. He asked the questions in sequence: when did she apply, when did she hear, when did she accept. She answered them. He did the arithmetic without looking away. Then he said, quietly: *you had already decided. Not just about Cambridge. About us.* She didn't answer that. On the train she moved seats. She chose a window seat two rows ahead. He can see her back and she can see the winter fields. She has not looked around.
 
-**What she won't say.** That she moved partly to see what he would do — and that he hasn't moved, which is information. That she is not certain she wants to end this, only that she could not continue that conversation. That she is not sure the Amsterdam thing is the actual problem or just the name she finally has for something older. That going home to Munich for forty-eight hours made her feel slightly smaller, more managed, the old legibility returning, and that she doesn't entirely hate this about Munich, which unsettles her.
+**Why she didn't tell him.** She needed to know what she wanted before it became a conversation about what he wanted. She knew his analytical mind — she loves his analytical mind — and she knew that if she told him she was applying, the question of them would surface before she had answered the question of herself. She is aware this is a form of protection. She is aware it is also a form of exclusion. She has not found a way to say both of these things at once.
 
-**Contradictions.** She studies belonging and has built hers in Berlin with considerable effort and intention. Going home undoes some of it — not all, but enough that she notices. She is self-interrupting by habit and calls this precision. Sometimes it is precision. Sometimes it is a way of not finishing a thought that is taking her somewhere uncomfortable.
+**What she won't say.** That part of her relief when the acceptance came was about not having to choose any more — the decision was made. That she called her mother first not because her mother was more important but because her mother would not make it complicated. That sitting two rows ahead is not a punishment; it is the only arrangement that makes sense right now. That she is going to Cambridge and she knows this, and she is not yet willing to examine what else she has settled.
+
+**Contradictions.** She studies the politics of belonging and has built her belonging in Berlin through deliberate effort. Cambridge will undo some of it. She moved to Berlin at nineteen to have something entirely hers. The fellowship is also entirely hers. She is tired of explaining the distinction to herself.
 
 ---
 
@@ -197,11 +221,9 @@ Kim is in her mid-twenties, Korean-German, Munich-raised, political science MA a
 
 Her subject is immigration and integration politics. Her parents' story — Korean workers, Munich, 1983, a bilateral labor agreement nobody discusses anymore — falls between the categories her academic frameworks describe. She has written about this without telling them.
 
-Three weeks ago a mutual friend texted asking if Daniel had decided about Amsterdam. Kim hadn't known. She showed him the phone without a word. The argument ran through a week, was suspended across a weekend at her parents' apartment in Munich, and resumed on the train. At some point she said something precise and moved seats. She is two rows ahead of him. She has not looked around.
+In November she applied for a two-year research fellowship at Cambridge. She applied alone, without telling Daniel. She heard in February and accepted the same week. She told Daniel this weekend, at her parents' apartment in Munich, after three weeks of carrying the acceptance. He asked the questions in order: when did she apply, when did she hear, when did she accept. He did the arithmetic. Then he said, quietly: *you had already decided. Not just about Cambridge. About us.* She didn't answer that.
 
-Her childhood bedroom in Munich is a study now. Her mother offered food continuously for two days and asked nothing directly.
-
-She is not sure she wants to end this. She is sure she cannot continue that conversation.
+On the train she moved two rows ahead. He can see her back. She has not looked around. She is going to Cambridge. She is not yet sure what else is settled.
 
 ---
 
@@ -217,21 +239,19 @@ He grew up between two registers — the apartment in Kreuzberg, his parents' Tu
 
 He did not choose Turkish-German history. Kim has come close to asking him directly why not. They have had the beginning of this conversation twice and not finished it. He knows what he would say if she asked clearly: that the Stasi is a bounded historical problem with an endpoint, and that his parents' story is not bounded and does not have an endpoint, and he needs the one that ends. He has not quite said this to himself in these words.
 
-What he has not examined: that he studies people who processed other people's lives at careful procedural distance, and that this is also, structurally, what he does. The twenty-two days he sat on the Amsterdam email are an example of this. He did not experience those days as suppression or self-protection. He experienced them as method — letting a decision clarify before it became a conversation.
+**What he didn't know.** In November, Kim applied for a two-year research fellowship at Cambridge. He didn't know she was considering it. He didn't know the application had been written, the offer sent, or the acceptance returned. She told him this weekend — on Saturday evening at her parents' apartment in Munich, three weeks after she accepted. She said: I applied for a fellowship. I got it. I accepted. I should have told you sooner.
 
-**Amsterdam.** A six-month research placement at an institute in Utrecht with access to a Stasi archive collection not available in Germany — genuinely significant for his dissertation chapter on the dissolution period. The email arrived in January. He sat on it for twenty-two days. His argument to himself: he needed to resolve the work question before the conversation became about them. What he required himself not to notice: that this ordering was itself a position on the relationship, and that Kim would recognize it.
+**The arithmetic.** He asked the questions in the order that made sense to him: when did you apply, when did you hear, when did you accept. She answered each one. He was aware, while doing this, that he was asking the questions in order to do something careful while the other thing happened alongside it. When the sequence was assembled he said, quietly: *you had already decided. Not just about Cambridge. About us.* She didn't answer that. On the train she moved seats. He watched her choose a window seat two rows ahead and settle into it. She hasn't looked back. He has not followed.
 
-**The text.** Petra texted Kim. Kim showed him the phone. He saw her face before she turned the screen toward him and the twenty-two days collapsed into a single visible fact. He said: *I was still deciding.* Kim said nothing immediately, which was not the same as accepting this.
+**What he is working through.** He can construct the logic of why she didn't tell him. She applied in November and might not have gotten it — no point having the conversation over a possibility. She heard in February and needed a day alone with the answer — reasonable. She accepted and waited three weeks to tell him — he can generate explanations for this too, but they lose persuasiveness as he repeats them. What he can't explain away is the shape of it: a twelve-page application, three months, an acceptance, three more weeks. The entire interior life of a major decision, and he was not part of it. Not excluded actively, not lied to directly — just not included. He knows there is a distinction between concealment and privacy, and he cannot currently locate it in what she did.
 
-**The argument.** It ran for a week before Munich and was suspended through the weekend at Kim's parents' apartment — he performed fine, he thinks he performed fine, he was careful and warm and asked Kim's father about his work and helped with the washing up. On the train it resumed. He produced his explanation in full: the uncertainty, the intention to tell her, the timing. Kim listened through all of it. Then she said: *You're very good at explaining things after you've already decided them.* Then she moved. He watched her choose a seat two rows ahead and settle into it. She hasn't looked back.
+**The parallel he hasn't noticed.** His dissertation concerns people who processed other people's lives at procedural distance — who handled facts without making decisions, and the question of what is owed when your role was only technical. He has argued in seminar that non-deciding is itself a form of deciding. He studies how people are excluded from decisions that shaped their lives and do not know it until afterward. He does not yet see the structural rhyme between this and what he is sitting inside now, two rows behind Kim on the Munich-Berlin train.
 
-He has rehearsed what he would say if he went to her or she came back. He has not gone.
+**The Friedrich connection.** Daniel has probably written the theoretical version of Friedrich's moral situation — the analyst who processed files on people whose fates he didn't follow, the question of what you owe when your role was technical. He has argued in seminar that the non-deciding hand is not innocent. He doesn't know that a man in his early seventies boarded this train at Halle who is living the interior life that Daniel's dissertation processes from the outside.
 
-**The Friedrich connection.** Daniel has probably written the theoretical version of Friedrich's moral situation — the analyst who processed files on people whose fates he didn't follow, the question of what is owed when your role was technical. He has argued in seminar that the non-deciding hand is not innocent. He doesn't know that a man in his early seventies boarded this train at Halle and is sitting somewhere in this carriage, living the interior life that Daniel's dissertation processes from the outside.
+**What he won't say.** That his first feeling, for approximately two seconds before everything else, was pride — Cambridge, he knows what that means, he was proud before he understood what it meant for them. That the hurt is not the fellowship; it is the three months of not knowing there was a decision being made. That he can see, from the outside, why she didn't tell him — she knew his input would change her answer, and she needed the answer to be hers first — and that he can see this clearly and cannot find the mechanism that makes it acceptable. That sitting two rows behind her and not going to her is, in its structure, exactly what she did: a decision made alone, in a private space, without asking.
 
-**What he won't say.** That he chose Stasi history partly because studying Turkish-German integration would mean studying his parents' lives, and he is not ready for that — not the politics of it but the specific texture of it, the forty years in Kreuzberg, the name they chose for him. That the twenty-two days with the Amsterdam email were not only about uncertainty. They were also about wanting, briefly, to imagine a version of his future that he hadn't already shared. That sitting two rows behind Kim and not going to her is the same gesture as the email, and he can see this clearly, and cannot find the mechanism to override it.
-
-**Contradictions.** He studies diffuse complicity — the question of what you owe when your participation was procedural — with genuine intellectual sympathy for its difficulty. He cannot apply the same sympathy to himself. His analytical precision is real and is also a form of shelter. He knows this and continues to use it.
+**Contradictions.** He studies diffuse complicity — the question of what you owe when your participation was procedural — with genuine intellectual sympathy for its difficulty. He cannot apply the same sympathy to himself, or to Kim, or to whatever is happening two rows ahead of him. His analytical precision is real and is also a form of shelter. He knows this and continues to use it.
 
 ---
 
@@ -243,10 +263,12 @@ Daniel is in his late twenties, Turkish-German, raised in Kreuzberg. His parents
 
 He studies the Stasi and its dissolution — specifically the institutional periphery: signals analysts, information processors, diffuse complicity, the moral weight of the technical role. He did not choose his parents' story. He and Kim have started the conversation about why twice and not finished it.
 
-Three weeks ago a research placement arrived from an archive institute in Utrecht. He held the email for twenty-two days while he resolved the work question — then a mutual friend texted Kim, assuming she knew. Kim showed him the phone without a word. The argument ran through a week, was suspended across a weekend in Munich at Kim's parents' apartment, and resumed on the train. She listened through his full explanation. Then she said something precise and moved two rows ahead. He watched her go. He has not followed.
+This weekend Kim told him she had applied for a two-year research fellowship at Cambridge in November, heard in February, accepted, and was telling him now. He asked the questions in order — when, when, when — because that was what he could do carefully in that moment. Then he said: *you had already decided. Not just about Cambridge. About us.* She moved seats. He is two rows behind her and has not followed.
+
+He can generate three or four explanations for why she didn't tell him. None of them reach the thing underneath.
 
 He has rehearsed what he would say. He can see the back of her head.
 
-He studies how people process other lives at procedural distance. He does not see this about himself.
+He studies what it means to process other people's lives at procedural distance. He does not see this about himself.
 
 ---

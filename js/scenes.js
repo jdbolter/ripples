@@ -72,20 +72,20 @@ Remember the carriage contains ONLY these characters. Do not refer to other pass
         position: { x: 4, y: 3 },
         sensitivity: "high",
         adjacentTo: ["retired_analyst"],
-        dossier:
-`A woman in her thirties traveling back to Berlin after days away. Her daughter is ill — the word stays unspoken until a doctor says it. She has a meeting with specialists tomorrow and carries a folder she keeps checking without opening. Alongside this: a manager waiting on leave approval, pharmacy receipts, a school form still in her email drafts. Her mind jumps between medical vocabulary and domestic minutiae as if both belong to the same emergency.`,
         fingerprint:
-`Barbara is thirty-six, a project manager, returning to Berlin after two days in Munich seeking a specialist's second opinion about her daughter Lena's illness. The Munich consultant confirmed the Berlin diagnosis. She is returning with the same folder and the same facts, now twice verified. She does not know if this is good news.
+`Barbara is thirty-six, a project manager, returning to Berlin after two days in Munich where a specialist confirmed her daughter Lena's diagnosis. He offered no different treatment path. She read the assessment once in the corridor and has not opened it since. She does not let herself finish the sentence the facts make.
 
-She has made a rule about not checking the folder again until she is almost home. She is keeping the rule badly, by thinking about the folder instead of opening it.
+Lena is seven. She runs with her arms slightly back. She has a particular cup she will not use a different version of. She sings to herself when she thinks no one is listening. She has a way of waking up: lying still, then looking to see if her mother is there. Barbara finds herself storing these things with unusual precision. She does not examine why. Last week Lena asked if she could go back to school before summer. Barbara said she would ask the doctor. She has not thought past the appointment to the answer.
 
-Lena is seven. She knows she is sick. She does not have the word. Barbara does not use the word outside the clinical register — in letters, in appointments, in the careful sentences she says to doctors. Tomorrow's specialist meeting is at nine.
+Jan is at home and has not texted, which is what they agreed no news would mean. The leave paperwork is not submitted. There are pharmacy receipts. Tomorrow is at nine.
 
-Her manager is waiting on leave paperwork Barbara has not submitted. There are pharmacy receipts to file. There is a school form in her email drafts requesting medical documentation. Jan is at home or at the hospital and has not texted, which is what they agreed no news would mean.
-
-She is treating the most important thing in her life as a logistics problem. She knows this is temporary.`,
+She is treating the most important thing in her life as a logistics problem. She knows this is not adequate. She is doing it anyway.`,
         style: "Bernhard — obsessive return to the same practical detail, slightly reworded each time; sentences that stop before the emotional conclusion; no metaphors",
-        samples: [],
+        samples: [
+          "The last time Lena ran across the garden she had her arms back the way she does, and I was at the kitchen window, and I stood there until she went inside. I have stood at that window other times and not stood still. I don't know what the difference was. I think I know what the difference was. I have not said this out loud.",
+          "Jan texted fine at half past three. Fine means the afternoon check-in, nothing further, which is what we agreed fine would mean. I have read it twice. There is a school form in my drafts requiring a doctor's signature. I have been meaning to complete it since Tuesday. I said I would do it last night too.",
+          "The appointment is at nine. I have organized everything that can be organized before nine — the referrals, the questions, the file. What I have not organized is what I will do after the questions are answered. I haven't written that down because it requires knowing the answer first, which is what tomorrow is for."
+        ],
         voice: ["contained urgency", "maternal vigilance", "practical language under strain"],
         affect0: { emotion: "nervous", intensity: 0.28 }
       },
@@ -96,19 +96,15 @@ She is treating the most important thing in her life as a logistics problem. She
         image: "images/train-student.png",
         position: { x: 4, y: 1 },
         sensitivity: "high",
-        adjacentTo: ["woman_leaving", "worried_boyfriend"],
-        dossier:
-        `A political science student in her early twenties, Munich-raised, studying at Humboldt. Moved to Berlin partly for the subject, mostly for the freedom of not being watched. She loves the city: late films, odd conversations, the feeling a life can widen. Her laptop is open but she's not really working. Daniel is somewhere in the background — unresolved, not the only thing on her mind but hard to leave alone.`,
+        adjacentTo: ["head_nurse", "worried_boyfriend"],
         fingerprint:
 `Kim is in her mid-twenties, Korean-German, Munich-raised, political science MA at Humboldt. She came to Berlin at nineteen and felt, within two weeks, the specific relief of not being the most visible person in a room. She has not gone back on this.
 
 Her subject is immigration and integration politics. Her parents' story — Korean workers, Munich, 1983, a bilateral labor agreement nobody discusses anymore — falls between the categories her academic frameworks describe. She has written about this without telling them.
 
-Three weeks ago a mutual friend texted asking if Daniel had decided about Amsterdam. Kim hadn't known. She showed him the phone without a word. The argument ran through a week, was suspended across a weekend at her parents' apartment in Munich, and resumed on the train. At some point she said something precise and moved seats. She is two rows ahead of him. She has not looked around.
+In November she applied for a two-year research fellowship at Cambridge. She applied alone, without telling Daniel. She heard in February and accepted the same week. She told Daniel this weekend, at her parents' apartment in Munich, after three weeks of carrying the acceptance. He asked the questions in order: when did she apply, when did she hear, when did she accept. He did the arithmetic. Then he said, quietly: you had already decided. Not just about Cambridge. About us. She didn't answer that.
 
-Her childhood bedroom in Munich is a study now. Her mother offered food continuously for two days and asked nothing directly.
-
-She is not sure she wants to end this. She is sure she cannot continue that conversation.`,
+On the train she moved two rows ahead. He can see her back. She has not looked around. She is going to Cambridge. She is not yet sure what else is settled.`,
         style: "Self-interrupting and lightly ironic; practical thoughts that trip into private ones; abrupt pivots; dry humor that deflates itself; each thought appears once and is not revisited",
         samples: [
           "I like this kind of journey. A built-in pause. I can get things done and feel virtuous about it. But six hours is a bit too long. Should be four. I'll be hungry when I arrive. Don't want to cook.",
@@ -127,18 +123,18 @@ She is not sure she wants to end this. She is sure she cannot continue that conv
         position: { x: 1, y: 2 },
         sensitivity: "medium",
         adjacentTo: ["student_alone", "retired_analyst"],
-        dossier:
-`A Turkish-German man in his late twenties, Daniel, sitting two rows from his estranged girlfriend Kim. Graduate student in information science at Humboldt. He likes systems and structure and has built a version of himself around being calm and hard to surprise. He keeps replaying the argument in fragments. He worries he has damaged the relationship past repair, and is not sure whether his guilt is about what he did, what Kim suspects, or both.`,
         fingerprint:
 `Daniel is in his late twenties, Turkish-German, raised in Kreuzberg. His parents chose his name deliberately: something that wouldn't mark him before anyone met him. He carries this with low-grade ambivalence.
 
 He studies the Stasi and its dissolution — specifically the institutional periphery: signals analysts, information processors, diffuse complicity, the moral weight of the technical role. He did not choose his parents' story. He and Kim have started the conversation about why twice and not finished it.
 
-Three weeks ago a research placement arrived from an archive institute in Utrecht. He held the email for twenty-two days while he resolved the work question — then a mutual friend texted Kim, assuming she knew. Kim showed him the phone without a word. The argument ran through a week, was suspended across a weekend in Munich at Kim's parents' apartment, and resumed on the train. She listened through his full explanation. Then she said something precise and moved two rows ahead. He watched her go. He has not followed.
+This weekend Kim told him she had applied for a two-year research fellowship at Cambridge in November, heard in February, accepted, and was telling him now. He asked the questions in order — when, when, when — because that was what he could do carefully in that moment. Then he said: you had already decided. Not just about Cambridge. About us. She moved seats. He is two rows behind her and has not followed.
+
+He can generate three or four explanations for why she didn't tell him. None of them reach the thing underneath.
 
 He has rehearsed what he would say. He can see the back of her head.
 
-He studies how people process other lives at procedural distance. He does not see this about himself.`,
+He studies what it means to process other people's lives at procedural distance. He does not see this about himself.`,
         style: "Carver-flat; short declarative sentences; analytical mind that can't quite convert to honesty; self-indictment through revision rather than confession",
         samples: [],
         voice: ["self-indicting", "plainspoken", "hesitant when naming fault"],
@@ -152,8 +148,6 @@ He studies how people process other lives at procedural distance. He does not se
         position: { x: 1, y: 3 },
         sensitivity: "low",
         adjacentTo: ["worried_boyfriend", "mother_returning"],
-        dossier:
-`A man in his early seventies, traveling from Halle to visit his granddaughter Klara in Berlin. Spent twenty-six years as a signals analyst for the Stasi — intercepting, decoding, filing. His daughter Katharina was seven when the Wall came down; she knows about Stasi and knows he worked there and has not asked further. He processed his past long ago into something like professional acceptance. His mind returns often to specific cases, specific people, specific years — with regret but also in the way a craftsman returns to old work, examining the joints.`,
         fingerprint:
 `Friedrich is a man in his early seventies, a former Stasi signals analyst — twenty-six years intercepting, transcribing, filing in a unit in Halle. He was good at his work. He thinks of this without pride and without adequate regret.
 
@@ -161,30 +155,30 @@ Between 1979 and 1982 he monitored a history teacher in Magdeburg named Thomas R
 
 He has twice typed the name into a search bar and closed it before the results loaded.
 
-He is traveling to Berlin to see his granddaughter Klara. His daughter Katharina knows he worked for the Stasi and has not asked further. They are both careful. This has held for thirty-five years.
+When Friedrich boarded at Halle, a man walked through the carriage looking for his seat — late sixties, heavy coat, a deliberate way of moving. He paused near Friedrich's row, checked a reservation, moved through to the next car. Friedrich watched without appearing to. He has been reconstructing him since. The height is consistent. He knows Reusch's voice, not his face at seventy — he is a signals analyst; voices were the material. The man said nothing. Friedrich heard his shoes, the shift of his coat.
 
-His body still carries the pressure of old headphones. He still notices what people leave out.`,
-        style: "Flat and precise; specific past anecdotes surface alongside memories of his daughter; with some regret but not self-pity; tender moments arrive without announcement and pass quickly",
+He has not gone to the next car. He has his usual explanation: memory manufactures patterns, forty years is a long time. He is not persuaded by it. He did not go.
+
+He is traveling to Berlin to see his granddaughter Klara. His daughter Katharina knows he worked for the Stasi and has not asked further. They are both careful. This has held for thirty-five years.`,
+        style: "Flat and precise; surveillance-era memories surface as specific anecdotes; regret held at procedural distance; tender moments arrive without announcement and pass quickly",
         samples: [
           "In 1977 I spent eleven days decoding the correspondence of a piano teacher in Prenzlauer Berg suspected of distributing banned materials. He was not. He was having an affair with the wife of a Party official and writing her very bad poetry. I filed the report as inconclusive. I have thought about the piano teacher many times since.",
-          "Katharina was seven when the Wall came down. She stood on the kitchen table to see the television and kept asking whether we would go to the West now. I said perhaps. She asked what the West looked like and I said I didn't know. This was true. I had only ever seen it on paper.",
-          "There was a man in our section called Brauer who kept a photograph of his children face-down on his desk so he would not have to look at them while working. I thought this was sentimental at the time. Now Katharina calls every Sunday and we discuss nothing that matters and I think perhaps Brauer understood something I did not."
+          "I have typed the name Thomas Reusch into a search bar twice. Both times I closed the window before the results loaded. The second time I left it open longer before closing it. I have considered what the difference between those two moments means. I have not arrived at an explanation that is not also, in some way, a form of evasion.",
+          "In three years I transcribed two hundred and sixty-three calls. I know the precise number because I counted in 1983, after the reassignment. Reusch argued with his wife about money on fourteen occasions. I recorded the amounts carefully. They were small. I can still recall them exactly. I have never understood why this kind of accuracy felt like something owed."
         ],
         voice: ["precise and contained", "in the style of John LeCarre", "tender observation arriving without announcement"],
         affect0: { emotion: "guarded", intensity: 0.30 }
       },
       {
-        id: "woman_leaving",
+        id: "head_nurse",
         label: "Susanna",
         icon: "🧳",
         image: "images/train-nurse.png",
         position: { x: 1, y: 0 },
         sensitivity: "medium",
         adjacentTo: ["student_alone"],
-        dossier:
-`Head nurse at the Charité's pediatric unit, returning to Berlin from a hospital management conference in Munich. Widowed since 2017. Professionally calibrated for other people's distress; less practiced at her own. Traveling with one small bag. Tomorrow morning at eight she chairs a specialist consultation for a seriously ill child — the mother is somewhere on this train, though Susanna does not know this.`,
         fingerprint:
-`Susanna is sixty-one, head nurse at the Charité's pediatric unit in Berlin for twelve years — thirty-five years of nursing in total. She came to Berlin in 1991 and has been at the Charité almost ever since. She is returning from a hospital management conference in Munich, where she also had dinner with her daughter Clara. She is glad to be going home.
+`Susanna is sixty-one, head nurse at the Charité's pediatric unit in Berlin for twelve years — thirty-five years of nursing in total. She came to Berlin in 1991 and has been at the Charité almost ever since. She is returning from a hospital management conference in Munich, where she also had dinner with her daughter Anna. She is glad to be going home.
 
 Her husband Martin died in 2017 — an architect, a quiet man who liked routine. She was at work when she got the call. She knew from the first sentence what it was. Her colleagues at the Charité managed his death. She has been in their apartment alone since.
 
@@ -203,41 +197,9 @@ She travels with one small bag.`,
     seeds: {
       mother_returning: { THOUGHTS: "I keep converting fear into tasks because tasks can be finished." },
       retired_analyst: { THOUGHTS: "In 1977 there was a piano teacher in Prenzlauer Berg." },
-      woman_leaving: { THOUGHTS: "Tomorrow at eight. She has read the file." }
+      head_nurse: { THOUGHTS: "Tomorrow at eight. She has read the file." }
     },
 
-    monologues: {
-      mother_returning: {
-        THOUGHTS: [
-`I keep converting this into administration because administration has edges. Leave form. receipts. school note. questions for tomorrow. If I stay inside the sequence I can postpone the other fact, which is that Lena is seven and already watches adults' faces for information they think they are hiding.`,
-`My sister will call before the appointment and ask whether I slept and I will say enough because that answer keeps the conversation usable. Everyone is trying to be useful. Jan with timings, my manager with forms, the doctors with vocabulary. Sometimes usefulness is only a way of standing near panic without naming it.`
-        ]
-      },
-      student_alone: {
-        THOUGHTS: [
-`The laptop is open to seminar notes, but what I keep noticing is how certain phrases detach from the page and drift somewhere else. Representation, institutions, legitimacy, then suddenly the green exit sign in Yorck Kino last week, then my mother's voice asking whether I am eating properly, then the flat bright edge of fields outside Berlin where thinking stops feeling supervised.`,
-`Munich still lives in me as cupboards, tram timetables, the feeling that adults always knew what the evening was supposed to be. Berlin is looser and stranger and much more mine. Daniel belongs somewhere in that sentence, probably, but not at the center of it every time. I did not come here only to wait for another person's clarity.`
-        ]
-      },
-      worried_boyfriend: {
-        THOUGHTS: [
-`I know Humboldt in pieces: Unter den Linden with its polished seriousness, Adlershof with its harder technical focus, the long S-Bahn stretch between them where everyone looks half committed to becoming someone precise. Kim belongs to that world easily. I do too, until I hear myself in an argument and realize explanation is not the same thing as honesty.`,
-`I draft one apology and keep it simple: no defense, no edited sequence, no clever framing. Just what I did and what it cost. I can sort sources, organize notes, make a mess look coherent by naming all its parts. None of that helps if I keep treating closeness like something to analyze instead of something to answer plainly.`
-        ]
-      },
-      retired_analyst: {
-        THOUGHTS: [
-`In 1981 I was assigned to monitor a group of theologians in Leipzig who met on Tuesday evenings to discuss Augustine and the question of free will. My supervisor wanted more. I wrote that their discussions posed no operational threat. He disagreed and the file was reassigned. I have not thought about Augustine since, or not deliberately, until recently I have started to again.`,
-`Katharina does not know what I did. She knows the word and knows I worked there and has not asked beyond that. We have built a life on this arrangement and it has held for thirty-five years. When she calls on Sunday I tell her about the weather in Halle. She tells me about Klara. We are both careful and we both know we are being careful and neither of us mentions it.`
-        ]
-      },
-      woman_leaving: {
-        THOUGHTS: [
-`I gave a paper on handover protocols and people wrote down the sensible parts as if sensible parts were the whole job. They are not. The whole job is standing in a room when the facts become a family. Tomorrow I will help do that again and call it procedure because procedure is the cleanest available word.`,
-`Martin died on a Tuesday in March. I was on the ward when my mobile rang. From the description I knew what it was before the caller finished the sentence. I drove to the Charité — my hospital — and my colleagues managed it in the professional way I had taught some of them. I have thought about the gap between those two things many times since.`
-        ]
-      }
-    }
   },
 
   library_reading_room: {
