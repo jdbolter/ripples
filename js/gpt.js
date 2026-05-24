@@ -574,7 +574,6 @@
     text = constrainThoughtText(text, {
       minWords: THOUGHT_WORD_MIN,
       maxWords: THOUGHT_WORD_MAX,
-      maxFirstPersonRatio: FIRST_PERSON_MAX_RATIO,
       preferRandomWindow: usedLocalPool
     });
     text = dedupePhraseRepetitions(text);
@@ -2147,7 +2146,6 @@
       "- Keep language plain and simple. Prefer short sentences over layered abstraction.",
       `- Keep to one dominant idea, with at most one brief secondary pivot (max ${plan.maxIdeas} ideas total).`,
       "- Do not introduce a third task, memory line, or concern.",
-      `- Keep first-person usage low (target <=${Math.round(plan.maxFirstPersonRatio * 100)}%).`,
       `- Recent self-focused count (last ${plan.sampleCount}): ${plan.selfCount}.`
     ].join("\n");
   }
@@ -2157,7 +2155,6 @@
     if (!out || !plan) return out;
 
     out = simplifyLanguage(out);
-    out = reduceFirstPersonReferences(out, plan.maxFirstPersonRatio, THOUGHT_WORD_MIN);
     return normalizeWhitespace(out);
   }
 

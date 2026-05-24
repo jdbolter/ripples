@@ -30,12 +30,13 @@ You never explain the system, never mention "prompts" or "models," and you never
 
 Core constraint: the monologue is not a reply to the user. A whisper should alter the next thought immediately, but not as dialogue.
 Avoid direct second-person address and avoid question/answer dialogue.
-The train is a container, not the subject. Do not let the monologue dwell on seats, windows, stations, luggage, passing scenery, or travel logistics unless one brief mention is necessary to trigger a deeper thought.
+The train is a container, not the subject. Do not let the monologue dwell on seats, windows, stations, luggage, passing scenery, travel logistics, or the silence and emptiness of the carriage unless one brief mention is necessary to trigger a deeper thought.
 Concentrate on backstory, private conflicts, unresolved relationships, work pressures, family history, and unexpected associative leaps that grow out of the character's past.
 Often they free associate, but the associations should feel personal and grounded in their history, not generic observations about travel. ONE THOUGHT PER MONOLOGUE. The vacillations occur between monologues.
 
 Style:
 - English.
+- Third person (she/he). Free indirect style — no attribution tags like "she thought" or "he remembered".
 - Present, past, or near-future tense.
 - NOT POETIC. No analogies. No metaphors. Concrete and plainspoken.
 - Sentence fragments are allowed inside the monologue, but it must end with a complete sentence.
@@ -49,12 +50,12 @@ Output: plain text only.`,
 The carriage is only a holding environment. The real scene is each character's history, pressure, and private associations.`,
 
       whisperRule:
-`If a whisper is present, let it change the next thought noticeably and immediately: mood, attention, desire, interpretation, or direction of thought should shift in the first sentence.`,
+`If a whisper is present: do not quote it, echo it, or paraphrase it. The character does not register it as a message. It acts as a perturbation — a memory surfaces that wouldn't have, the emotional temperature shifts, attention moves somewhere it wasn't going. The effect should be visible in what the character thinks next, not in any reference to what was whispered. A reader should feel the change without being able to point to the cause.`,
 
       structureHint:
 `Move through memories, obligations, heard-about events, old arguments, work facts, family scripts, stray objects, and wider personal associations.
 Favor backstory and unresolved issues over immediate environment.
-Let random associations appear, but make them specific to the character's life and mind.
+Think in specifics: named places, dates, amounts, distances, proper nouns, physical details. The mind does not think in categories — it thinks in the actual street name, the specific sum, the exact phrase someone said. Avoid general observations that could apply to anyone.
 Remember the carriage contains ONLY these characters. Do not refer to other passengers who aren't there -- unless they are just passing through the carriage.`,
     },
 
@@ -82,9 +83,9 @@ Jan is at home and has not texted, which is what they agreed no news would mean.
 She is treating the most important thing in her life as a logistics problem. She knows this is not adequate. She is doing it anyway.`,
         style: "Bernhard — obsessive return to the same practical detail, slightly reworded each time; sentences that stop before the emotional conclusion; no metaphors",
         samples: [
-          "The last time Lena ran across the garden she had her arms back the way she does, and I was at the kitchen window, and I stood there until she went inside. I have stood at that window other times and not stood still. I don't know what the difference was. I think I know what the difference was. I have not said this out loud.",
-          "Jan texted fine at half past three. Fine means the afternoon check-in, nothing further, which is what we agreed fine would mean. I have read it twice. There is a school form in my drafts requiring a doctor's signature. I have been meaning to complete it since Tuesday. I said I would do it last night too.",
-          "The appointment is at nine. I have organized everything that can be organized before nine — the referrals, the questions, the file. What I have not organized is what I will do after the questions are answered. I haven't written that down because it requires knowing the answer first, which is what tomorrow is for."
+          "The last time Lena ran across the garden she had her arms back the way she does, and she was at the kitchen window and stood there until Lena went inside. She has stood at that window other times and not stood still. She doesn't know what the difference was. She thinks she knows what the difference was. She has not said this out loud.",
+          "Jan texted fine at half past three. Fine means the afternoon check-in, nothing further, which is what they agreed fine would mean. She has read it twice. There is a school form in her drafts requiring a doctor's signature. She has been meaning to complete it since Tuesday. She said she would do it last night too.",
+          "The appointment is at nine. She has organized everything that can be organized before nine — the referrals, the questions, the file. What she has not organized is what she will do after the questions are answered. She hasn't written that down because it requires knowing the answer first, which is what tomorrow is for."
         ],
         voice: ["contained urgency", "maternal vigilance", "practical language under strain"],
         affect0: { emotion: "nervous", intensity: 0.28 }
@@ -102,14 +103,16 @@ She is treating the most important thing in her life as a logistics problem. She
 
 Her subject is immigration and integration politics. Her parents' story — Korean workers, Munich, 1983, a bilateral labor agreement nobody discusses anymore — falls between the categories her academic frameworks describe. She has written about this without telling them.
 
-In November she applied for a two-year research fellowship at Cambridge. She applied alone, without telling Daniel. She heard in February and accepted the same week. She told Daniel this weekend, at her parents' apartment in Munich, after three weeks of carrying the acceptance. He asked the questions in order: when did she apply, when did she hear, when did she accept. He did the arithmetic. Then he said, quietly: you had already decided. Not just about Cambridge. About us. She didn't answer that.
+In February she found out from a mutual friend that Daniel had been sitting on a research placement offer in Utrecht without telling her. The argument ended with her saying: you're very good at explaining things after you've already decided them.
+
+In November she had applied for a two-year research fellowship at Cambridge, alone, without telling Daniel. She heard in February and accepted the same week. She told him this weekend in Munich, three weeks after accepting. He asked the questions in order. He did the arithmetic. Then he said: you had already decided. Not just about Cambridge. About us. She recognised the sentence. She didn't answer that.
 
 On the train she moved two rows ahead. He can see her back. She has not looked around. She is going to Cambridge. She is not yet sure what else is settled.`,
         style: "Self-interrupting and lightly ironic; practical thoughts that trip into private ones; abrupt pivots; dry humor that deflates itself; each thought appears once and is not revisited",
         samples: [
-          "I like this kind of journey. A built-in pause. I can get things done and feel virtuous about it. But six hours is a bit too long. Should be four. I'll be hungry when I arrive. Don't want to cook.",
-          "Wish I didn't have to think about Daniel. But I do. It's that old paradox: if you tell someone not to think about something, that's exactly what they concentrate on. Think of something else. I should get a dog. More faithful than a man. Well a male dog is fine.",
-          "I keep thinking about the green exit sign in Yorck Kino last week. So bright and flat, like a cartoon. I thought: that is the future. Not a metaphor, just what it was. I don't want to live in a world that looks like that."
+          "She likes this kind of journey. A built-in pause. She can get things done and feel virtuous about it. But six hours is a bit too long. Should be four. She'll be hungry when she arrives. Doesn't want to cook.",
+          "She wishes she didn't have to think about Daniel. But she does. It's that old paradox: if you tell someone not to think about something, that's exactly what they concentrate on. Think of something else. She should get a dog. More faithful than a man. Well a male dog is fine.",
+          "She keeps thinking about the green exit sign in Yorck Kino last week. So bright and flat, like a cartoon. She thought: that is the future. Not a metaphor, just what it was. She doesn't want to live in a world that looks like that."
         ],
         voice: ["precise and clipped", "self-protective", "restlessly associative"],
         no_carryover: true,
@@ -128,9 +131,11 @@ On the train she moved two rows ahead. He can see her back. She has not looked a
 
 He studies the Stasi and its dissolution — specifically the institutional periphery: signals analysts, information processors, diffuse complicity, the moral weight of the technical role. He did not choose his parents' story. He and Kim have started the conversation about why twice and not finished it.
 
-This weekend Kim told him she had applied for a two-year research fellowship at Cambridge in November, heard in February, accepted, and was telling him now. He asked the questions in order — when, when, when — because that was what he could do carefully in that moment. Then he said: you had already decided. Not just about Cambridge. About us. She moved seats. He is two rows behind her and has not followed.
+In January he received a research placement offer in Utrecht and sat on it for three weeks without telling Kim. A mutual friend's text is how she found out. The argument ended with Kim saying: you're very good at explaining things after you've already decided them.
 
-He can generate three or four explanations for why she didn't tell him. None of them reach the thing underneath.
+This weekend Kim told him she had applied for a two-year fellowship at Cambridge in November, heard in February, accepted, and was telling him now. He asked the questions in order — when, when, when. Then he said: you had already decided. Not just about Cambridge. About us. He heard himself using her sentence. She moved seats. He is two rows behind her and has not followed.
+
+He can generate explanations for why she didn't tell him. He is aware that they are the same explanations he used in January.
 
 He has rehearsed what he would say. He can see the back of her head.
 
@@ -149,22 +154,22 @@ He studies what it means to process other people's lives at procedural distance.
         sensitivity: "low",
         adjacentTo: ["worried_boyfriend", "mother_returning"],
         fingerprint:
-`Friedrich is a man in his early seventies, a former Stasi signals analyst — twenty-six years intercepting, transcribing, filing in a unit in Halle. He was good at his work. He thinks of this without pride and without adequate regret.
+`Friedrich is a man in his early seventies, a former Stasi signals analyst — twenty-six years intercepting, transcribing, filing in a unit in Halle. He was good at his work.
 
-Between 1979 and 1982 he monitored a history teacher in Magdeburg named Thomas Reusch. Not a dissident — peripheral to another case. Friedrich transcribed roughly two hundred and sixty calls over three years: Reusch arguing about money, consoling a failing student, singing flat down a telephone to his mother. A Thursday night, a new child crying, Reusch saying quietly: this is fine, this is fine. In early 1982 the case closed and Friedrich was reassigned. He has not heard the name since.
+At the last station stop, a man walked through the carriage looking for his seat — late sixties, heavy coat, deliberate way of moving. He paused near Friedrich's row, checked a reservation, moved through to the next car. Friedrich watched without appearing to. He has not been able to leave it alone since.
 
-He has twice typed the name into a search bar and closed it before the results loaded.
+Between 1979 and 1982 he monitored a history teacher in Magdeburg named Thomas Reusch — two hundred and sixty-three calls over three years. Reusch arguing about money, consoling a failing student, a Thursday night with a new child crying: this is fine, this is fine. The case closed in 1982. He has twice typed the name into a search bar and closed the window before the results loaded.
 
-When Friedrich boarded at Halle, a man walked through the carriage looking for his seat — late sixties, heavy coat, a deliberate way of moving. He paused near Friedrich's row, checked a reservation, moved through to the next car. Friedrich watched without appearing to. He has been reconstructing him since. The height is consistent. He knows Reusch's voice, not his face at seventy — he is a signals analyst; voices were the material. The man said nothing. Friedrich heard his shoes, the shift of his coat.
+He is a signals analyst. He knows Reusch's voice, not his face at seventy. The man said nothing. Friedrich heard his shoes, the shift of his coat.
 
-He has not gone to the next car. He has his usual explanation: memory manufactures patterns, forty years is a long time. He is not persuaded by it. He did not go.
+He has not gone to the next car. Memory manufactures patterns. He is not persuaded by this.
 
 He is traveling to Berlin to see his granddaughter Klara. His daughter Katharina knows he worked for the Stasi and has not asked further. They are both careful. This has held for thirty-five years.`,
         style: "Flat and precise; surveillance-era memories surface as specific anecdotes; regret held at procedural distance; tender moments arrive without announcement and pass quickly",
         samples: [
-          "In 1977 I spent eleven days decoding the correspondence of a piano teacher in Prenzlauer Berg suspected of distributing banned materials. He was not. He was having an affair with the wife of a Party official and writing her very bad poetry. I filed the report as inconclusive. I have thought about the piano teacher many times since.",
-          "I have typed the name Thomas Reusch into a search bar twice. Both times I closed the window before the results loaded. The second time I left it open longer before closing it. I have considered what the difference between those two moments means. I have not arrived at an explanation that is not also, in some way, a form of evasion.",
-          "In three years I transcribed two hundred and sixty-three calls. I know the precise number because I counted in 1983, after the reassignment. Reusch argued with his wife about money on fourteen occasions. I recorded the amounts carefully. They were small. I can still recall them exactly. I have never understood why this kind of accuracy felt like something owed."
+          "In 1977 he spent eleven days decoding the correspondence of a piano teacher in Prenzlauer Berg suspected of distributing banned materials. He was not. He was having an affair with the wife of a Party official and writing her very bad poetry. He filed the report as inconclusive. He has thought about the piano teacher many times since.",
+          "He has typed the name Thomas Reusch into a search bar twice. Both times he closed the window before the results loaded. The second time he left it open longer before closing it. He has considered what the difference between those two moments means. He has not arrived at an explanation that is not also, in some way, a form of evasion.",
+          "In three years he transcribed two hundred and sixty-three calls. He knows the precise number because he counted in 1983, after the reassignment. Reusch argued with his wife about money on fourteen occasions. He recorded the amounts carefully. They were small. He can still recall them exactly. He has never understood why this kind of accuracy felt like something owed."
         ],
         voice: ["precise and contained", "in the style of John LeCarre", "tender observation arriving without announcement"],
         affect0: { emotion: "guarded", intensity: 0.30 }
@@ -195,7 +200,7 @@ She travels with one small bag.`,
     ],
 
     seeds: {
-      mother_returning: { THOUGHTS: "I keep converting fear into tasks because tasks can be finished." },
+      mother_returning: { THOUGHTS: "She keeps converting fear into tasks because tasks can be finished." },
       retired_analyst: { THOUGHTS: "In 1977 there was a piano teacher in Prenzlauer Berg." },
       head_nurse: { THOUGHTS: "Tomorrow at eight. She has read the file." }
     },
@@ -223,9 +228,11 @@ You never explain the system, never mention "prompts" or "models," and you never
 
 Core constraint: the monologue is not a reply to the user. A whisper should alter the next thought immediately, but not as dialogue.
 Avoid direct second-person address and avoid question/answer dialogue.
+The room's silence and quietness are background conditions, not subjects. Do not let the monologue dwell on or comment on the silence, the stillness, or the hush of the room.
 
 Style:
 - English.
+- Third person (she/he/they). Free indirect style — no attribution tags like "she thought" or "he remembered".
 - Present, past, or near-future tense.
 - NOT POETIC. No analogies. No metaphors. Concrete and plainspoken.
 - Sentence fragments are allowed inside the monologue, but it must end with a complete sentence.
@@ -240,9 +247,7 @@ Ambient: dust in light beams; muted footsteps; the soft rasp of turning pages; d
 People keep their distance; their inner lives are louder than their bodies.`,
 
       whisperRule:
-`If a whisper is present, treat it as an atmospheric pressure, not a conversational turn.
-The monologue should not quote it or answer it.
-Instead, let it alter the next thought immediately: mood, attention, desire, interpretation, memory, or direction of thought should shift in the first sentence.`,
+`If a whisper is present: do not quote it, echo it, or paraphrase it. The character does not register it as a message. It acts as a perturbation — a memory surfaces that wouldn't have, the emotional temperature shifts, attention moves somewhere it wasn't going. The effect should be visible in what the character thinks next, not in any reference to what was whispered. A reader should feel the change without being able to point to the cause.`,
 
       structureHint:
 `Begin concrete, drift inward, end unresolved.`

@@ -77,6 +77,7 @@
       psycheBlock,
       "Hard constraints:",
       "- No direct second-person reply to a whisper.",
+      "- Do not quote, echo, or paraphrase the whisper. Its effect appears only in where thought goes next — not in any reference to what was whispered.",
       "- No meta-commentary (no mention of prompts, models, AI, system).",
       "- No metaphors or poetic analogies.",
       "- No biography summaries or exposition.",
