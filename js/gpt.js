@@ -6,7 +6,6 @@
    - Whisper text + click Whisper => re-generates monologue; whisper causes visible ripple
    - Traces log records both "LISTEN" and "WHISPER" events + affect snapshot per trace
    - API mode: a SINGLE OpenAI call returns the monologue; affect ripple is inferred locally
-   - Local fallback: deterministic monologue rotation with locally inferred affect ripple
 
    Depends on: js/scenes.js providing window.SCENES and window.SCENE_ORDER
    Requires index.html elements:
@@ -536,40 +535,36 @@
       scene
     });
     let text = "";
-    let usedLocalPool = false;
     ui.setWorldtext("…", { mode: "baseline" });
 
-    const canUseOpenAI = hasApiAccess();
-
     try {
-      if (canUseOpenAI) {
-        const out = await generateFromOpenAI({
-          characterId,
-          channel,
-          whisperText,
-          kind,
-          openingLead,
-          openingLeadSource,
-          toneSteering,
-          focusSteering
-        });
-        text = out.text;
-      } else {
-        text = engine.nextMonologue(characterId, channel);
-        usedLocalPool = true;
+      if (!hasApiAccess()) {
+        ui.showApiModal();
+        return;
       }
+      const out = await generateFromOpenAI({
+        characterId,
+        channel,
+        whisperText,
+        kind,
+        openingLead,
+        openingLeadSource,
+        toneSteering,
+        focusSteering
+      });
+      text = out.text;
     } catch (err) {
-      console.error("OpenAI generation failed; falling back to local.", err);
-      text = engine.nextMonologue(characterId, channel);
-      usedLocalPool = true;
+      console.error("[RIPPLES] AI generation failed:", err);
+      ui.showErrorBanner("Could not reach the AI model. Check your connection or API key.");
+      ui.setWorldtext(engine.getScene().meta.baseline || "", { mode: "baseline" });
+      return;
     } finally {
       isGenerating = false;
     }
 
     text = constrainThoughtText(text, {
       minWords: THOUGHT_WORD_MIN,
-      maxWords: THOUGHT_WORD_MAX,
-      preferRandomWindow: usedLocalPool
+      maxWords: THOUGHT_WORD_MAX
     });
     text = dedupePhraseRepetitions(text);
     text = cleanSpacing(text);
@@ -1122,17 +1117,11 @@
   function constrainThoughtText(text, opts = {}) {
     const minWords = Number.isFinite(opts.minWords) ? opts.minWords : THOUGHT_WORD_MIN;
     const maxWords = Number.isFinite(opts.maxWords) ? opts.maxWords : THOUGHT_WORD_MAX;
-    const preferRandomWindow = !!opts.preferRandomWindow;
 
     const raw = normalizeWhitespace(stripOuterQuotes(text));
     if (!raw) return raw;
 
-    let out = raw;
-    if (preferRandomWindow) {
-      out = pickRandomClauseWindow(out, minWords, maxWords);
-    }
-
-    out = clampWordRange(out, { minWords, maxWords, fallback: raw });
+    const out = clampWordRange(raw, { minWords, maxWords, fallback: raw });
     return cleanSpacing(out);
   }
 
@@ -1499,41 +1488,6 @@
     if (!total) return 0;
     const fp = tokens.filter(isFirstPersonToken).length;
     return fp / total;
-  }
-
-  function pickRandomClauseWindow(text, minWords, maxWords) {
-    const clauses = splitClauses(text);
-    if (!clauses.length) return normalizeWhitespace(text);
-    if (clauses.length === 1) return truncateToWordCount(clauses[0], maxWords);
-
-    const target = randInt(minWords, maxWords);
-    let best = clauses[Math.floor(Math.random() * clauses.length)];
-    let bestScore = Number.POSITIVE_INFINITY;
-
-    for (let attempt = 0; attempt < 12; attempt++) {
-      const start = randInt(0, clauses.length - 1);
-      let cand = clauses[start];
-      let i = start + 1;
-
-      while (i < clauses.length && wordCount(cand) < target) {
-        cand = `${cand} ${clauses[i]}`;
-        i += 1;
-      }
-
-      cand = truncateToWordCount(cand, maxWords);
-      const wc = wordCount(cand);
-      const score =
-        wc >= minWords && wc <= maxWords
-          ? Math.abs(target - wc)
-          : Math.min(Math.abs(wc - minWords), Math.abs(wc - maxWords)) + 100;
-
-      if (score < bestScore) {
-        bestScore = score;
-        best = cand;
-      }
-    }
-
-    return normalizeWhitespace(best);
   }
 
   function pickRandomWordWindow(text, minWords, maxWords) {

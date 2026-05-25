@@ -18,9 +18,6 @@
     let tick = 0;
     let selectedId = null;
 
-    const cursor = {};
-    const cursorRecent = {};
-
     const lastWhisper = {};
     const whisperHistory = [];
     const openingBufferByCharacter = {};
@@ -279,8 +276,6 @@
       tick = 0;
       selectedId = null;
       audit = [];
-      for (const k of Object.keys(cursor)) delete cursor[k];
-      for (const k of Object.keys(cursorRecent)) delete cursorRecent[k];
       for (const k of Object.keys(lastWhisper)) delete lastWhisper[k];
       whisperHistory.length = 0;
       for (const k of Object.keys(openingBufferByCharacter)) delete openingBufferByCharacter[k];
@@ -354,33 +349,6 @@
       return openingBufferByCharacter[id];
     }
 
-    function nextMonologue(characterId, channel) {
-      const sc = getScene();
-
-      const pool = sc.monologues?.[characterId]?.[channel];
-      if (!pool || !pool.length) {
-        const seed = sc.seeds?.[characterId]?.[channel] || "";
-        return seed ? `${seed}\n\n(There is no full monologue pool for this character/channel.)`
-          : "(No monologue available.)";
-      }
-
-      if (!cursor[characterId]) cursor[characterId] = {};
-      if (!cursorRecent[characterId]) cursorRecent[characterId] = {};
-      const recent = Array.isArray(cursorRecent[characterId][channel])
-        ? cursorRecent[characterId][channel]
-        : [];
-      const blockSize = Math.min(pool.length - 1, 2);
-      const blocked = new Set(recent.slice(-Math.max(0, blockSize)));
-      const candidates = pool
-        .map((_, i) => i)
-        .filter((i) => !blocked.has(i));
-      const choicePool = candidates.length ? candidates : pool.map((_, i) => i);
-      const next = choicePool[Math.floor(Math.random() * choicePool.length)];
-      cursor[characterId][channel] = next;
-      cursorRecent[characterId][channel] = recent.concat(next).slice(-3);
-      return pool[next];
-    }
-
     function pushTrace(entry) {
       audit.unshift(entry);
       audit = audit.slice(0, 80);
@@ -428,7 +396,6 @@
       snapshot,
       selectCharacter,
       getSelectedId,
-      nextMonologue,
       newTrace,
       recordWhisper,
       getLastWhisper,

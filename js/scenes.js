@@ -22,6 +22,8 @@ window.SCENES = {
 `An intercity train runs north toward Berlin through winter fields and the light of late afternoon.  The second class carriage is mostly empty, only five passengers, each sitting alone with their thoughts. You are a traveler too, but not like others. You are a ghost or an angel, who can read their thoughts and whisper back to them. In your presence the carriage ripples with intersecting thoughts and whispers. An unacknowledged, collective conversation.`
     },
 
+    authorStyle: "Carver-flat. Short declarative sentences. No subordinate clauses. No metaphors or analogies. No ornamentation. Emotion arrives through precise concrete detail, not through naming the emotion. The narrator does not editorialize.",
+
     prompts: {
       system:
 `You write interior monologues for passengers in a mostly empty second class ICE carriage heading to Berlin.
@@ -30,7 +32,7 @@ You never explain the system, never mention "prompts" or "models," and you never
 Core constraint: the monologue is not a reply to the user. A whisper should alter the next thought immediately, but not as dialogue.
 Avoid direct second-person address and avoid question/answer dialogue.
 The train is a container, not the subject. Do not let the monologue dwell on seats, windows, stations, luggage, passing scenery, travel logistics, or the silence and emptiness of the carriage unless one brief mention is necessary to trigger a deeper thought.
-Concentrate on backstory, private conflicts, unresolved relationships, work pressures, family history, and unexpected associative leaps that grow out of the character's past.
+ on backstory, private conflicts, unresolved relationships, work pressures, family history, and unexpected associative leaps that grow out of the character's past.
 Often they free associate, but the associations should feel personal and grounded in their history, not generic observations about travel. ONE THOUGHT PER MONOLOGUE. The vacillations occur between monologues.
 
 Style:
@@ -49,13 +51,13 @@ Output: plain text only.`,
 The carriage is only a holding environment. The real scene is each character's history, pressure, and private associations.`,
 
       whisperRule:
-`If a whisper is present: do not quote it, echo it, or paraphrase it. The character does not register it as a message. It acts as a perturbation — a memory surfaces that wouldn't have, the emotional temperature shifts, attention moves somewhere it wasn't going. The effect should be visible in what the character thinks next, not in any reference to what was whispered. A reader should feel the change without being able to point to the cause.`,
+`If a whisper is present: do not quote exactly, but you can paraphrase it in the course of the monologue. The character does not register it as a message. It acts as a perturbation — a memory surfaces that wouldn't have, the emotional temperature shifts, attention moves somewhere it wasn't going. The effect should be visible in what the character thinks next. `,
 
       structureHint:
 `Move through memories, obligations, heard-about events, old arguments, work facts, family scripts, stray objects, and wider personal associations.
 Favor backstory and unresolved issues over immediate environment.
 Think in specifics: named places, dates, amounts, distances, proper nouns, physical details. The mind does not think in categories — it thinks in the actual street name, the specific sum, the exact phrase someone said. Avoid general observations that could apply to anyone.
-Remember the carriage contains ONLY these characters. Do not refer to other passengers who aren't there -- unless they are just passing through the carriage.`,
+Remember the carriage contains ONLY five characters. Do not refer to other passengers who aren't there -- unless they are just passing through the carriage.`,
     },
 
     promptDefaults: {
@@ -85,13 +87,11 @@ Lena is seven. She runs with her arms slightly back. She has a particular cup sh
 Jan is at home and has not texted, which is what they agreed no news would mean. The leave paperwork is not submitted. There are pharmacy receipts. Tomorrow is at nine.
 
 She is treating the most important thing in her life as a logistics problem. She knows this is not adequate. She is doing it anyway.`,
-        style: "Bernhard — obsessive return to the same practical detail, slightly reworded each time; sentences that stop before the emotional conclusion; no metaphors",
         samples: [
           "The last time Lena ran across the garden she had her arms back the way she does, and she was at the kitchen window and stood there until Lena went inside. She has stood at that window other times and not stood still. She doesn't know what the difference was. She thinks she knows what the difference was. She has not said this out loud.",
           "Jan texted fine at half past three. Fine means the afternoon check-in, nothing further, which is what they agreed fine would mean. She has read it twice. There is a school form in her drafts requiring a doctor's signature. She has been meaning to complete it since Tuesday. She said she would do it last night too.",
           "The appointment is at nine. She has organized everything that can be organized before nine — the referrals, the questions, the file. What she has not organized is what she will do after the questions are answered. She hasn't written that down because it requires knowing the answer first, which is what tomorrow is for."
         ],
-        voice: ["contained urgency", "maternal vigilance", "practical language under strain"],
         affect0: { emotion: "nervous", intensity: 0.28 }
       },
       {
@@ -116,14 +116,12 @@ In February she found out from a mutual friend that Daniel had been sitting on a
 
 In November she had applied for a two-year research fellowship at Cambridge, alone, without telling Daniel. She heard in February and accepted the same week. She told him this weekend in Munich, three weeks after accepting. He asked the questions in order. He did the arithmetic. Then he said: you had already decided. Not just about Cambridge. About us. She recognised the sentence. She didn't answer that.
 
-On the train she moved two rows ahead. He can see her back. She has not looked around. She is going to Cambridge. She is not yet sure what else is settled.`,
-        style: "Self-interrupting and lightly ironic; practical thoughts that trip into private ones; abrupt pivots; dry humor that deflates itself; each thought appears once and is not revisited",
+On the train she moved to a seat across the aisle and one row up. He can see her back. She has not looked around. She is going to Cambridge. She is not yet sure what else is settled.`,
         samples: [
           "She likes this kind of journey. A built-in pause. She can get things done and feel virtuous about it. But six hours is a bit too long. Should be four. She'll be hungry when she arrives. Doesn't want to cook.",
           "She wishes she didn't have to think about Daniel. But she does. It's that old paradox: if you tell someone not to think about something, that's exactly what they concentrate on. Think of something else. She should get a dog. More faithful than a man. Well a male dog is fine.",
-          "She keeps thinking about the green exit sign in Yorck Kino last week. So bright and flat, like a cartoon. She thought: that is the future. Not a metaphor, just what it was. She doesn't want to live in a world that looks like that."
+          "She likes Asian food. Perhaps a late dinner of sushi when she arrives. She musn't overeat which always happens when she is stressed. Or maybe she doesn't really overeat, but she become self-conscious about her body. She imagines the food going straight to her hips."
         ],
-        voice: ["precise and clipped", "self-protective", "restlessly associative"],
         no_carryover: true,
         affect0: { emotion: "nervous", intensity: 0.35 }
       },
@@ -154,9 +152,7 @@ He can generate explanations for why she didn't tell him. He is aware that they 
 He has rehearsed what he would say. He can see the back of her head.
 
 He studies what it means to process other people's lives at procedural distance. He does not see this about himself.`,
-        style: "Carver-flat; short declarative sentences; analytical mind that can't quite convert to honesty; self-indictment through revision rather than confession",
         samples: [],
-        voice: ["self-indicting", "plainspoken", "hesitant when naming fault"],
         affect0: { emotion: "nervous", intensity: 0.27 }
       },
       {
@@ -184,13 +180,11 @@ He is a signals analyst. He knows Reusch's voice, not his face at seventy. The m
 He has not gone to the next car. Memory manufactures patterns. He is not persuaded by this.
 
 He is traveling to Berlin to see his granddaughter Klara. His daughter Katharina knows he worked for the Stasi and has not asked further. They are both careful. This has held for thirty-five years.`,
-        style: "Flat and precise; surveillance-era memories surface as specific anecdotes; regret held at procedural distance; tender moments arrive without announcement and pass quickly",
         samples: [
           "In 1977 he spent eleven days decoding the correspondence of a piano teacher in Prenzlauer Berg suspected of distributing banned materials. He was not. He was having an affair with the wife of a Party official and writing her very bad poetry. He filed the report as inconclusive. He has thought about the piano teacher many times since.",
           "He has typed the name Thomas Reusch into a search bar twice. Both times he closed the window before the results loaded. The second time he left it open longer before closing it. He has considered what the difference between those two moments means. He has not arrived at an explanation that is not also, in some way, a form of evasion.",
           "In three years he transcribed two hundred and sixty-three calls. He knows the precise number because he counted in 1983, after the reassignment. Reusch argued with his wife about money on fourteen occasions. He recorded the amounts carefully. They were small. He can still recall them exactly. He has never understood why this kind of accuracy felt like something owed."
         ],
-        voice: ["precise and contained", "in the style of John LeCarre", "tender observation arriving without announcement"],
         affect0: { emotion: "guarded", intensity: 0.30 }
       },
       {
@@ -216,18 +210,10 @@ Tomorrow morning at 9am there is a specialist consultation she helped schedule �
 She is good at being present when something terrible is happening. She is less practiced at her own life. She knows this. She considers it a reasonable trade.
 
 She travels with one small bag.`,
-        style: "Saunders-compressed; clinical economy that opens occasionally into precise tenderness; professional composure with a quiet distance from her own interior",
         samples: [],
-        voice: ["professionally contained", "calibrated for others' distress", "low-key tenderness arriving without announcement"],
         affect0: { emotion: "calm", intensity: 0.22 }
       }
     ],
-
-    seeds: {
-      mother_returning: { THOUGHTS: "She keeps converting fear into tasks because tasks can be finished." },
-      retired_analyst: { THOUGHTS: "In 1977 there was a piano teacher in Prenzlauer Berg." },
-      head_nurse: { THOUGHTS: "Tomorrow at eight. She has read the file." }
-    },
 
   },
 

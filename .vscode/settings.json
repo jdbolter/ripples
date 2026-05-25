@@ -1,6 +1,8 @@
 {
   "editor.wordWrap": "on",
   "editor.inlineSuggest.enabled": false,
+  "github.copilot.nextEditSuggestions.enabled": false,
+  "github.copilot.editor.enableAutoCompletions": false,
   "editor.quickSuggestions": {
     "comments": "off",
     "strings": "off",

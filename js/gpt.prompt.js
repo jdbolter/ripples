@@ -27,7 +27,7 @@
     const ambientThread = String(opts.ambientThread || "").trim();
     const fingerprint = String(ch.fingerprint || "").trim();
     const dossier = String(ch.dossier || "");
-    const style = String(ch.style || "");
+    const style = String(sc.authorStyle || "");
     const samples = Array.isArray(ch.samples) && ch.samples.length ? ch.samples : [];
 
     // Samples block

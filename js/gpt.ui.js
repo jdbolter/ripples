@@ -363,6 +363,20 @@
       }
     }
 
+    function showErrorBanner(message) {
+      let banner = document.getElementById("ripplesErrorBanner");
+      if (!banner) {
+        banner = document.createElement("div");
+        banner.id = "ripplesErrorBanner";
+        banner.className = "error-banner";
+        document.body.appendChild(banner);
+      }
+      banner.textContent = String(message || "An error occurred.");
+      banner.classList.add("visible");
+      clearTimeout(banner._dismissTimer);
+      banner._dismissTimer = setTimeout(() => banner.classList.remove("visible"), 6000);
+    }
+
     function setApiKeyChecking(loading) {
       const disabled = !!loading;
       btnApiSubmit.disabled = disabled;
@@ -441,6 +455,7 @@
       closeFocus,
       preloadSceneImages,
       flashRippleFor,
+      showErrorBanner,
       setApiKeyChecking,
       setApiKeyStatus,
       getApiKeyInputValue,

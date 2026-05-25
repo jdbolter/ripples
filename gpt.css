@@ -601,6 +601,26 @@ select:focus{
   display: none;
 }
 
+.error-banner{
+  position: fixed;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10,10,8,0.97);
+  color: rgba(220,140,40,0.95);
+  border: 1px solid rgba(220,140,40,0.45);
+  padding: 9px 18px;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  z-index: 2000;
+  white-space: nowrap;
+  transition: top 0.22s ease;
+  pointer-events: none;
+}
+.error-banner.visible{
+  top: 14px;
+}
+
 .api-modal-inner{
   width: 420px;
   max-width: 90%;
