@@ -65,23 +65,10 @@
   const THOUGHT_WORD_MIN = 60;
   const THOUGHT_WORD_MAX = 90;
   const CONTINUITY_LEAD_MAX_WORDS = 16;
-  const FIRST_PERSON_MAX_RATIO = 0.20;
-  // Global fallback stays off unless a scene/character policy opts in.
-  const PACKET_STEERING_ENABLED = false;
   const CONTINUITY_STOPWORDS = new Set([
     "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "from", "if", "in", "into",
     "is", "it", "its", "of", "on", "or", "so", "than", "that", "the", "their", "there", "they",
     "this", "to", "up", "was", "were", "with", "you", "your"
-  ]);
-  const OPEN_PROFILE_AMBIENT_THREADS = Object.freeze([
-    "passing landscape details and weather changes",
-    "ordinary choices about attention, pacing, and what to notice",
-    "small practical rituals like checking pockets, tickets, or notes",
-    "mundane observations about strangers and shared space",
-    "quiet memory flashes with no urgent problem attached",
-    "food, coffee, or simple everyday preferences",
-    "tiny plans for the next stop, meal, or evening",
-    "neutral curiosity about objects, sounds, and routines nearby"
   ]);
   const AUTO_THOUGHT = {
     enabled: true,
@@ -463,6 +450,14 @@
   }
 
   function onSelectCharacter(id) {
+    if (engine.getSelectedId() === id) {
+      clearAutoThoughtTimer();
+      engine.selectCharacter(null);
+      ui.closeFocus();
+      ui.setSelectedPillText(ui.getDefaultSelectedPillText());
+      ui.setWorldtext("", { mode: "baseline" });
+      return;
+    }
     void focusCharacter(id, { source: "manual" });
   }
 
@@ -732,14 +727,8 @@
         );
 
     return {
-      usePacketSteering: Boolean(raw.use_packet_steering ?? defaults.use_packet_steering ?? PACKET_STEERING_ENABLED),
       focusMode: String(raw.focus_mode || defaults.focus_mode || "balanced").trim().toLowerCase(),
-      maxFirstPersonRatio,
-      ambientThreadPool: uniqList(
-        []
-          .concat(Array.isArray(defaults.ambient_thread_pool) ? defaults.ambient_thread_pool : [])
-          .concat(Array.isArray(raw.ambient_thread_pool) ? raw.ambient_thread_pool : [])
-      ).filter(Boolean)
+      maxFirstPersonRatio
     };
   }
 
@@ -783,312 +772,10 @@
     return apiNarrativeState[sid][cid];
   }
 
-  function buildPacketPromptContext({ sceneId, scene, character, whisperText, priorMonologueCount, disclosurePhase }) {
-    const promptPolicy = getCharacterPromptPolicy(scene, character);
-    if (!promptPolicy.usePacketSteering) {
-      return {
-        promptBlock: "- Packet steering disabled for this run. Use the dossier, scene framing, continuity, psyche, and whisper guidance only.",
-        selection: null
-      };
-    }
-
-    const packet = normalizeCharacterPacket(character);
-    const state = getApiCharacterState(sceneId, character?.id);
-    const turnNumber = state.turnIndex + 1;
-    const pressureProfile = packet.pressureProfile;
-    const toneCadenceDirective = pressureProfile === "focused"
-      ? (
-          (turnNumber % 2 === 0)
-            ? "- Tonal cadence (required this turn): keep the overall thought neutral-to-gently-hopeful. Include one concrete stabilizing or competence cue."
-            : "- Tonal cadence: darker pressure is allowed, but retain one concrete anchor of agency or steadiness."
-        )
-      : "- Tonal cadence (required this turn): keep the overall thought mostly neutral, curious, or gently pleasant; pressure can appear, but do not let it dominate.";
-
-    const activeThread = pickLifeThread({
-      threads: packet.lifeThreads,
-      state,
-      cooldown: packet.antiRepeat.topicCooldownTurns
-    });
-    const ambientThread = pickAmbientThread({ scene, state, turnNumber, character, promptPolicy });
-    const shouldSurfaceLongTermThread = pressureProfile === "focused" || (turnNumber % 4 === 0);
-
-    const phase = disclosurePhase || (
-      priorMonologueCount <= 3 ? "early" :
-      priorMonologueCount <= 7 ? "middle" : "late"
-    );
-    const phaseDirectives = packet.disclosurePlan[phase] || [];
-    const includeSecondaryThread = (
-      packet.maxIdeas > 1 &&
-      shouldIncludeSecondaryThread(phase, state.turnIndex, pressureProfile)
-    );
-    const secondaryThread = includeSecondaryThread
-      ? pickLifeThread({
-          threads: packet.lifeThreads.filter((t) => t !== activeThread),
-          state,
-          cooldown: Math.max(1, packet.antiRepeat.topicCooldownTurns - 1)
-        })
-      : null;
-
-    const openingAvoid = state.recentOpenings
-      .slice(-packet.antiRepeat.openingCooldownTurns)
-      .map((s) => trimForPrompt(s, 72));
-    const topicAvoid = state.recentTopics
-      .slice(-packet.antiRepeat.topicCooldownTurns)
-      .map((s) => trimForPrompt(s, 64));
-    const phraseAvoid = state.recentNgrams
-      .slice(-packet.antiRepeat.bannedRecentNgrams)
-      .map((s) => trimForPrompt(s, 56));
-
-    const longTermThreadLines = pressureProfile === "focused"
-      ? [
-          `- Preserve central conflict: ${packet.core.centralConflict}.`,
-          `- Preserve contradiction: ${packet.core.contradiction}.`,
-          `- Primary life thread (required, concrete): ${activeThread}.`
-        ]
-      : [
-          `- Long-term life pressure available in the background when natural: ${activeThread}.`,
-          shouldSurfaceLongTermThread
-            ? "- If the long-term pressure appears, keep it brief and woven into ordinary thought rather than making it the whole subject."
-            : "- Let the long-term pressure stay dormant unless the thought naturally brushes against it.",
-          `- Ordinary thought field available this turn: ${ambientThread}.`,
-          "- The thought may stay with ordinary noticing, small routines, social inference, study texture, city life, or passing memory without forcing a major concern."
-        ];
-
-    const mustIncludeLine = pressureProfile === "focused"
-      ? (
-          packet.promptContract.mustInclude.length
-            ? `- Must include this turn: ${packet.promptContract.mustInclude.join("; ")}.`
-            : "- Must include this turn: one practical stake, one time cue, one concrete anchor."
-        )
-      : (
-          packet.promptContract.mustInclude.length
-            ? `- Soft preference this turn: ${packet.promptContract.mustInclude.join("; ")}.`
-            : "- Soft preference this turn: include at least one ordinary concrete detail, but let the thought find its own subject."
-        );
-
-    const mustAvoidLine = pressureProfile === "focused"
-      ? (
-          packet.promptContract.mustAvoid.length
-            ? `- Must avoid this turn: ${packet.promptContract.mustAvoid.join("; ")}.`
-            : "- Must avoid this turn: direct whisper reply; life-summary exposition."
-        )
-      : (
-          packet.promptContract.mustAvoid.length
-            ? `- Core taboos only: ${packet.promptContract.mustAvoid.join("; ")}.`
-            : "- Core taboos only: direct whisper reply; life-summary exposition."
-        );
-
-    const backgroundFactsLine = packet.backgroundFacts.length
-      ? `- Background facts available without explanation: ${packet.backgroundFacts.join("; ")}.`
-      : "";
-    const worldKnowledgeLine = packet.worldKnowledge.length
-      ? `- Plausible world knowledge this character carries: ${packet.worldKnowledge.join("; ")}.`
-      : "";
-    const cityHabitsLine = packet.cityHabits.length
-      ? `- City habits / ordinary routines available for thought: ${packet.cityHabits.join("; ")}.`
-      : "";
-    const knownPlacesLine = packet.knownPlaces.length
-      ? `- Specific real-world place anchors available when natural: ${packet.knownPlaces.join("; ")}.`
-      : "";
-    const culturalReferencesLine = packet.culturalReferences.length
-      ? `- Cultural references available when natural: ${packet.culturalReferences.join("; ")}.`
-      : "";
-    const styleProfileLine = packet.styleProfile.length
-      ? `- Style profile for this character's interior prose: ${packet.styleProfile.join("; ")}.`
-      : "";
-
-    const promptBlock = [
-      `- Turn index in this scene for this character: ${turnNumber}.`,
-      toneCadenceDirective,
-      `- Character premise anchor: ${packet.core.premise}.`,
-      backgroundFactsLine,
-      worldKnowledgeLine,
-      cityHabitsLine,
-      knownPlacesLine,
-      culturalReferencesLine,
-      styleProfileLine,
-      packet.knownPlaces.length || packet.culturalReferences.length
-        ? "- Use specific references sparingly: at most one named place or cultural reference in a thought, and only if it feels native to this person."
-        : "",
-      packet.styleProfile.length
-        ? "- Follow the style profile as tonal craft guidance, not as parody or named-author imitation."
-        : "",
-      ...longTermThreadLines,
-      packet.maxIdeas <= 1
-        ? "- No secondary thread allowed this turn; keep the entire thought on a single idea."
-        : secondaryThread
-        ? pressureProfile === "focused"
-          ? `- Optional secondary thread (at most one brief clause): ${secondaryThread}.`
-          : `- Optional side-current if it arises naturally: ${secondaryThread}.`
-        : pressureProfile === "focused"
-          ? "- No secondary thread this turn; stay with the primary thread."
-          : "- No second thread is required; a passing side association is fine if it remains brief.",
-      packet.maxIdeas <= 1
-        ? "- Hard cap: this monologue must contain exactly one substantial idea or concern thread."
-        : pressureProfile === "focused"
-        ? "- Hard cap: keep this thought to one dominant concern, with at most one brief secondary pivot."
-        : "- Let the thought have one center of gravity, but allow adjacent ordinary associations to drift through without turning into a checklist of topics.",
-      packet.maxIdeas <= 1
-        ? "- Do not introduce any second major topic, pivot, memory line, or practical side-thread."
-        : pressureProfile === "focused"
-          ? "- Do not introduce a third concern thread in this thought."
-          : "- Avoid stacking multiple unrelated concerns; one main current plus one or two nearby associations is enough.",
-      pressureProfile === "focused"
-        ? "- Associative range: stay grounded in immediate detail while tension remains plausible."
-        : "- Associative range: allow wider everyday drift across city life, study, bodies, strangers, weather, memory fragments, errands, habits, and social perception as long as the thought still feels like one person's attention.",
-      `- Voice texture: ${packet.voiceRules.texture.join(", ")}.`,
-      `- Syntax bias: ${packet.voiceRules.syntaxBias.join(", ")}.`,
-      `- Taboo stylistic moves: ${packet.voiceRules.tabooMoves.join("; ")}.`,
-      phaseDirectives.length
-        ? `- Disclosure directives (${phase.toUpperCase()}): ${phaseDirectives.join(" | ")}.`
-        : `- Disclosure directives (${phase.toUpperCase()}): keep incremental and allusive.`,
-      mustIncludeLine,
-      mustAvoidLine,
-      openingAvoid.length
-        ? `- Opening cooldown: do not reuse these recent openings: ${openingAvoid.join(" || ")}.`
-        : "- Opening cooldown: use a fresh opening shape.",
-      topicAvoid.length
-        ? pressureProfile === "focused"
-          ? `- Topic cooldown: avoid centering these recently used topics: ${topicAvoid.join(", ")}.`
-          : `- Topic cooldown: do not let these recently used pressures dominate again unless the thought truly returns to them: ${topicAvoid.join(", ")}.`
-        : pressureProfile === "focused"
-          ? "- Topic cooldown: rotate primary concern across turns, not multiple concerns within one thought."
-          : "- Topic cooldown: vary recurring pressures so ordinary life can re-enter between them.",
-      phraseAvoid.length
-        ? `- Phrase suppression: avoid close variants of these recent fragments: ${phraseAvoid.join(" || ")}.`
-        : "- Phrase suppression: keep noun/imagery set fresh."
-    ].join("\n");
-
-    return {
-      promptBlock,
-      selection: {
-        packet,
-        activeThread,
-        secondaryThread
-      }
-    };
-  }
-
-  function normalizeCharacterPacket(character) {
-    const packet = (character && typeof character.packet === "object" && character.packet) ? character.packet : {};
-    const core = (packet.core && typeof packet.core === "object") ? packet.core : {};
-    const voiceRules = (packet.voice_rules && typeof packet.voice_rules === "object") ? packet.voice_rules : {};
-    const disclosurePlan = (packet.disclosure_plan && typeof packet.disclosure_plan === "object") ? packet.disclosure_plan : {};
-    const antiRepeat = (packet.anti_repeat && typeof packet.anti_repeat === "object") ? packet.anti_repeat : {};
-    const promptContract = (packet.prompt_contract && typeof packet.prompt_contract === "object") ? packet.prompt_contract : {};
-
-    const fallbackPremise = trimForPrompt(character?.dossier || "A person under pressure in a shared public interior.", 120);
-    const lifeThreads = uniqList(packet.life_threads || []).length
-      ? uniqList(packet.life_threads || [])
-      : [
-          "immediate practical obligations",
-          "relationship or social pressure",
-          "money/admin constraints",
-          "memory, anticipation, and self-interpretation",
-          "future identity uncertainty"
-        ];
-
-    const profileHint = String(packet.pressure_profile || packet.tone_profile || "").toLowerCase();
-    const pressureProfile = getCharacterPressureProfile(character, profileHint);
-
-    return {
-      core: {
-        premise: String(core.premise || fallbackPremise),
-        centralConflict: String(core.central_conflict || "conflicting obligations under uncertainty"),
-        contradiction: String(core.contradiction || "wants stability but keeps drifting toward risk")
-      },
-      lifeThreads,
-      recurringStakes: uniqList(packet.recurring_stakes || []),
-      backgroundFacts: uniqList(packet.background_facts || []).slice(0, 8),
-      worldKnowledge: uniqList(packet.world_knowledge || []).slice(0, 8),
-      cityHabits: uniqList(packet.city_habits || []).slice(0, 8),
-      knownPlaces: uniqList(packet.known_places || []).slice(0, 8),
-      culturalReferences: uniqList(packet.cultural_references || []).slice(0, 8),
-      styleProfile: uniqList(packet.style_profile || []).slice(0, 10),
-      voiceRules: {
-        texture: uniqList(voiceRules.texture || character?.voice || ["plainspoken"]).slice(0, 6),
-        syntaxBias: uniqList(voiceRules.syntax_bias || ["concrete clauses", "occasional fragment"]).slice(0, 5),
-        tabooMoves: uniqList(voiceRules.taboo_moves || ["direct whisper reply", "biography summary"]).slice(0, 5)
-      },
-      pressureProfile,
-      maxIdeas: Math.max(1, Number(packet.max_ideas) || 2),
-      disclosurePlan: {
-        early: uniqList(disclosurePlan.early || []),
-        middle: uniqList(disclosurePlan.middle || []),
-        late: uniqList(disclosurePlan.late || [])
-      },
-      antiRepeat: {
-        bannedRecentNgrams: Math.max(1, Number(antiRepeat.banned_recent_ngrams) || 3),
-        topicCooldownTurns: Math.max(1, Number(antiRepeat.topic_cooldown_turns) || 2),
-        openingCooldownTurns: Math.max(1, Number(antiRepeat.opening_cooldown_turns) || 3),
-        motifRepeatLimitPer4Turns: Math.max(1, Number(antiRepeat.motif_repeat_limit_per_4_turns) || 2)
-      },
-      promptContract: {
-        mustInclude: uniqList(promptContract.must_include || []),
-        mustAvoid: uniqList(promptContract.must_avoid || [])
-      }
-    };
-  }
-
-  function pickLifeThread({ threads, state, cooldown }) {
-    const pool = uniqList(threads || []).filter(Boolean);
-    if (!pool.length) return "immediate practical obligation";
-
-    const scored = pool.map((thread) => {
-      const key = String(thread);
-      const last = Number.isFinite(state.threadLastUsed[key]) ? state.threadLastUsed[key] : -999;
-      const age = state.turnIndex - last;
-      const penalty = age <= cooldown ? 2 : 0;
-      const jitter = Math.random() * 0.25;
-      return { thread: key, score: age - penalty + jitter };
-    });
-    scored.sort((a, b) => b.score - a.score);
-    return scored[0].thread;
-  }
-
-  function pickAmbientThread({ scene, state, turnNumber, character = null, promptPolicy = null }) {
-    const policy = promptPolicy || getCharacterPromptPolicy(scene, character);
-    if (policy.ambientThreadPool.length) {
-      const idx = (Math.max(1, Number(turnNumber) || 1) + Math.max(0, Number(state?.turnIndex) || 0)) % policy.ambientThreadPool.length;
-      return policy.ambientThreadPool[idx];
-    }
-
-    const sceneLabel = normalizeWhitespace(String(scene?.meta?.label || "")).toLowerCase();
-    const sceneSpecific = sceneLabel.includes("train")
-      ? [
-          "window views, tracks, stations, and winter light",
-          "the carriage rhythm and small passenger movements",
-          "arrival logistics, platform timing, and simple next-step planning"
-        ]
-      : sceneLabel.includes("reading room") || sceneLabel.includes("library")
-        ? [
-            "page texture, shelf order, and room acoustics",
-            "quiet human choreography across tables and aisles",
-            "small reading rituals and attention resets"
-          ]
-        : [];
-
-    const pool = uniqList(sceneSpecific.concat(OPEN_PROFILE_AMBIENT_THREADS));
-    if (!pool.length) return "ordinary present-moment details";
-    const idx = (Math.max(1, Number(turnNumber) || 1) + Math.max(0, Number(state?.turnIndex) || 0)) % pool.length;
-    return pool[idx];
-  }
-
-  function shouldIncludeSecondaryThread(phase, turnIndex, pressureProfile = "focused") {
-    const p = String(phase || "").toLowerCase();
-    const t = Math.max(0, Number(turnIndex) || 0);
-    const profile = String(pressureProfile || "focused").toLowerCase();
-
-    if (profile !== "focused") {
-      if (p === "early") return t % 3 === 2;
-      if (p === "middle") return t % 2 === 0;
-      if (p === "late") return t % 2 === 1;
-      return false;
-    }
-
-    if (p === "middle") return t % 2 === 0; // about half of turns
-    if (p === "late") return t % 3 === 1;   // occasional late-stage pivot
-    return false; // early thoughts stay single-threaded
+  function pickAmbientThread(character, turnNumber) {
+    const pool = Array.isArray(character?.ambientThreads) ? character.ambientThreads : [];
+    if (!pool.length) return "";
+    return pool[Math.max(0, (turnNumber - 1)) % pool.length];
   }
 
   function updateApiNarrativeState({ sceneId, characterId, text, packetContext }) {
@@ -1283,12 +970,7 @@
     });
     const focusSteeringBlock = buildFocusSteeringBlock(focusPlan);
     const apiState = getApiCharacterState(sceneId, characterId);
-    const ambientThread = pickAmbientThread({
-      scene: sc,
-      state: apiState,
-      turnNumber: apiState.turnIndex + 1,
-      character: ch
-    });
+    const ambientThread = pickAmbientThread(ch, apiState.turnIndex + 1);
     const { sys, userPrompt, packetContext } = buildOpenAIUserPrompt({
       sc,
       ch,
@@ -1307,7 +989,6 @@
       psyche: engine.getPsyche(characterId),
       classifyWhisperTone,
       trimForPrompt,
-      buildPacketPromptContext,
       normalizeWhitespace,
       uniqList
     });
@@ -1818,29 +1499,6 @@
     if (!total) return 0;
     const fp = tokens.filter(isFirstPersonToken).length;
     return fp / total;
-  }
-
-  function reduceFirstPersonReferences(text, maxRatio, minWords) {
-    let out = normalizeWhitespace(text)
-      .replace(/\bI am\b/gi, "feeling")
-      .replace(/\bI'm\b/gi, "feeling")
-      .replace(/\bI keep\b/gi, "keep")
-      .replace(/\bI was\b/gi, "was")
-      .replace(/\bI have\b/gi, "have")
-      .replace(/\bI've\b/gi, "have")
-      .replace(/\bmy\b/gi, "the")
-      .replace(/\bmine\b/gi, "that")
-      .replace(/\bmyself\b/gi, "this self");
-
-    let words = splitWords(out);
-    for (let i = 0; i < words.length && firstPersonRatio(words) > maxRatio; i++) {
-      if (!isFirstPersonToken(words[i])) continue;
-      if (wordCount(words) <= minWords) break;
-      words.splice(i, 1);
-      i -= 1;
-    }
-
-    return normalizeWhitespace(words.join(" "));
   }
 
   function pickRandomClauseWindow(text, minWords, maxWords) {
