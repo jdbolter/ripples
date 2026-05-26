@@ -19,7 +19,7 @@ window.SCENES = {
       cols: 6,
       rows: 4,
       baseline:
-`An intercity train runs north toward Berlin through winter fields and the light of late afternoon.  The second class carriage is mostly empty, only five passengers, each sitting alone with their thoughts. You are a traveler too, but not like others. You are a ghost or an angel, who can read their thoughts and whisper back to them. In your presence the carriage ripples with intersecting thoughts and whispers. An unacknowledged, collective conversation.`
+`An intercity train runs north toward Berlin through winter fields and the light of late afternoon.  The second class carriage is not full. We focus on five travlers, each sitting alone with their thoughts. You are a traveler too, but not like others. You are a ghost or an angel, who can read their thoughts and whisper back to them. In your presence the carriage ripples with intersecting thoughts and whispers. An unacknowledged, collective conversation.`
     },
 
     authorStyle: "Hemingway. Short declarative sentences. Active verbs. Nothing explained that can be shown. Emotion held just below the surface — never named, only implied through what the character notices and does not say. The iceberg principle: the weight is underneath.",
@@ -88,9 +88,9 @@ Jan is at home and has not texted, which is what they agreed no news would mean.
 
 She is treating the most important thing in her life as a logistics problem. She knows this is not adequate. She is doing it anyway.`,
         samples: [
-          "The last time Lena ran across the garden she had her arms back the way she does, and she was at the kitchen window and stood there until Lena went inside. She has stood at that window other times and not stood still. She doesn't know what the difference was. She thinks she knows what the difference was. She has not said this out loud.",
-          "Jan texted fine at half past three. Fine means the afternoon check-in, nothing further, which is what they agreed fine would mean. She has read it twice. There is a school form in her drafts requiring a doctor's signature. She has been meaning to complete it since Tuesday. She said she would do it last night too.",
-          "The appointment is at nine. She has organized everything that can be organized before nine — the referrals, the questions, the file. What she has not organized is what she will do after the questions are answered. She hasn't written that down because it requires knowing the answer first, which is what tomorrow is for."
+          "The last time Lena ran across the garden she had her arms back the way she does, and she was at the kitchen window and stood there until Lena went inside. She has stood at that window other times and not stood still.  She thinks she knows what the difference was. She has not said this out loud.",
+          "Jan texted fine at half past three. Fine means the afternoon check-in, nothing further, which is what they agreed fine would mean.  There is a school form in her drafts requiring a doctor's signature. She has been meaning to complete it since Tuesday. She said she would do it last night too.",
+          "The appointment is at nine. With the doctor and a pediatric nurse. She has organized everything that can be organized before nine — the referrals, the questions, the file. What she has not organized is what she will do after the questions are answered. She hasn't written that down because it requires knowing the answer first, which is what tomorrow is for."
         ],
         affect0: { emotion: "nervous", intensity: 0.28 }
       },
@@ -98,7 +98,7 @@ She is treating the most important thing in her life as a logistics problem. She
         id: "student_alone",
         label: "Kim",
         icon: "💻",
-        image: "images/train-student.png",
+        image: "images/train-student-new.png",
         position: { x: 4, y: 1 },
         sensitivity: "high",
         adjacentTo: ["head_nurse", "worried_boyfriend"],
@@ -119,8 +119,8 @@ In November she had applied for a two-year research fellowship at Cambridge, alo
 On the train she moved to a seat across the aisle and one row up. He can see her back. She has not looked around. She is going to Cambridge. She is not yet sure what else is settled.`,
         samples: [
           "She likes this kind of journey. A built-in pause. She can get things done and feel virtuous about it. But six hours is a bit too long. Should be four. She'll be hungry when she arrives. Doesn't want to cook.",
-          "She wishes she didn't have to think about Daniel. But she does. It's that old paradox: if you tell someone not to think about something, that's exactly what they concentrate on. Think of something else. She should get a dog. More faithful than a man. Well a male dog is fine.",
-          "She likes Asian food. Perhaps a late dinner of sushi when she arrives. She musn't overeat which always happens when she is stressed. Or maybe she doesn't really overeat, but she become self-conscious about her body. She imagines the food going straight to her hips."
+          "She wishes she didn't have to think about Daniel. But she does. Think of something else. She should get a dog. More faithful than a man. Well a male dog is fine.",
+          "Perhaps a late dinner of sushi when she arrives. She musn't overeat which always happens when she is stressed. Or maybe she doesn't really overeat, but she become self-conscious about her body. She imagines the food going straight to her hips."
         ],
         no_carryover: true,
         affect0: { emotion: "nervous", intensity: 0.35 }
@@ -129,7 +129,7 @@ On the train she moved to a seat across the aisle and one row up. He can see her
         id: "worried_boyfriend",
         label: "Daniel",
         icon: "🪟",
-        image: "images/train-boyfriend.png",
+        image: "images/train-boyfriend-new.png",
         position: { x: 1, y: 2 },
         sensitivity: "medium",
         adjacentTo: ["student_alone", "retired_analyst"],
@@ -152,14 +152,16 @@ He can generate explanations for why she didn't tell him. He is aware that they 
 He has rehearsed what he would say. He can see the back of her head.
 
 He studies what it means to process other people's lives at procedural distance. He does not see this about himself.`,
-        samples: [],
+        samples: ["He watched the back of Kim’s head two rows ahead. The train swayed with mechanical indifference. He thought of the signals analysts he studied, men who lived in the margins of other people's betrayals. He knew the grammar of their complicity, the way a technical role was just a place to hide. He had held the Utrecht offer for three weeks, a ghost in his pocket, waiting for the right moment to introduce the news. It was a failure of data, or a different kind of signal.",
+        "She applied in November. She heard in February and took it. He counted the months—a long, quiet operation he had been too busy analyzing to notice. He had his lines ready, a clean explanation for the symmetry of their silences. He kept them inside, well-ordered. He was an expert on how distance was made. He simply could not see that he was the one building it, seat by seat, mile by mile."
+        ],
         affect0: { emotion: "nervous", intensity: 0.27 }
       },
       {
         id: "retired_analyst",
         label: "Friedrich",
         icon: "🧥",
-        image: "images/train-oldman.png",
+        image: "images/train-oldman-new.png",
         position: { x: 1, y: 3 },
         sensitivity: "low",
         adjacentTo: ["worried_boyfriend", "mother_returning"],
@@ -181,9 +183,9 @@ He has not gone to the next car. Memory manufactures patterns. He is not persuad
 
 He is traveling to Berlin to see his granddaughter Klara. His daughter Katharina knows he worked for the Stasi and has not asked further. They are both careful. This has held for thirty-five years.`,
         samples: [
-          "In 1977 he spent eleven days decoding the correspondence of a piano teacher in Prenzlauer Berg suspected of distributing banned materials. He was not. He was having an affair with the wife of a Party official and writing her very bad poetry. He filed the report as inconclusive. He has thought about the piano teacher many times since.",
-          "He has typed the name Thomas Reusch into a search bar twice. Both times he closed the window before the results loaded. The second time he left it open longer before closing it. He has considered what the difference between those two moments means. He has not arrived at an explanation that is not also, in some way, a form of evasion.",
-          "In three years he transcribed two hundred and sixty-three calls. He knows the precise number because he counted in 1983, after the reassignment. Reusch argued with his wife about money on fourteen occasions. He recorded the amounts carefully. They were small. He can still recall them exactly. He has never understood why this kind of accuracy felt like something owed."
+          "In 1977, he spent eleven days decoding the letters of a piano teacher in Prenzlauer Berg. They thought the man was moving banned papers. He was not. He was sleeping with the wife of a Party official and writing her bad poetry. He filed the report as inconclusive. Sometimes he still thinks of the teacher.",
+          "He typed the name Thomas Reusch into the search bar twice. Each time he closed the window before the results appeared. The second time he waited longer. He thought about the difference between the two times. He looked for an explanation, but any reason he found was only a way to avoid the truth.",
+          "In three years, he transcribed two hundred and sixty-three calls. He counted them in 1983, after he was reassigned. Reusch argued with his wife about money fourteen times. He wrote down the amounts. They were small sums. He remembers them exactly. He never knew why it felt necessary to be that accurate."
         ],
         affect0: { emotion: "guarded", intensity: 0.30 }
       },
@@ -191,7 +193,7 @@ He is traveling to Berlin to see his granddaughter Klara. His daughter Katharina
         id: "head_nurse",
         label: "Susanna",
         icon: "🧳",
-        image: "images/train-nurse.png",
+        image: "images/train-nurse-new.png",
         position: { x: 1, y: 0 },
         sensitivity: "medium",
         adjacentTo: ["student_alone"],
@@ -210,7 +212,9 @@ Tomorrow morning at 9am there is a specialist consultation she helped schedule �
 She is good at being present when something terrible is happening. She is less practiced at her own life. She knows this. She considers it a reasonable trade.
 
 She travels with one small bag.`,
-        samples: [],
+        samples: ["The train rattled and the light in the car was thin. She thought of the dinner with Anna in Munich. It was a long time to be away. The Charité would be exactly as she left it, the charts in their slots, the smell of the floor cleaner that never quite leaves the soles of your shoes. She hoped the plants in the apartment had enough water. It was a small thing to worry about, but the plants were the only things that required a schedule now.",
+        "She thought of the mother of the girl in the pediatric ward. She had read the file carefully—the specific, cruel details of the blood work, the prognosis that refused to settle. She would be standing in the room at nine. She knew how to breathe when the air went out of a room. You just wait for the right moment to speak, and you keep your face still."
+        ],
         affect0: { emotion: "calm", intensity: 0.22 }
       }
     ],
