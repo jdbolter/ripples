@@ -562,6 +562,24 @@
       isGenerating = false;
     }
 
+    // Stale-result guard: the user may have clicked a different character while the
+    // fetch was in flight. If the selection changed, discard this result and fire a
+    // fresh request for whoever is now selected.
+    const currentSelectedId = engine.getSelectedId();
+    if (currentSelectedId !== characterId) {
+      ui.setWorldtext(engine.getScene().meta.baseline || "", { mode: "baseline" });
+      if (currentSelectedId) {
+        void requestMonologue({
+          characterId: currentSelectedId,
+          channel: DEFAULT_CHANNEL,
+          kind: EVENT_KIND.LISTEN,
+          whisperText: null,
+          trigger: "deferred-select"
+        });
+      }
+      return;
+    }
+
     text = constrainThoughtText(text, {
       minWords: THOUGHT_WORD_MIN,
       maxWords: THOUGHT_WORD_MAX
