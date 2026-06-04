@@ -85,7 +85,7 @@
     intense: {
       directWhisperScale: 1.00,
       directThoughtScale: 0.72,
-      sharedRippleScale: 0.24,
+      sharedRippleScale: 0.62,
       whisperBaseIntensity: 0.28,
       listenBaseIntensity: 0.14,
       recoveryRate: 0.08,
@@ -95,7 +95,7 @@
     high: {
       directWhisperScale: 1.00,
       directThoughtScale: 0.62,
-      sharedRippleScale: 0.18,
+      sharedRippleScale: 0.52,
       whisperBaseIntensity: 0.22,
       listenBaseIntensity: 0.10,
       recoveryRate: 0.10,
@@ -105,7 +105,7 @@
     subtle: {
       directWhisperScale: 0.92,
       directThoughtScale: 0.52,
-      sharedRippleScale: 0.12,
+      sharedRippleScale: 0.30,
       whisperBaseIntensity: 0.16,
       listenBaseIntensity: 0.08,
       recoveryRate: 0.14,
@@ -506,9 +506,10 @@
     await focusCharacter(nextCharacterId, { source: "auto", closeCurrentFocus: true });
   }
 
-  async function requestMonologue({ characterId, channel, kind, whisperText, trigger = "unknown" }) {
+  async function requestMonologue({ characterId, channel, kind, whisperText, rippleWhisperText = null, trigger = "unknown" }) {
     if (isGenerating) return;
     isGenerating = true;
+    const isRippleTrigger = trigger === "ripple";
     const scene = engine.getScene();
     const character = scene?.characters?.find((c) => c.id === characterId) || null;
 
@@ -535,7 +536,7 @@
       scene
     });
     let text = "";
-    ui.setWorldtext("…", { mode: "baseline" });
+    if (!isRippleTrigger) ui.setWorldtext("…", { mode: "baseline" });
 
     try {
       if (!hasApiAccess()) {
@@ -546,6 +547,7 @@
         characterId,
         channel,
         whisperText,
+        rippleWhisperText,
         kind,
         openingLead,
         openingLeadSource,
@@ -555,29 +557,31 @@
       text = out.text;
     } catch (err) {
       console.error("[RIPPLES] AI generation failed:", err);
-      ui.showErrorBanner("Could not reach the AI model. Check your connection or API key.");
-      ui.setWorldtext(engine.getScene().meta.baseline || "", { mode: "baseline" });
+      if (!isRippleTrigger) {
+        ui.showErrorBanner("Could not reach the AI model. Check your connection or API key.");
+        ui.setWorldtext(engine.getScene().meta.baseline || "", { mode: "baseline" });
+      }
       return;
     } finally {
       isGenerating = false;
     }
 
-    // Stale-result guard: the user may have clicked a different character while the
-    // fetch was in flight. If the selection changed, discard this result and fire a
-    // fresh request for whoever is now selected.
-    const currentSelectedId = engine.getSelectedId();
-    if (currentSelectedId !== characterId) {
-      ui.setWorldtext(engine.getScene().meta.baseline || "", { mode: "baseline" });
-      if (currentSelectedId) {
-        void requestMonologue({
-          characterId: currentSelectedId,
-          channel: DEFAULT_CHANNEL,
-          kind: EVENT_KIND.LISTEN,
-          whisperText: null,
-          trigger: "deferred-select"
-        });
+    // Stale-result guard: skip for ripple triggers, which intentionally generate for non-selected characters.
+    if (!isRippleTrigger) {
+      const currentSelectedId = engine.getSelectedId();
+      if (currentSelectedId !== characterId) {
+        ui.setWorldtext(engine.getScene().meta.baseline || "", { mode: "baseline" });
+        if (currentSelectedId) {
+          void requestMonologue({
+            characterId: currentSelectedId,
+            channel: DEFAULT_CHANNEL,
+            kind: EVENT_KIND.LISTEN,
+            whisperText: null,
+            trigger: "deferred-select"
+          });
+        }
+        return;
       }
-      return;
     }
 
     text = constrainThoughtText(text, {
@@ -590,7 +594,7 @@
     engine.applyRipple({
       sourceId: characterId,
       kind,
-      whisperText,
+      whisperText: whisperText || "",
       affectText: text
     });
 
@@ -604,11 +608,15 @@
       whisperText: whisperText || "",
       text
     });
-    ui.setWorldtext(text, { mode: "ripple" });
+
+    if (!isRippleTrigger) ui.setWorldtext(text, { mode: "ripple" });
+
     const snap = engine.snapshot();
     ui.renderReplay(snap);
     ui.renderGrid(snap);
     ui.renderLinks(snap);
+
+    if (isRippleTrigger) return;
 
     if (trigger === "auto-listen") {
       const passiveCount = notePassiveListen(characterId);
@@ -619,6 +627,37 @@
     }
 
     scheduleAutoThought(AUTO_THOUGHT.intervalMs);
+
+    if (kind === EVENT_KIND.WHISPER && whisperText) {
+      void scheduleRippleGenerations(characterId, whisperText);
+    }
+  }
+
+  async function scheduleRippleGenerations(sourceCharacterId, whisperText) {
+    try {
+      const sceneIdAtWhisper = engine.getSceneId();
+      const sc = engine.getScene();
+      const src = sc.characters.find(c => c.id === sourceCharacterId);
+      if (!src || !Array.isArray(src.adjacentTo) || !src.adjacentTo.length) return;
+
+      const adjacentIds = src.adjacentTo.filter(id => sc.characters.some(c => c.id === id));
+      if (!adjacentIds.length) return;
+
+      for (const adjId of adjacentIds) {
+        await new Promise(resolve => window.setTimeout(resolve, 1400));
+        if (engine.getSceneId() !== sceneIdAtWhisper) return;
+        await requestMonologue({
+          characterId: adjId,
+          channel: DEFAULT_CHANNEL,
+          kind: EVENT_KIND.LISTEN,
+          whisperText: null,
+          rippleWhisperText: whisperText,
+          trigger: "ripple"
+        });
+      }
+    } catch (err) {
+      console.error("[RIPPLES] Ripple generation error:", err);
+    }
   }
 
   function cycleScene(dir) {
@@ -953,6 +992,7 @@
     characterId,
     channel,
     whisperText,
+    rippleWhisperText = null,
     kind,
     openingLead = "",
     openingLeadSource = "none",
@@ -989,6 +1029,7 @@
       ch,
       sceneId,
       whisperText: whisperClean,
+      rippleWhisperText: String(rippleWhisperText || "").trim(),
       openingLead,
       openingLeadSource,
       recentThoughts,
@@ -1040,7 +1081,8 @@
     const resp = await fetch(requestTarget.url, {
       method: "POST",
       headers: requestTarget.headers,
-      body: JSON.stringify(requestPayload)
+      body: JSON.stringify(requestPayload),
+      signal: AbortSignal.timeout(45000)
     });
 
     if (!resp.ok) {

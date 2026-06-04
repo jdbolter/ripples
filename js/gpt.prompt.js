@@ -24,6 +24,8 @@
       ? sc.prompts.whisperRule
       : "If a whisper is present, let it alter the thought immediately and indirectly. Do not answer it directly.";
 
+    const rippleWhisperText = String(opts.rippleWhisperText || "").trim();
+
     const ambientThread = String(opts.ambientThread || "").trim();
     const fingerprint = String(ch.fingerprint || "").trim();
     const dossier = String(ch.dossier || "");
@@ -46,10 +48,12 @@
         ].join("\n")
       : "";
 
-    // Whisper
+    // Whisper / ripple disturbance
     const whisperBlock = whisperText
       ? `A whisper has reached this character: "${whisperText}"\n${whisperRule}`
-      : "(No whisper present.)";
+      : rippleWhisperText
+        ? `Something has shifted in the shared space — not directed at this character, but felt as a change in the room's atmosphere. The source of the disturbance: "${rippleWhisperText}". Do not quote, echo, or reference this directly. Let it alter only the texture or direction of the thought — a tonal shift, a changed angle of attention, a slight unease or settling.`
+        : "(No whisper present.)";
 
     const emotion = String(psyche.emotion || "guarded").trim().toLowerCase() || "guarded";
     const intensity = Math.max(0, Math.min(1, Number(psyche.intensity || 0)));
