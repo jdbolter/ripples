@@ -32,13 +32,13 @@ Monologues were too focused on defined character problems, too poetic (forced an
 ### Solution applied
 - Removed all `packet` and `prompt_policy` blocks from every character in `scenes.js`
 - Added `style` field per character (one-line literary texture reference)
-- Added `samples` field per character (array of 40–60 word example monologues written by the author)
+- Added `samples` field per character (array of 15–30 word example monologues written by the author)
 - Slimmed dossiers to 4–5 tight background sentences
 - Rewrote `gpt.prompt.js` from ~350 lines to ~70 lines — uses style + samples as primary guide; psyche vector only for intensity modulation
 - Kept psyche vectors and delta return for diffusion/ripple mechanics
 
 ### Key principle
-Samples do more work than rules. 2–3 author-written examples per character teach rhythm, vocabulary, and associativity better than 50 constraints. **Sample length should match output length: 40–60 words.**
+Samples do more work than rules. 2–3 author-written examples per character teach rhythm, vocabulary, and associativity better than 50 constraints. **Sample length should match output length: 15–30 words.**
 
 ---
 
@@ -67,5 +67,5 @@ Samples do more work than rules. 2–3 author-written examples per character tea
 ## What still needs doing
 - Write tighter dossiers for all characters (specific and concrete, not spec-sheet language)
 - Write 2–3 samples for every character except `student_alone` (Kim has 3) and `retired_analyst` (has 3)
-- Samples should be written by the author, 40–60 words, in the character's voice
+- Samples should be written by the author, 15–30 words, in the character's voice
 - `jdb-dev-rethink` branch: replacing train characters with more varied/resonant figures; `retired_analyst` (Stasi signals analyst) replaces `retired_widower` (literature professor); `woman_leaving` (moving to Lisbon) replaces `nurse_on_shift`

@@ -20,6 +20,7 @@
 
     const lastWhisper = {};
     const whisperHistory = [];
+    const whisperEcho = {};
     const openingBufferByCharacter = {};
 
     const affect = {};
@@ -314,6 +315,26 @@
       return whisperHistory.slice(-limit);
     }
 
+    function setWhisperEcho(characterId, text, turns) {
+      const clean = String(text || "").trim();
+      if (!clean || turns <= 0) {
+        delete whisperEcho[characterId];
+        return;
+      }
+      whisperEcho[characterId] = { text: clean, turnsLeft: Math.max(1, Math.floor(turns)) };
+    }
+
+    function getWhisperEcho(characterId) {
+      return whisperEcho[characterId] || null;
+    }
+
+    function decrementWhisperEcho(characterId) {
+      const e = whisperEcho[characterId];
+      if (!e) return;
+      e.turnsLeft -= 1;
+      if (e.turnsLeft <= 0) delete whisperEcho[characterId];
+    }
+
     function getRecentMonologues(characterId, limit = 3) {
       const n = Math.max(0, Math.min(10, Number(limit) || 0));
       if (!n) return [];
@@ -400,6 +421,9 @@
       recordWhisper,
       getLastWhisper,
       getWhisperHistory,
+      setWhisperEcho,
+      getWhisperEcho,
+      decrementWhisperEcho,
       getRecentMonologues,
       getMonologueCount,
       getOpeningBuffer,

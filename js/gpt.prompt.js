@@ -22,9 +22,11 @@
 
     const whisperRule = (sc.prompts && sc.prompts.whisperRule)
       ? sc.prompts.whisperRule
-      : "If a whisper is present, let it alter the thought immediately and indirectly. Do not answer it directly.";
+      : "A whisper has reached this character. Let it bend the thought — a word may echo, an image may shift. Do not answer it as dialogue.";
 
     const rippleWhisperText = String(opts.rippleWhisperText || "").trim();
+    const lingeringWhisperText = String(opts.lingeringWhisperText || "").trim();
+    const lingeringTurnsLeft = Number(opts.lingeringTurnsLeft || 0);
 
     const ambientThread = String(opts.ambientThread || "").trim();
     const fingerprint = String(ch.fingerprint || "").trim();
@@ -48,12 +50,16 @@
         ].join("\n")
       : "";
 
-    // Whisper / ripple disturbance
+    // Whisper / ripple / lingering disturbance
     const whisperBlock = whisperText
       ? `A whisper has reached this character: "${whisperText}"\n${whisperRule}`
       : rippleWhisperText
-        ? `Something has shifted in the shared space — not directed at this character, but felt as a change in the room's atmosphere. The source of the disturbance: "${rippleWhisperText}". Do not quote, echo, or reference this directly. Let it alter only the texture or direction of the thought — a tonal shift, a changed angle of attention, a slight unease or settling.`
-        : "(No whisper present.)";
+        ? `Something was spoken nearby, not to this character directly: "${rippleWhisperText}". Let it color the thought — a borrowed word, a shifted attention, a tone that wasn't there before.`
+        : lingeringWhisperText
+          ? (lingeringTurnsLeft > 1
+              ? `An earlier whisper still resonates: "${lingeringWhisperText}". Let it surface — a word half-remembered, something not quite finished.`
+              : `A faint trace of something said earlier: "${lingeringWhisperText}". Let it color the thought from beneath, barely visible.`)
+          : "(No whisper present.)";
 
     const emotion = String(psyche.emotion || "guarded").trim().toLowerCase() || "guarded";
     const intensity = Math.max(0, Math.min(1, Number(psyche.intensity || 0)));
@@ -81,7 +87,7 @@
       psycheBlock,
       "Hard constraints:",
       "- No direct second-person reply to a whisper.",
-      "- Do not quote, echo, or paraphrase the whisper. Its effect appears only in where thought goes next — not in any reference to what was whispered.",
+      "- A word or phrase from a whisper may surface naturally in the thought. Do not answer it as dialogue or address it directly.",
       "- No meta-commentary (no mention of prompts, models, AI, system).",
       "- No metaphors or poetic analogies.",
       "- No biography summaries or exposition.",

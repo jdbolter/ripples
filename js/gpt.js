@@ -61,8 +61,8 @@
   // Single implicit channel for now
   const DEFAULT_CHANNEL = "THOUGHTS";
   const EVENT_KIND = { LISTEN: "LISTEN", WHISPER: "WHISPER" };
-  const THOUGHT_WORD_MIN = 60;
-  const THOUGHT_WORD_MAX = 90;
+  const THOUGHT_WORD_MIN = 15;
+  const THOUGHT_WORD_MAX = 30;
   const CONTINUITY_LEAD_MAX_WORDS = 16;
   const CONTINUITY_STOPWORDS = new Set([
     "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "from", "if", "in", "into",
@@ -473,6 +473,7 @@
     clearAutoThoughtTimer();
     noteUserFocusInteraction(selectedId);
     engine.recordWhisper(selectedId, whisper);
+    engine.setWhisperEcho(selectedId, whisper, 2);
 
     // Begin generating new monologue (API or local)
     void requestMonologue({
@@ -1003,6 +1004,9 @@
     const sceneId = engine.getSceneId();
     const ch = sc.characters.find(c => c.id === characterId);
     const whisperClean = String(whisperText || "").trim();
+    const rippleClean = String(rippleWhisperText || "").trim();
+    const echo = (!whisperClean && !rippleClean) ? engine.getWhisperEcho(characterId) : null;
+    if (echo) engine.decrementWhisperEcho(characterId);
     const recentThoughts = engine.getRecentMonologues(characterId, 3);
     const priorMonologueCount = engine.getMonologueCount(characterId);
     const steering = toneSteering || buildToneSteering({
@@ -1029,7 +1033,9 @@
       ch,
       sceneId,
       whisperText: whisperClean,
-      rippleWhisperText: String(rippleWhisperText || "").trim(),
+      rippleWhisperText: rippleClean,
+      lingeringWhisperText: echo ? echo.text : "",
+      lingeringTurnsLeft: echo ? echo.turnsLeft + 1 : 0,
       openingLead,
       openingLeadSource,
       recentThoughts,
@@ -1073,17 +1079,23 @@
       max_output_tokens: 200
     };
 
-    // Debug: inspect in DevTools
     window.__lastOpenAIRequest = requestPayload;
-    console.log("[RIPPLES] sending request text.format", requestPayload?.text?.format);
 
     const requestTarget = getResponsesRequestTarget();
-    const resp = await fetch(requestTarget.url, {
-      method: "POST",
-      headers: requestTarget.headers,
-      body: JSON.stringify(requestPayload),
-      signal: AbortSignal.timeout(45000)
-    });
+    const RETRYABLE = new Set([429, 502, 503, 504]);
+    let resp;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        await new Promise(r => window.setTimeout(r, attempt * 1000));
+      }
+      resp = await fetch(requestTarget.url, {
+        method: "POST",
+        headers: requestTarget.headers,
+        body: JSON.stringify(requestPayload),
+        signal: AbortSignal.timeout(45000)
+      });
+      if (resp.ok || !RETRYABLE.has(resp.status)) break;
+    }
 
     if (!resp.ok) {
       const errText = await safeReadText(resp);
