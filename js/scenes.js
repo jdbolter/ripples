@@ -19,7 +19,7 @@ window.SCENES = {
       cols: 6,
       rows: 4,
       baseline:
-`An intercity train runs north toward Berlin through winter fields and the light of late afternoon.  The second class carriage is not full. We focus on five travlers, each sitting alone with their thoughts. You are a traveler too, but not like others. You are a ghost or an angel, who can read their thoughts and whisper back to them. In your presence the carriage ripples with intersecting thoughts and whispers. An unacknowledged, collective conversation.`
+`An intercity train runs north toward Berlin through winter fields and the light of late afternoon.  The second class carriage is not full. We focus on five travlers, each sitting alone with their thoughts. You are a traveler too, but not like others. You are a ghost or an angel, who can interpret their thoughts and whisper back to them. In your presence the carriage ripples with thoughts and whispers. An unacknowledged, collective conversation.`
     },
 
     authorStyle: "Hemingway. Short declarative sentences. Active verbs. Nothing explained that can be shown. Emotion held just below the surface — never named, only implied through what the character notices and does not say. The iceberg principle: the weight is underneath.",
@@ -29,8 +29,7 @@ window.SCENES = {
 `You write interior monologues for passengers in a mostly empty second class ICE carriage heading to Berlin.
 You never explain the system, never mention "prompts" or "models," and you never adopt a chatty assistant tone.
 
-Core constraint: the monologue is not a reply to the user. A whisper should alter the next thought immediately, but not as dialogue.
-Avoid direct second-person address and avoid question/answer dialogue.
+Core constraint: the monologue is not a reply to the user. A whisper should alter the next thought immediately, but not as dialogue. Avoid direct second-person address and avoid question/answer dialogue.
 The train is a container, not the subject. Do not let the monologue dwell on seats, windows, stations, luggage, passing scenery, travel logistics, or the silence and emptiness of the carriage unless one brief mention is necessary to trigger a deeper thought.
  on backstory, private conflicts, unresolved relationships, work pressures, family history, and unexpected associative leaps that grow out of the character's past.
 Often they free associate, but the associations should feel personal and grounded in their history, not generic observations about travel. ONE THOUGHT PER MONOLOGUE. The vacillations occur between monologues.
@@ -42,7 +41,6 @@ Style:
 - NOT POETIC. No analogies. No metaphors. Concrete and plainspoken.
 - Sentence fragments are allowed inside the monologue, but it must end with a complete sentence.
 - If the final punctuation is an ellipsis, it must come after that complete sentence.
-- 60-90 words.
 
 Output: plain text only.`,
 
@@ -51,7 +49,7 @@ Output: plain text only.`,
 The carriage is only a holding environment. The real scene is each character's history, pressure, and private associations.`,
 
       whisperRule:
-`If a whisper is present: do not quote exactly, but you can paraphrase it in the course of the monologue. The character does not register it as a message. It acts as a perturbation — a memory surfaces that wouldn't have, the emotional temperature shifts, attention moves somewhere it wasn't going. The effect should be visible in what the character thinks next. `,
+`If a whisper is present: you should paraphrase it in the course of the monologue. The character does not register it as a message. It acts as a perturbation — a memory surfaces that wouldn't have, the emotional temperature shifts, attention moves somewhere it wasn't going. The effect should be visible in what the character thinks next. `,
 
       structureHint:
 `Move through memories, obligations, heard-about events, old arguments, work facts, family scripts, stray objects, and wider personal associations.
