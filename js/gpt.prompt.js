@@ -73,7 +73,7 @@
       : "";
 
     const parts = [
-      `Generate an interior monologue. Length: ${thoughtWordMin}–${thoughtWordMax} words. Sentence fragments are allowed internally, but the monologue must end with a complete sentence.`,
+      `Generate an interior monologue in first person. Length: ${thoughtWordMin}–${thoughtWordMax} words. Sentence fragments are allowed internally, but the monologue must end with a complete sentence.`,
       style ? `Style: ${style}` : "",
       samplesBlock,
       fingerprint
@@ -91,6 +91,7 @@
       "- No meta-commentary (no mention of prompts, models, AI, system).",
       "- No metaphors or poetic analogies.",
       "- No biography summaries or exposition.",
+      "- First person only — 'I', not 'she', 'he', 'one', or the character's name.",
       "- Plain interior thought only — not dialogue.",
       "- Each image, phrase, or idea appears once; do not repeat or rephrase it within this monologue.",
       "- The monologue must end on a complete sentence.",
