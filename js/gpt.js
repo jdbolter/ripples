@@ -63,6 +63,8 @@
   const EVENT_KIND = { LISTEN: "LISTEN", WHISPER: "WHISPER" };
   const THOUGHT_WORD_MIN = 15;
   const THOUGHT_WORD_MAX = 30;
+  const WHISPER_THOUGHT_WORD_MIN = 50;
+  const WHISPER_THOUGHT_WORD_MAX = 75;
   const CONTINUITY_LEAD_MAX_WORDS = 16;
   const CONTINUITY_STOPWORDS = new Set([
     "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "from", "if", "in", "into",
@@ -511,6 +513,8 @@
     if (isGenerating) return;
     isGenerating = true;
     const isRippleTrigger = trigger === "ripple";
+    const effectiveWordMin = kind === EVENT_KIND.WHISPER ? WHISPER_THOUGHT_WORD_MIN : THOUGHT_WORD_MIN;
+    const effectiveWordMax = kind === EVENT_KIND.WHISPER ? WHISPER_THOUGHT_WORD_MAX : THOUGHT_WORD_MAX;
     const scene = engine.getScene();
     const character = scene?.characters?.find((c) => c.id === characterId) || null;
 
@@ -553,7 +557,9 @@
         openingLead,
         openingLeadSource,
         toneSteering,
-        focusSteering
+        focusSteering,
+        wordMin: effectiveWordMin,
+        wordMax: effectiveWordMax
       });
       text = out.text;
     } catch (err) {
@@ -586,8 +592,8 @@
     }
 
     text = constrainThoughtText(text, {
-      minWords: THOUGHT_WORD_MIN,
-      maxWords: THOUGHT_WORD_MAX
+      minWords: effectiveWordMin,
+      maxWords: effectiveWordMax
     });
     text = dedupePhraseRepetitions(text);
     text = cleanSpacing(text);
@@ -998,7 +1004,9 @@
     openingLead = "",
     openingLeadSource = "none",
     toneSteering = null,
-    focusSteering = null
+    focusSteering = null,
+    wordMin = THOUGHT_WORD_MIN,
+    wordMax = THOUGHT_WORD_MAX
   }) {
     const sc = engine.getScene();
     const sceneId = engine.getSceneId();
@@ -1043,8 +1051,8 @@
       toneSteeringBlock,
       focusSteeringBlock,
       ambientThread,
-      thoughtWordMin: THOUGHT_WORD_MIN,
-      thoughtWordMax: THOUGHT_WORD_MAX,
+      thoughtWordMin: wordMin,
+      thoughtWordMax: wordMax,
       dynamicsPromptLine: DYNAMICS.promptLine,
       psyche: engine.getPsyche(characterId),
       classifyWhisperTone,
