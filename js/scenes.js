@@ -19,7 +19,7 @@ window.SCENES = {
       cols: 6,
       rows: 4,
       baseline:
-`An intercity train runs north toward Berlin through winter fields and the light of late afternoon.  The second class carriage is not full. We focus on five travlers, each sitting alone with their thoughts. You are a traveler too, but not like others. You are a ghost or an angel, who can interpret their thoughts and whisper back to them. In your presence the carriage ripples with thoughts and whispers. An unacknowledged, collective conversation.`
+`An intercity train runs north toward Berlin through winter fields and the light of late afternoon.  The second class carriage is not full. We focus on five travelers, each alone with their thoughts. You are a traveler too, but not like others. You are a ghost or an angel, who can hear their thoughts and whisper back to them. In your presence the carriage ripples with thoughts and whispers. An unacknowledged, collective conversation.`
     },
 
     authorStyle: "Hemingway. Short declarative sentences. Active verbs. Nothing explained that can be shown. Emotion held just below the surface — never named, only implied through what the character notices and does not say. The iceberg principle: the weight is underneath.",
